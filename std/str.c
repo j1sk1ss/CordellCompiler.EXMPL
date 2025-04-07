@@ -55,3 +55,34 @@ char* str_strncpy(char* dst, char* src, int n) {
 
 	return dst;
 }
+
+int str_strcmp(char* f, char* s) {
+    if (!f || !s) return -1;
+    while (*f && *s && *f == *s) {
+        ++f;
+        ++s;
+    }
+
+    return (unsigned char)(*f) - (unsigned char)(*s);
+}
+
+int str_atoi(char *str) {
+    int neg = 1;
+    long long num = 0;
+    size_t i = 0;
+
+    while (*str == ' ') str++;
+    if (*str == '-' || *str == '+') {
+        neg = *str == '-' ? -1 : 1;
+        str++;
+    }
+
+	while (*str >= '0' && *str <= '9' && *str) {
+		num = num * 10 + (str[i] - 48);
+        if (neg == 1 && num > INT_MAX) return INT_MAX;
+        if (neg == -1 && -num < INT_MIN) return INT_MIN;
+		str++;
+	}
+    
+	return (num * neg);
+}
