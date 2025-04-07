@@ -7,4 +7,6 @@ void* str_memcpy(void* destination, void* source, size_t num);
 void* str_memset(void* pointer, unsigned char value, size_t num);
 int str_memcmp(void* firstPointer, void* secondPointer, size_t num);
 
+char* str_strncpy(char* dst, char* src, int n);
+
 #endif

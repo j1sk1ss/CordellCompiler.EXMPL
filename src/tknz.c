@@ -1,7 +1,8 @@
 #include "../include/tknz.h"
 
-
 token_t* tknz_tokenize(int fd) {
+    if (fd < 0) return NULL;
+
     token_t* head = NULL;
     token_t* tail = NULL;
 
@@ -9,7 +10,7 @@ token_t* tknz_tokenize(int fd) {
     unsigned char buffer[BUFFER_SIZE] = {0};
     ssize_t bytes_read;
 
-    unsigned char token_buf[TOKEN_MAX_SIZE];
+    unsigned char token_buf[TOKEN_MAX_SIZE + 1] = { 0 };
     size_t token_len = 0;
     token_type_t current_type = UNKNOWN_STRING;
 
@@ -24,8 +25,13 @@ token_t* tknz_tokenize(int fd) {
                 if (!in_token || current_type != UNKNOWN_STRING) {
                     if (in_token) {
                         token_t* new_token = (token_t*)mm_malloc(sizeof(token_t));
+                        if (!new_token) {
+                            unload_tokens(head);
+                            return NULL;
+                        }
+                        
                         new_token->t_type = current_type;
-                        str_memcpy(new_token->value, token_buf, token_len);
+                        str_strncpy((char*)new_token->value, (char*)token_buf, token_len);
                         new_token->value[token_len] = '\0';
                         new_token->next = NULL;
                         if (!head) head = new_token;
@@ -33,20 +39,28 @@ token_t* tknz_tokenize(int fd) {
                         tail = new_token;
                         token_len = 0;
                     }
-
                     in_token = 1;
                     current_type = UNKNOWN_STRING;
                 }
 
-                if (token_len < TOKEN_MAX_SIZE - 1)
+                if (token_len < TOKEN_MAX_SIZE) {
                     token_buf[token_len++] = ch;
+                } else {
+                    unload_tokens(head);
+                    return NULL;
+                }
             }
             else if (isdigit(ch)) {
                 if (!in_token || current_type != UNKNOWN_NUMERIC) {
                     if (in_token) {
                         token_t* new_token = (token_t*)mm_malloc(sizeof(token_t));
+                        if (!new_token) {
+                            unload_tokens(head);
+                            return NULL;
+                        }
+
                         new_token->t_type = current_type;
-                        str_memcpy(new_token->value, token_buf, token_len);
+                        str_strncpy((char*)new_token->value, (char*)token_buf, token_len);
                         new_token->value[token_len] = '\0';
                         new_token->next = NULL;
                         if (!head) head = new_token;
@@ -54,19 +68,26 @@ token_t* tknz_tokenize(int fd) {
                         tail = new_token;
                         token_len = 0;
                     }
-
                     in_token = 1;
                     current_type = UNKNOWN_NUMERIC;
                 }
 
-                if (token_len < TOKEN_MAX_SIZE - 1)
-                    token_buf[token_len++] = ch;
+                if (token_len < TOKEN_MAX_SIZE) token_buf[token_len++] = ch;
+                else {
+                    unload_tokens(head);
+                    return NULL;
+                }
             }
             else {
                 if (in_token) {
                     token_t* new_token = (token_t*)mm_malloc(sizeof(token_t));
+                    if (!new_token) {
+                        unload_tokens(head);
+                        return NULL;
+                    }
+
                     new_token->t_type = current_type;
-                    str_memcpy(new_token->value, token_buf, token_len);
+                    str_strncpy((char*)new_token->value, (char*)token_buf, token_len);
                     new_token->value[token_len] = '\0';
                     new_token->next = NULL;
                     if (!head) head = new_token;
@@ -81,8 +102,13 @@ token_t* tknz_tokenize(int fd) {
 
     if (in_token && token_len > 0) {
         token_t* new_token = (token_t*)mm_malloc(sizeof(token_t));
+        if (!new_token) {
+            unload_tokens(head);
+            return NULL;
+        }
+
         new_token->t_type = current_type;
-        str_memcpy(new_token->value, token_buf, token_len);
+        str_strncpy((char*)new_token->value, (char*)token_buf, token_len);
         new_token->value[token_len] = '\0';
         new_token->next = NULL;
         if (!head) head = new_token;
@@ -100,6 +126,5 @@ int unload_tokens(token_t* head) {
         curr = curr->next;
         mm_free(prev);
     }
-
     return 1;
 }

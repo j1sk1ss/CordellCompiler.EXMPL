@@ -40,3 +40,18 @@ int str_memcmp(void* firstPointer, void* secondPointer, size_t num) {
 
     return 0;
 }
+
+char* str_strncpy(char* dst, char* src, int n) {
+	int	i = 0;
+	while (i < n && src[i]) {
+		dst[i] = src[i];
+		i++;
+	}
+
+	while (i < n) {
+		dst[i] = '\0';
+		i++;
+	}
+
+	return dst;
+}
