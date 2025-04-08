@@ -14,6 +14,10 @@
 #define WHILE_COMAND        "while"
 #define WHILE_START_COMMAND "lstart"
 #define WHILE_END_COMMAND   "lend"
+#define IF_COMMAND          "if"
+#define IF_START_COMMAND    "ifstart"
+#define IF_END_COMMAND      "ifend"
+#define SYSCALL_COMMAND     "syscall"
 
 // Symbols and statements (Operands)
 #define ASIGN_STATEMENT     "="

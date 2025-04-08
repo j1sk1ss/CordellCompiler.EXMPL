@@ -19,17 +19,27 @@ typedef enum {
     UNKNOWN_NUMERIC_TOKEN,
     UNKNOWN_SYMBOL_TOKEN,
     UNKNOWN_COMMAND_TOKEN,
-
-    // Commands
     DELIMITER_TOKEN,
-    START_TOKEN,
+
+    // Types
     INT_TYPE_TOKEN,
     STRING_TYPE_TOKEN,
     ARRAY_TYPE_TOKEN,
+
+    // Commands
+    START_TOKEN,
     EXIT_TOKEN,
+    SYSCALL_TOKEN,
+    
+    // While
     WHILE_TOKEN,
     WHILE_START_TOKEN,
     WHILE_END_TOKEN,
+    
+    // If
+    IF_TOKEN,
+    IF_START_TOKEN,
+    IF_END_TOKEN,
 
     // Statements
     PLUS_TOKEN,
