@@ -5,8 +5,8 @@
 #include "logg.h"
 #include "str.h"
 
+#define ALIGNMENT           8
 #define ALLOC_BUFFER_SIZE   65536
-#define ALIGNMENT           8  
 #define MM_BLOCK_MAGIC      0xC07DEL
 
 

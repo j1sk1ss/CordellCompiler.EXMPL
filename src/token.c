@@ -4,6 +4,7 @@
 static char_type_t _get_char_type(unsigned char ch) {
     if (isalpha(ch)) return CHAR_ALPHA;
     if (isdigit(ch)) return CHAR_DIGIT;
+    if (ch == '"')   return CHAR_QUOTE;
     if (ch == '\n')  return CHAR_NEWLINE;
     if (ch == ' ')   return CHAR_SPACE;
     if (ch == ';')   return CHAR_DELIMITER;
@@ -47,20 +48,26 @@ token_t* tokenize(int fd) {
 
     while ((bytes_read = pread(fd, buffer, BUFFER_SIZE, file_offset)) > 0) {
         file_offset += bytes_read;
+        int quotes_open = 0;
         
         for (ssize_t i = 0; i < bytes_read; ++i) {
             unsigned char ch = buffer[i];
             char_type_t ct = _get_char_type(ch);
+            if (ct == CHAR_QUOTE) {
+                quotes_open = !quotes_open;
+                continue;
+            }
 
-            if (ct != CHAR_SPACE && ct != CHAR_NEWLINE) {
+            if ((ct != CHAR_SPACE && ct != CHAR_NEWLINE) || quotes_open) {
                 token_type_t new_type;
                 if (ct == CHAR_ALPHA) new_type = UNKNOWN_STRING_TOKEN;
                 else if (ct == CHAR_DIGIT) new_type = UNKNOWN_NUMERIC_TOKEN;
                 else if (ct == CHAR_DELIMITER) new_type = DELIMITER_TOKEN;
                 else new_type = UNKNOWN_SYMBOL_TOKEN;
                 
+                if (quotes_open) new_type = STRING_VALUE_TOKEN;
                 if (in_token) {
-                    if (current_type != new_type && current_type != UNKNOWN_STRING_TOKEN) {
+                    if (current_type != new_type && current_type != UNKNOWN_STRING_TOKEN && new_type != STRING_VALUE_TOKEN) {
                         if (!_add_token(&head, &tail, current_type, token_buf, token_len)) goto error;
                         in_token = 0;
                     }

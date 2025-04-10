@@ -38,7 +38,7 @@ static tree_t* _create_tree_node(token_t* token) {
 }
 
 static int _add_child_node(tree_t* parent, tree_t* child) {
-    if (!parent || !child) return;
+    if (!parent || !child) return 0;
     
     child->parent = parent;
     if (!parent->first_child) parent->first_child = child;

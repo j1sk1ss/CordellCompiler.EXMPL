@@ -3,6 +3,8 @@
 
 #include "syntax.h"
 
+/*
+*/
 int generate_asm(tree_t* root, FILE* output);
 
 #endif

@@ -67,6 +67,8 @@ static int _generate_expression(tree_t* node, FILE* output) {
             fprintf(output, "sub ebx, eax\n");
             fprintf(output, "mov eax, ebx\n");
             break;
+        case MULTIPLY_TOKEN: break; // TODO
+        case DIVIDE_TOKEN: break; // TODO
         case LARGER_TOKEN:
             _generate_expression(node->first_child, output);
             fprintf(output, "push eax\n");

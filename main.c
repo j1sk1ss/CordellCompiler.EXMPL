@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
 
         tree_t* parse_tree = create_syntax_tree(tokens);
 
-        // print_parse_tree(parse_tree, 0);
-        // generate_asm(parse_tree, stdout);
+        print_parse_tree(parse_tree, 0);
+        generate_asm(parse_tree, stdout);
         unload_syntax_tree(parse_tree);
         unload_tokens(tokens);
     }

@@ -59,6 +59,7 @@ typedef enum {
 typedef enum {
     CHAR_ALPHA,
     CHAR_DIGIT,
+    CHAR_QUOTE,
     CHAR_OTHER,
     CHAR_SPACE,
     CHAR_DELIMITER,
@@ -72,7 +73,12 @@ typedef struct token {
 } token_t;
 
 
+/*
+*/
 token_t* tokenize(int fd);
+
+/*
+*/
 int unload_tokens(token_t* head);
 
 #endif

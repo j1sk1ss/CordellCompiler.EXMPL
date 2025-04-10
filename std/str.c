@@ -3,31 +3,29 @@
 
 void* str_memcpy(void* destination, void* source, size_t num) {
     unsigned int num_dwords = num / 4;
-    unsigned int num_bytes = num % 4;
+    unsigned int num_bytes  = num % 4;
     unsigned int* dest32 = (unsigned int*)destination;
-    unsigned int* src32 = (unsigned int*)source;
+    unsigned int* src32  = (unsigned int*)source;
     unsigned char* dest8 = ((unsigned char*)destination) + num_dwords * 4;
-    unsigned char* src8 = ((unsigned char*)source) + num_dwords * 4;
+    unsigned char* src8  = ((unsigned char*)source) + num_dwords * 4;
     unsigned int i = 0;
 
     for (i = 0; i < num_dwords; i++) dest32[i] = src32[i];
     for (i = 0; i < num_bytes; i++) dest8[i] = src8[i];
-
     return destination;
 }
 
 void* str_memset(void* pointer, unsigned char value, size_t num) {
     unsigned int num_dwords = num / 4;
-    unsigned int num_bytes = num % 4;
+    unsigned int num_bytes  = num % 4;
     unsigned int *dest32 = (unsigned int*)pointer;
     unsigned char *dest8 = ((unsigned char*)pointer) + num_dwords * 4;
-    unsigned char val8 = (unsigned char)value;
-    unsigned int val32 = value | (value << 8) | (value << 16) | (value << 24);
+    unsigned char val8   = (unsigned char)value;
+    unsigned int val32   = value | (value << 8) | (value << 16) | (value << 24);
     unsigned int i = 0;
 
     for (i = 0; i < num_dwords; i++) dest32[i] = val32;
     for (i = 0; i < num_bytes; i++) dest8[i] = val8;
-    
     return pointer;
 }
 
@@ -85,4 +83,17 @@ int str_atoi(char *str) {
 	}
     
 	return (num * neg);
+}
+
+int is_number(char* s) {
+    while (*s) {
+        if (!str_isdigit(*s)) return 0;
+        s++;
+    }
+
+    return 1;
+}
+
+int str_isdigit(int c) {
+    return (c >= '0' && c <= '9');
 }
