@@ -28,6 +28,10 @@ int command_markup(token_t* head);
 
 /*
 */
+int variable_markup(token_t* head);
+
+/*
+*/
 tree_t* create_syntax_tree(token_t* head);
 
 /*

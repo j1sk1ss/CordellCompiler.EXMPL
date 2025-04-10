@@ -34,6 +34,7 @@ int main(int argc, char* argv[]) {
         if (!tokens) return -1;
 
         int markup_res = command_markup(tokens);
+        markup_res = variable_markup(tokens);
         if (!markup_res) {
             unload_tokens(tokens);
             return -1;
@@ -41,7 +42,7 @@ int main(int argc, char* argv[]) {
 
         tree_t* parse_tree = create_syntax_tree(tokens);
 
-        // print_parse_tree(parse_tree, 0);
+        print_parse_tree(parse_tree, 0);
 
         FILE* output = fopen("output.asm", "w");
         generate_asm(parse_tree, output);

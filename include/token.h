@@ -51,6 +51,11 @@ typedef enum {
     LOWER_TOKEN,
     LARGER_TOKEN,
 
+    // Vars
+    STR_VARIABLE_TOKEN,
+    INT_VARIABLE_TOKEN,
+    ARR_VARIABLE_TOKEN,
+
     // Values
     INT_VALUE_TOKEN,
     STRING_VALUE_TOKEN

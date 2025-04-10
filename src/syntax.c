@@ -22,6 +22,9 @@ static const command_handler_t _command_handlers[] = {
     { WHILE_TOKEN,          _parse_while_loop           },
     { IF_TOKEN,             _parse_if_statement         },
     { SYSCALL_TOKEN,        _parse_syscall              },
+    { STR_VARIABLE_TOKEN,   _parse_expression           },
+    { INT_VARIABLE_TOKEN,   _parse_expression           },
+    { ARR_VARIABLE_TOKEN,   _parse_expression           },
     { UNKNOWN_STRING_TOKEN, _parse_expression           },
     { -1, NULL }
 };
@@ -60,7 +63,6 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     
     if (
         !type_token || !name_token || !assign_token ||
-        name_token->t_type != UNKNOWN_STRING_TOKEN ||
         assign_token->t_type != ASIGN_TOKEN
     ) return NULL;
     
@@ -77,16 +79,16 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
 }
 
 static tree_t* _parse_array_declaration(token_t** curr) {
-    token_t* arr_token    = *curr;
-    token_t* size_token   = (*curr)->next;
-    token_t* type_token   = size_token->next;
-    token_t* name_token   = type_token->next;
-    token_t* assign_token = name_token->next;
+    token_t* arr_token  = *curr;
+    token_t* name_token = (*curr)->next;
+    token_t* size_token = name_token->next;
+    token_t* elem_size_token = size_token->next;
+    token_t* assign_token    = elem_size_token->next;
     
     if (
-        !size_token || !type_token || !name_token || !assign_token ||
+        !size_token || !elem_size_token || !name_token || !assign_token ||
         size_token->t_type != UNKNOWN_NUMERIC_TOKEN || 
-        name_token->t_type != UNKNOWN_STRING_TOKEN ||
+        name_token->t_type != ARR_VARIABLE_TOKEN ||
         assign_token->t_type != ASIGN_TOKEN
         ) {
         return NULL;
@@ -94,11 +96,11 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     
     tree_t* arr_node  = _create_tree_node(arr_token);
     tree_t* size_node = _create_tree_node(size_token);
-    tree_t* type_node = _create_tree_node(type_token);
+    tree_t* elem_size_node = _create_tree_node(elem_size_token);
     tree_t* name_node = _create_tree_node(name_token);
     
     _add_child_node(arr_node, size_node);
-    _add_child_node(arr_node, type_node);
+    _add_child_node(arr_node, elem_size_node);
     _add_child_node(arr_node, name_node);
     
     int arr_size = str_atoi((char*)size_token->value);

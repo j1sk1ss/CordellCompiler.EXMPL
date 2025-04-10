@@ -7,6 +7,11 @@ typedef struct {
     token_type_t type;
 } markup_token_t;
 
+typedef struct Variable {
+    unsigned char name[TOKEN_MAX_SIZE];
+    token_type_t type;
+} variable_t;
+
 static markup_token_t _markups[] = {
     { .value = START_COMMAND,       .type = START_TOKEN         },
     { .value = INT_VARIABLE,        .type = INT_TYPE_TOKEN      },
@@ -44,5 +49,46 @@ int command_markup(token_t* head) {
         curr = curr->next;
     }
 
+    return 1;
+}
+
+
+int variable_markup(token_t* head) {
+    token_t* curr = head;
+    variable_t* variables = NULL;
+    size_t var_count = 0;
+
+    while (curr) {
+        if (curr->t_type == INT_TYPE_TOKEN || curr->t_type == STRING_TYPE_TOKEN || curr->t_type == ARRAY_TYPE_TOKEN) {
+            token_t* next = curr->next;
+            if (next && next->t_type == UNKNOWN_STRING_TOKEN) {
+                variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
+                str_strncpy((char*)variables[var_count].name, (char*)next->value, TOKEN_MAX_SIZE);
+
+                if (curr->t_type == INT_TYPE_TOKEN) variables[var_count].type = INT_VARIABLE_TOKEN;
+                else if (curr->t_type == STRING_TYPE_TOKEN) variables[var_count].type = STR_VARIABLE_TOKEN;
+                else if (curr->t_type == ARRAY_TYPE_TOKEN) variables[var_count].type = ARR_VARIABLE_TOKEN;
+                var_count++;
+            }
+        }
+
+        curr = curr->next;
+    }
+
+    curr = head;
+    while (curr) {
+        if (curr->t_type == UNKNOWN_STRING_TOKEN) {
+            for (size_t i = 0; i < var_count; i++) {
+                if (str_strncmp((char*)curr->value, (char*)variables[i].name, TOKEN_MAX_SIZE) == 0) {
+                    curr->t_type = variables[i].type;
+                    break;
+                }
+            }
+        }
+
+        curr = curr->next;
+    }
+
+    mm_free(variables);
     return 1;
 }

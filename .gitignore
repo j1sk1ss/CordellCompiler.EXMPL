@@ -3,3 +3,4 @@
 /test
 builds/
 .DS_Store
+*.asm
