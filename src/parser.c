@@ -51,20 +51,13 @@ static void _add_child_node(tree_t* parent, tree_t* child) {
     parent->child_count++;
 }
 
-static int __is_expression_terminator(token_t* t) {
-    return t->t_type == DELIMITER_TOKEN ||
-           t->t_type == WHILE_START_TOKEN ||
-           t->t_type == WHILE_END_TOKEN ||
-           t->t_type == EXIT_TOKEN;
-}
-
-static tree_t* _parse_expression(token_t** curr) {
+static tree_t* _parse_expression(token_t** curr, token_type_t expression_end) {
     if (!*curr) return NULL;
     
     tree_t* expr_node = _create_tree_node(*curr);
     *curr = (*curr)->next;
     
-    while (*curr && !__is_expression_terminator(*curr)) {
+    while (*curr && (*curr)->t_type != expression_end) {
         tree_t* node = _create_tree_node(*curr);
         _add_child_node(expr_node, node);
         *curr = (*curr)->next;
@@ -79,15 +72,16 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     token_t* assign_token = name_token->next;
     
     if (
-        !name_token || name_token->t_type != UNKNOWN_STRING_TOKEN ||
-        !assign_token || assign_token->t_type != ASIGN_TOKEN
+        !name_token || !assign_token ||
+        name_token->t_type != UNKNOWN_STRING_TOKEN ||
+        assign_token->t_type != ASIGN_TOKEN
     ) {
         return NULL;
     }
     
     tree_t* decl_node  = _create_tree_node(type_token);
     tree_t* name_node  = _create_tree_node(name_token);
-    tree_t* value_node = _create_tree_node(assign_token->next);
+    tree_t* value_node = _parse_expression(&assign_token->next, DELIMITER_TOKEN);
     
     _add_child_node(decl_node, name_node);
     _add_child_node(decl_node, value_node);
@@ -104,10 +98,10 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     token_t* assign_token = name_token->next;
     
     if (
-        !size_token || size_token->t_type != UNKNOWN_NUMERIC_TOKEN ||
-        !type_token || (type_token->t_type != INT_TYPE_TOKEN && type_token->t_type != STRING_TYPE_TOKEN) ||
-        !name_token || name_token->t_type != UNKNOWN_STRING_TOKEN ||
-        !assign_token || assign_token->t_type != ASIGN_TOKEN
+        !size_token || !type_token || !name_token || !assign_token ||
+        size_token->t_type != UNKNOWN_NUMERIC_TOKEN || 
+        name_token->t_type != UNKNOWN_STRING_TOKEN ||
+        assign_token->t_type != ASIGN_TOKEN
         ) {
         return NULL;
     }
@@ -123,7 +117,6 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     
     int arr_size = str_atoi((char*)size_token->value);
     token_t* val_token = assign_token->next;
-    
     for (int i = 0; i < arr_size && val_token; i++) {
         tree_t* val_node = _create_tree_node(val_token);
         _add_child_node(arr_node, val_node);
@@ -137,14 +130,13 @@ static tree_t* _parse_array_declaration(token_t** curr) {
 static tree_t* _parse_assignment(token_t** curr) {
     token_t* name_token = *curr;
     token_t* assign_token = name_token->next;
-    
     if (!assign_token || assign_token->t_type != ASIGN_TOKEN) {
         return NULL;
     }
     
     tree_t* assign_node = _create_tree_node(assign_token);
     tree_t* name_node = _create_tree_node(name_token);
-    tree_t* expr_node = _parse_expression(&(assign_token->next));
+    tree_t* expr_node = _parse_expression(&(assign_token->next), DELIMITER_TOKEN);
     
     _add_child_node(assign_node, name_node);
     if (expr_node) {
@@ -161,7 +153,6 @@ static tree_t* _parse_assignment(token_t** curr) {
     return assign_node;
 }
 
-
 static tree_t* _parse_scope(token_t** curr_ptr, token_type_t exit_token) {
     if (!curr_ptr || !*curr_ptr) return NULL;
     tree_t* scope_node = _create_tree_node(NULL);
@@ -169,9 +160,9 @@ static tree_t* _parse_scope(token_t** curr_ptr, token_type_t exit_token) {
 
     while (curr && curr->t_type != exit_token) {
         int handled = 0;
-        for (const command_handler_t* h = _command_handlers; h->parser; h++) {
-            if (curr && h->type == curr->t_type) {
-                tree_t* node = h->parser(&curr);
+        for (const command_handler_t* handler = _command_handlers; handler->parser; handler++) {
+            if (curr && handler->type == curr->t_type) {
+                tree_t* node = handler->parser(&curr);
                 if (node) {
                     _add_child_node(scope_node, node);
                     handled = 1;
@@ -184,7 +175,7 @@ static tree_t* _parse_scope(token_t** curr_ptr, token_type_t exit_token) {
             curr = curr->next;
         }
     }
-
+    
     if (curr) *curr_ptr = curr->next;
     else *curr_ptr = NULL;
     return scope_node;
@@ -198,20 +189,14 @@ static tree_t* __parse_statement_scope(token_t** curr, token_type_t start, token
     if (!body_node) return NULL;
     
     *curr = (*curr)->next;
-    tree_t* cond = _parse_expression(curr);
-    if (cond) {
-        _add_child_node(body_node, cond);
-    }
-
+    tree_t* cond = _parse_expression(curr, start);
+    if (cond) _add_child_node(body_node, cond);
     if (*curr && (*curr)->t_type == start) {
         token_t* body_start = *curr;
         *curr = body_start->next;
         
         tree_t* body = _parse_scope(curr, end);
-        if (body) {
-            _add_child_node(body_node, body);
-        }
-        
+        if (body) _add_child_node(body_node, body);
         if (*curr && (*curr)->t_type == end) {
             *curr = (*curr)->next;
         }
@@ -235,16 +220,13 @@ static tree_t* _parse_syscall(token_t** curr) {
     tree_t* syscall_node = _create_tree_node(syscall_token);
     *curr = (*curr)->next;
 
-    for (int i = 0; i < 5 && *curr && (*curr)->t_type != DELIMITER_TOKEN; i++) {
+    for (int i = 0; *curr && (*curr)->t_type != DELIMITER_TOKEN; i++) {
         tree_t* arg_node = _create_tree_node(*curr);
         _add_child_node(syscall_node, arg_node);
         *curr = (*curr)->next;
     }
 
-    if (*curr && (*curr)->t_type == DELIMITER_TOKEN) {
-        *curr = (*curr)->next;
-    }
-
+    if (*curr && (*curr)->t_type == DELIMITER_TOKEN) *curr = (*curr)->next;
     return syscall_node;
 }
 
@@ -257,16 +239,18 @@ tree_t* create_parse_tree(token_t* head) {
     if (!curr) return NULL;
     tree_t* root = _create_tree_node(curr);
     curr = curr->next;
-    
+
     tree_t* body = _parse_scope(&curr, EXIT_TOKEN);
-    _add_child_node(root, body);
+    if (body) _add_child_node(root, body);
 
-    tree_t* exit_node = _create_tree_node(curr);
-    _add_child_node(root, exit_node);
+    if (curr) {
+        tree_t* exit_node = _create_tree_node(curr);
+        _add_child_node(root, exit_node);
 
-    if (curr->next && curr->next->t_type == UNKNOWN_NUMERIC_TOKEN) {
-        _add_child_node(exit_node, _create_tree_node(curr->next));
-        curr = curr->next->next;
+        if (curr->next) {
+            _add_child_node(exit_node, _create_tree_node(curr->next));
+            curr = curr->next->next;
+        }
     }
 
     return root;

@@ -70,7 +70,7 @@ typedef struct token {
 } token_t;
 
 
-token_t* tknz_tokenize(int fd);
+token_t* tokenize(int fd);
 int unload_tokens(token_t* head);
 
 #endif

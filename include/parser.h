@@ -1,7 +1,7 @@
 #ifndef PARSER_H_
 #define PARSER_H_
 
-#include "tknz.h"
+#include "token.h"
 #include "dict.h"
 #include "str.h"
 

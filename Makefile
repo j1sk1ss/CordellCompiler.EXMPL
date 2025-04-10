@@ -1,5 +1,5 @@
 CFLAGS = -Wall -Wextra -Ikernel/include -Wcomment -Wno-unknown-pragmas -Wno-unused-result -Wno-empty-body -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-variable -Wno-format-overflow
-CC = gcc-14
+CC = gcc
 
 # Logger flags
 ERROR_LOGS ?= 1
@@ -7,7 +7,7 @@ WARN_LOGS ?= 1
 INFO_LOGS ?= 1
 DEBUG_LOGS ?= 1
 IO_LOGS ?= 1
-MEM_LOGS ?= 1
+MEM_LOGS ?= 0
 LOGGING_LOGS ?= 1
 SPECIAL_LOGS ?= 1
 
@@ -54,7 +54,7 @@ force_build:
 	@if [ -e $(OUTPUT) ]; then rm -f $(OUTPUT); fi
 
 $(OUTPUT): $(SOURCES)
-	$(CC) $(CFLAGS) -o $(OUTPUT) $(SOURCES) $(DEBUG_FLAGS)
+	$(CC) $(CFLAGS) -o $(OUTPUT) $(SOURCES) -g
 
 clean:
 	rm -f $(OUTPUT)
