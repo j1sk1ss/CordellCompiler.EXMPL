@@ -44,8 +44,8 @@ typedef enum {
     // Statements
     PLUS_TOKEN,
     MINUS_TOKEN,
-    MULTIPLY_TOKEN, //
-    DIVIDE_TOKEN, //
+    MULTIPLY_TOKEN,
+    DIVIDE_TOKEN,
     ASIGN_TOKEN,
     COMPARE_TOKEN,
     LOWER_TOKEN,

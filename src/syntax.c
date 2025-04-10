@@ -8,6 +8,7 @@ static tree_t* _parse_if_statement(token_t** curr);
 static tree_t* _parse_syscall(token_t** curr);
 static tree_t* _parse_scope(token_t** curr_ptr, token_type_t exit_token);
 static tree_t* _parse_expression(token_t** curr);
+static tree_t* _parse_exit(token_t** curr);
 
 typedef struct {
     token_type_t type;
@@ -15,13 +16,13 @@ typedef struct {
 } command_handler_t;
 
 static const command_handler_t _command_handlers[] = {
-    { INT_TYPE_TOKEN, _parse_variable_declaration },
-    { STRING_TYPE_TOKEN, _parse_variable_declaration },
-    { ARRAY_TYPE_TOKEN, _parse_array_declaration },
-    { WHILE_TOKEN, _parse_while_loop },
-    { IF_TOKEN, _parse_if_statement },
-    { SYSCALL_TOKEN, _parse_syscall },
-    { UNKNOWN_STRING_TOKEN, _parse_expression },
+    { INT_TYPE_TOKEN,       _parse_variable_declaration },
+    { STRING_TYPE_TOKEN,    _parse_variable_declaration },
+    { ARRAY_TYPE_TOKEN,     _parse_array_declaration    },
+    { WHILE_TOKEN,          _parse_while_loop           },
+    { IF_TOKEN,             _parse_if_statement         },
+    { SYSCALL_TOKEN,        _parse_syscall              },
+    { UNKNOWN_STRING_TOKEN, _parse_expression           },
     { -1, NULL }
 };
 
@@ -136,7 +137,7 @@ static tree_t* _parse_scope(token_t** curr_ptr, token_type_t exit_token) {
     tree_t* scope_node = _create_tree_node(NULL);
     token_t* curr = *curr_ptr;
 
-    while (curr && curr->t_type != exit_token) {
+    while (curr && curr->t_type != exit_token && curr->t_type != EXIT_TOKEN) {
         int handled = 0;
         for (const command_handler_t* handler = _command_handlers; handler->parser; handler++) {
             if (curr && handler->type == curr->t_type) {
@@ -154,8 +155,12 @@ static tree_t* _parse_scope(token_t** curr_ptr, token_type_t exit_token) {
         }
     }
     
-    if (curr) *curr_ptr = curr->next;
-    else *curr_ptr = NULL;
+    if (!curr) *curr_ptr = NULL; 
+    else {
+        if (curr->t_type != EXIT_TOKEN) *curr_ptr = curr->next;
+        else *curr_ptr = curr;
+    }
+
     return scope_node;
 }
 
@@ -210,6 +215,20 @@ static tree_t* _parse_syscall(token_t** curr) {
     return syscall_node;
 }
 
+static tree_t* _parse_exit(token_t** curr) {
+    if (!curr || !*curr || (*curr)->t_type != EXIT_TOKEN) return NULL;
+
+    token_t* exit_token = *curr;
+    tree_t* exit_node = _create_tree_node(exit_token);
+    *curr = (*curr)->next;
+
+    tree_t* exp = _parse_expression(curr);
+    _add_child_node(exit_node, exp);
+
+    if (*curr && (*curr)->t_type == DELIMITER_TOKEN) *curr = (*curr)->next;
+    return exit_node;
+}
+
 tree_t* create_syntax_tree(token_t* head) {
     token_t* curr = head;
     while (curr && curr->t_type != START_TOKEN) {
@@ -224,13 +243,8 @@ tree_t* create_syntax_tree(token_t* head) {
     if (body) _add_child_node(root, body);
 
     if (curr) {
-        tree_t* exit_node = _create_tree_node(curr);
+        tree_t* exit_node = _parse_exit(&curr);
         _add_child_node(root, exit_node);
-
-        if (curr->next) {
-            _add_child_node(exit_node, _create_tree_node(curr->next));
-            curr = curr->next->next;
-        }
     }
 
     return root;

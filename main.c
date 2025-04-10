@@ -1,8 +1,8 @@
-#include "include/token.h"
+#include "include/generator.h"
 #include "include/syntax.h"
+#include "include/token.h"
 #include "include/logg.h"
 #include "include/mm.h"
-#include "include/translator.h"
 
 
 void print_parse_tree(tree_t* node, int depth) {
@@ -41,8 +41,11 @@ int main(int argc, char* argv[]) {
 
         tree_t* parse_tree = create_syntax_tree(tokens);
 
-        print_parse_tree(parse_tree, 0);
-        generate_asm(parse_tree, stdout);
+        // print_parse_tree(parse_tree, 0);
+
+        FILE* output = fopen("output.asm", "w");
+        generate_asm(parse_tree, output);
+        fclose(output);
         unload_syntax_tree(parse_tree);
         unload_tokens(tokens);
     }
