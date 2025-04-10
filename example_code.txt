@@ -1,8 +1,8 @@
 start
-    int a = 10 ;
-    int b = 20 ;
+    int a = 10 + 1 ;
+    int b = 20 / 2 ;
     int c = a + b ;
-    while c > 0 lstart
+    while c > 0 ; lstart
         c = c - 1 ;
     lend
 
@@ -10,7 +10,7 @@ start
 
     str input = 0 ;
     syscall 10 10 10 10 input ;
-    if input == hello ifstart
+    if input == hello ; ifstart
         a = 100 ;
     ifend
 exit a

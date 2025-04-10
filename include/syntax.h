@@ -25,7 +25,7 @@ Return -1 if somehing goes wrong.
 Return 1 if markup success.
 */
 int command_markup(token_t* head);
-tree_t* create_parse_tree(token_t* head);
-int unload_parse_tree(tree_t* node);
+tree_t* create_syntax_tree(token_t* head);
+int unload_syntax_tree(tree_t* node);
 
 #endif
