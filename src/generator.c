@@ -64,7 +64,11 @@ static int _generate_expression(tree_t* node, FILE* output) {
             fprintf(output, "mov %s, eax\n", node->first_child->token->value);
         }
     }
-    else if (node->token->t_type == STR_VARIABLE_TOKEN || node->token->t_type == UNKNOWN_NUMERIC_TOKEN) {
+    else if (
+        node->token->t_type == STR_VARIABLE_TOKEN || 
+        node->token->t_type == UNKNOWN_NUMERIC_TOKEN ||
+        node->token->t_type == ARR_VARIABLE_TOKEN
+    ) {
         fprintf(output, "mov eax, %s\n", node->token->value);
         _generate_expression(node->first_child, output);
     }
@@ -123,7 +127,8 @@ static int _generate_expression(tree_t* node, FILE* output) {
     }
     else if (node->token->t_type == EXIT_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "xor ebx, ebx\n");
+        fprintf(output, "mov ebx, eax\n");
+        fprintf(output, "mov eax, 1\n");
         fprintf(output, "int 0x80\n");
     }
 
