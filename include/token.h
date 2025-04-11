@@ -34,6 +34,13 @@ typedef enum {
     START_TOKEN,
     EXIT_TOKEN,
     SYSCALL_TOKEN,
+    CALL_TOKEN,
+    LABEL_TOKEN,
+
+    // Function
+    FUNC_TOKEN,
+    FUNC_START_TOKEN,
+    FUNC_END_TOKEN,
     
     // While
     WHILE_TOKEN,

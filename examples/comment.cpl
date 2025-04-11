@@ -16,6 +16,6 @@
 :
 
 start
-exit 123 ;
+exit 123;
 
 : Down comment :

@@ -2,8 +2,14 @@
 #define DICT_H_
 
 // Misc
-#define START_COMMAND   "start"
-#define EXIT_COMMAND    "exit"
+#define START_COMMAND "start"
+#define EXIT_COMMAND  "exit"
+
+// Function
+#define CALLFUNC_COMMAND        "callfunc"
+#define FUNCTION_COMMAND        "function"
+#define FUNCTION_START_COMMAND  "fstart"
+#define FUNCTION_END_COMMAND    "fend"
 
 // Types
 #define INT_VARIABLE    "int"

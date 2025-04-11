@@ -2,6 +2,7 @@
 
 
 static int _label_counter = 0;
+static int _generate_function(tree_t* node, FILE* output);
 static int _generate_if(tree_t* node, FILE* output);
 static int _generate_while(tree_t* node, FILE* output);
 static int _generate_syscall(tree_t* node, FILE* output);
@@ -27,34 +28,39 @@ static array_info_t* _find_array_info(const char* name) {
 
 static int _generate_data_section(tree_t* node, FILE* output) {
     if (!node) return 0;
-    if (node->token->t_type == START_TOKEN) {
-        tree_t* scope = node->first_child;
-        for (tree_t* child = scope->first_child; child; child = child->next_sibling) {
-            switch (child->token->t_type) {
-                case INT_TYPE_TOKEN: {
-                    tree_t* name  = child->first_child;
-                    tree_t* value = name->next_sibling;
-                    if (value->token->t_type == INT_VALUE_TOKEN) fprintf(output, "%s dd %s\n", name->token->value, value->token->value);
-                    else fprintf(output, "%s dd 0\n", name->token->value);
-                    break;
-                }
-                case ARRAY_TYPE_TOKEN: {
-                    tree_t* size   = child->first_child;
-                    tree_t* t_type = size->next_sibling;
-                    tree_t* name   = t_type->next_sibling;
-                
-                    array_info_t info;
-                    str_strncpy(info.name, (char*)name->token->value, 32);
-                    info.el_size = str_atoi((char*)t_type->token->value);
-                    _arrays_info[_array_count++] = info;
+    for (tree_t* child = node->first_child; child; child = child->next_sibling) {
+        if (!child->token) {
+            _generate_data_section(child, output);
+            continue;
+        }
+        
+        switch (child->token->t_type) {
+            case INT_TYPE_TOKEN: {
+                tree_t* name  = child->first_child;
+                tree_t* value = name->next_sibling;
+                if (value->token->t_type == INT_VALUE_TOKEN) fprintf(output, "%s dd %s\n", name->token->value, value->token->value);
+                else fprintf(output, "%s dd 0\n", name->token->value);
+                break;
+            }
+            case ARRAY_TYPE_TOKEN: {
+                tree_t* size   = child->first_child;
+                tree_t* t_type = size->next_sibling;
+                tree_t* name   = t_type->next_sibling;
+            
+                array_info_t info;
+                str_strncpy(info.name, (char*)name->token->value, 32);
+                info.el_size = str_atoi((char*)t_type->token->value);
+                _arrays_info[_array_count++] = info;
 
-                    const char* directive = NULL;
-                    if (str_strcmp((char*)t_type->token->value, "1") == 0) directive = "db";
-                    else if (str_strcmp((char*)t_type->token->value, "2") == 0) directive = "dw";
-                    else if (str_strcmp((char*)t_type->token->value, "4") == 0) directive = "dd";
-                    else if (str_strcmp((char*)t_type->token->value, "8") == 0) directive = "dq";
-                    else directive = "dd";
-                
+                const char* directive = NULL;
+                if (str_strcmp((char*)t_type->token->value, "1") == 0) directive = "db";
+                else if (str_strcmp((char*)t_type->token->value, "2") == 0) directive = "dw";
+                else if (str_strcmp((char*)t_type->token->value, "4") == 0) directive = "dd";
+                else if (str_strcmp((char*)t_type->token->value, "8") == 0) directive = "dq";
+                else directive = "dd";
+            
+                if (!name->next_sibling) fprintf(output, "%s times %s %s 0\n", name->token->value, size->token->value, directive);
+                else {
                     fprintf(output, "%s %s ", name->token->value, directive);
                     for (tree_t* elem = name->next_sibling; elem; elem = elem->next_sibling) {
                         if (elem->token->t_type == UNKNOWN_NUMERIC_TOKEN) fprintf(output, "%s%s", elem->token->value, elem->next_sibling ? "," : "\n");
@@ -69,16 +75,17 @@ static int _generate_data_section(tree_t* node, FILE* output) {
                             fprintf(output, "%i%s", value, elem->next_sibling ? "," : "\n");
                         }
                     }
-                    break;
                 }
-                case STRING_TYPE_TOKEN: {
-                    tree_t* name  = child->first_child;
-                    tree_t* value = name->next_sibling;
-                    fprintf(output, "%s db '%s', 0\n", name->token->value, value->token->value);
-                    break;
-                }
-                default: break;
+
+                break;
             }
+            case STRING_TYPE_TOKEN: {
+                tree_t* name  = child->first_child;
+                tree_t* value = name->next_sibling;
+                fprintf(output, "%s db '%s', 0\n", name->token->value, value->token->value);
+                break;
+            }
+            default: _generate_data_section(child, output); break;
         }
     }
 
@@ -89,6 +96,7 @@ static int _generate_expression(tree_t* node, FILE* output) {
     if (!node) return 0;
 
     if (node->token->t_type == IF_TOKEN) _generate_if(node, output);
+    else if (node->token->t_type == FUNC_TOKEN) _generate_function(node, output);
     else if (node->token->t_type == WHILE_TOKEN) _generate_while(node, output);
     else if (node->token->t_type == SYSCALL_TOKEN) _generate_syscall(node, output);
     else if (node->token->t_type == ASIGN_TOKEN) _generate_assignment(node, output);
@@ -183,6 +191,27 @@ static int _generate_expression(tree_t* node, FILE* output) {
         fprintf(output, "sete al\n");
         fprintf(output, "movzx eax, al\n");
     }
+    else if (node->token->t_type == CALL_TOKEN) {
+        tree_t* func_name_node = node->first_child;
+        tree_t* args_node = func_name_node->next_sibling;
+        int arg_count = 0;
+        for (tree_t* arg = args_node->first_child; arg; arg = arg->next_sibling) {
+            _generate_expression(arg, output);
+            fprintf(output, "push eax\n");
+            arg_count++;
+        }
+    
+        fprintf(output, "call %s\n", func_name_node->token->value);
+        if (arg_count > 0) {
+            fprintf(output, "add esp, %d\n", arg_count * 4);
+        }
+    }
+    else if (node->token->t_type == FUNC_END_TOKEN) {
+        _generate_expression(node->first_child, output);
+        fprintf(output, "mov esp, ebp\n");
+        fprintf(output, "pop ebp\n");
+        fprintf(output, "ret\n");
+    }
     else if (node->token->t_type == EXIT_TOKEN) {
         _generate_expression(node->first_child, output);
         fprintf(output, "mov ebx, eax\n");
@@ -190,6 +219,43 @@ static int _generate_expression(tree_t* node, FILE* output) {
         fprintf(output, "int 0x80\n");
     }
 
+    return 1;
+}
+
+static int _generate_function(tree_t* node, FILE* output) {
+    tree_t* name_node = node->first_child;
+    tree_t* params_node = name_node->next_sibling;
+    tree_t* body_node = params_node->next_sibling;
+
+    fprintf(output, "%s:\n", name_node->token->value);
+    fprintf(output, "push ebp\n");
+    fprintf(output, "mov ebp, esp\n");
+
+    int local_vars_size = 0;
+    for (tree_t* param = params_node->first_child; param; param = param->next_sibling) {
+        local_vars_size += str_atoi((char*)param->token->value);
+    }
+
+    fprintf(output, "sub esp, %d\n", local_vars_size);
+
+    int param_offset = 8;
+    for (tree_t* param = params_node->first_child; param; param = param->next_sibling) {
+        int param_size = str_atoi((char*)param->token->value);
+        char* param_name = (char*)param->first_child->token->value;
+        
+        fprintf(output, "mov eax, [ebp + %d]\n", param_offset);
+        fprintf(output, "mov [ebp - %d], eax\n", param_offset - param_size);
+        
+        param_offset += param_size;
+    }
+
+    for (tree_t* part = body_node->first_child; part; part = part->next_sibling) {
+        _generate_expression(part, output); // _generate_local_expression
+    }
+
+    fprintf(output, "mov esp, ebp\n");
+    fprintf(output, "pop ebp\n");
+    fprintf(output, "ret\n");
     return 1;
 }
 
@@ -280,24 +346,20 @@ static int _generate_assignment(tree_t* node, FILE* output) {
 
 static int _generate_text_section(tree_t* node, FILE* output) {
     if (!node) return 0;
-    if (node->token->t_type == START_TOKEN) {
-        tree_t* scope = node->first_child;
-        for (tree_t* child = scope->first_child; child; child = child->next_sibling) {
-            _generate_expression(child, output);
-        }
-
-        _generate_expression(node->first_child->next_sibling, output);
+    for (tree_t* child = node->first_child; child; child = child->next_sibling) {
+        _generate_expression(child, output);
     }
 
+    _generate_expression(node->next_sibling, output);
     return 1;
 }
 
 int generate_asm(tree_t* root, FILE* output) {
     fprintf(output, "section .data\n");
-    _generate_data_section(root, output);
+    _generate_data_section(root->first_child, output);
     fprintf(output, "\nsection .text\n");
     fprintf(output, "global _start\n\n");
     fprintf(output, "_start:\n");
-    _generate_text_section(root, output);
+    _generate_text_section(root->first_child, output);
     return 1;
 }
