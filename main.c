@@ -1,10 +1,12 @@
 #include "include/generator.h"
+#include "include/semantic.h"
 #include "include/syntax.h"
 #include "include/token.h"
 #include "include/logg.h"
 #include "include/mm.h"
 
 
+#ifdef PRINT_PARSE
 void print_parse_tree(tree_t* node, int depth) {
     if (!node) return;
     for (int i = 0; i < depth; i++) printf("  ");
@@ -17,6 +19,10 @@ void print_parse_tree(tree_t* node, int depth) {
         child = child->next_sibling;
     }
 }
+#else
+void print_parse_tree(tree_t* node, int depth) {}
+#endif
+
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -41,12 +47,14 @@ int main(int argc, char* argv[]) {
         }
 
         tree_t* parse_tree = create_syntax_tree(tokens);
-
         print_parse_tree(parse_tree, 0);
+        int semantic_res = check_semantic(parse_tree);
+        if (semantic_res) {
+            FILE* output = fopen("output.asm", "w");
+            generate_asm(parse_tree, output);
+            fclose(output);
+        }
 
-        FILE* output = fopen("output.asm", "w");
-        generate_asm(parse_tree, output);
-        fclose(output);
         unload_syntax_tree(parse_tree);
         unload_tokens(tokens);
     }

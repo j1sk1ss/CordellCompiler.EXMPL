@@ -1,0 +1,21 @@
+: Top comment :
+
+:
+    This is a example program code on CordellProgrammingLanguage (CPL).
+    This is a large comment block that is supported by CordellCompiler.
+:
+
+:
+    Structs WIP syntax
+    struct <struct_name> sstart
+        <field>
+    send
+
+    func <func_name> fstart
+    fend <exit_code>
+:
+
+start
+exit 123 ;
+
+: Down comment :

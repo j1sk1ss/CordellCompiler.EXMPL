@@ -1,12 +1,29 @@
 #include "../include/generator.h"
 
 
+static int _label_counter = 0;
 static int _generate_if(tree_t* node, FILE* output);
 static int _generate_while(tree_t* node, FILE* output);
 static int _generate_syscall(tree_t* node, FILE* output);
 static int _generate_assignment(tree_t* node, FILE* output);
-static int _label_counter = 0;
 
+typedef struct {
+    char name[TOKEN_MAX_SIZE];
+    int el_size;
+} array_info_t;
+
+static array_info_t _arrays_info[ARRAYS_MAX_TOKEN];
+static int _array_count = 0;
+
+
+static array_info_t* _find_array_info(const char* name) {
+    for(int i = 0; i < _array_count; i++) {
+        if(str_strcmp(_arrays_info[i].name, (char*)name) == 0) {
+            return &_arrays_info[i];
+        }
+    }
+    return NULL;
+}
 
 static int _generate_data_section(tree_t* node, FILE* output) {
     if (!node) return 0;
@@ -15,24 +32,47 @@ static int _generate_data_section(tree_t* node, FILE* output) {
         for (tree_t* child = scope->first_child; child; child = child->next_sibling) {
             switch (child->token->t_type) {
                 case INT_TYPE_TOKEN: {
-                    tree_t* name = child->first_child;
+                    tree_t* name  = child->first_child;
                     tree_t* value = name->next_sibling;
                     if (value->token->t_type == INT_VALUE_TOKEN) fprintf(output, "%s dd %s\n", name->token->value, value->token->value);
                     else fprintf(output, "%s dd 0\n", name->token->value);
                     break;
                 }
                 case ARRAY_TYPE_TOKEN: {
-                    tree_t* size = child->first_child;
+                    tree_t* size   = child->first_child;
                     tree_t* t_type = size->next_sibling;
-                    tree_t* name = t_type->next_sibling;
-                    fprintf(output, "%s dd ", name->token->value);
+                    tree_t* name   = t_type->next_sibling;
+                
+                    array_info_t info;
+                    str_strncpy(info.name, (char*)name->token->value, 32);
+                    info.el_size = str_atoi((char*)t_type->token->value);
+                    _arrays_info[_array_count++] = info;
+
+                    const char* directive = NULL;
+                    if (str_strcmp((char*)t_type->token->value, "1") == 0) directive = "db";
+                    else if (str_strcmp((char*)t_type->token->value, "2") == 0) directive = "dw";
+                    else if (str_strcmp((char*)t_type->token->value, "4") == 0) directive = "dd";
+                    else if (str_strcmp((char*)t_type->token->value, "8") == 0) directive = "dq";
+                    else directive = "dd";
+                
+                    fprintf(output, "%s %s ", name->token->value, directive);
                     for (tree_t* elem = name->next_sibling; elem; elem = elem->next_sibling) {
-                        fprintf(output, "%s%s", elem->token->value, elem->next_sibling ? ", " : "\n");
+                        if (elem->token->t_type == UNKNOWN_NUMERIC_TOKEN) fprintf(output, "%s%s", elem->token->value, elem->next_sibling ? "," : "\n");
+                        else {
+                            int value = 0;
+                            char* token_start = (char*)elem->token->value;
+                            while (*token_start) {
+                                value += *token_start;
+                                token_start++;
+                            }
+
+                            fprintf(output, "%i%s", value, elem->next_sibling ? "," : "\n");
+                        }
                     }
                     break;
                 }
                 case STRING_TYPE_TOKEN: {
-                    tree_t* name = child->first_child;
+                    tree_t* name  = child->first_child;
                     tree_t* value = name->next_sibling;
                     fprintf(output, "%s db '%s', 0\n", name->token->value, value->token->value);
                     break;
@@ -64,17 +104,26 @@ static int _generate_expression(tree_t* node, FILE* output) {
             fprintf(output, "mov %s, eax\n", node->first_child->token->value);
         }
     }
-    else if (
-        node->token->t_type == STR_VARIABLE_TOKEN || 
-        node->token->t_type == UNKNOWN_NUMERIC_TOKEN ||
-        node->token->t_type == ARR_VARIABLE_TOKEN
-    ) {
+    else if (node->token->t_type == UNKNOWN_NUMERIC_TOKEN) {
         fprintf(output, "mov eax, %s\n", node->token->value);
         _generate_expression(node->first_child, output);
     }
     else if (node->token->t_type == INT_VARIABLE_TOKEN) {
         fprintf(output, "mov eax, [%s]\n", node->token->value);
         _generate_expression(node->first_child, output);
+    }
+    else if (node->token->t_type == ARR_VARIABLE_TOKEN || node->token->t_type == STR_VARIABLE_TOKEN) {
+        if (node->first_child) {
+            array_info_t* arr_info = _find_array_info((char*)node->token->value);
+            int elem_size = arr_info ? arr_info->el_size : 1;
+            _generate_expression(node->first_child, output);
+            fprintf(output, "imul eax, %d\n", elem_size); 
+            fprintf(output, "add eax, %s\n", node->token->value);
+            fprintf(output, "mov eax, [eax]\n");
+        }
+        else {
+            fprintf(output, "mov eax, %s\n", node->token->value);
+        }
     }
     else if (node->token->t_type == PLUS_TOKEN) {
         _generate_expression(node->first_child, output);
@@ -114,6 +163,15 @@ static int _generate_expression(tree_t* node, FILE* output) {
         fprintf(output, "pop ebx\n");
         fprintf(output, "cmp ebx, eax\n");
         fprintf(output, "setg al\n");
+        fprintf(output, "movzx eax, al\n");
+    }
+    else if (node->token->t_type == LOWER_TOKEN) {
+        _generate_expression(node->first_child, output);
+        fprintf(output, "push eax\n");
+        _generate_expression(node->first_child->next_sibling, output);
+        fprintf(output, "pop ebx\n");
+        fprintf(output, "cmp ebx, eax\n");
+        fprintf(output, "setl al\n");
         fprintf(output, "movzx eax, al\n");
     }
     else if (node->token->t_type == COMPARE_TOKEN) {
@@ -185,8 +243,8 @@ static int _generate_syscall(tree_t* node, FILE* output) {
     int argument_index = 0;
     tree_t* args = node->first_child;
     while (args) {
-        if (args->token->t_type == UNKNOWN_NUMERIC_TOKEN || args->token->t_type == STR_VARIABLE_TOKEN) fprintf(output, "mov %s, %s\n", registers[argument_index++], args->token->value);
-        else fprintf(output, "mov %s, [%s]\n", registers[argument_index++], args->token->value);
+        if (args->token->t_type == INT_VARIABLE_TOKEN) fprintf(output, "mov %s, [%s]\n", registers[argument_index++], args->token->value);
+        else fprintf(output, "mov %s, %s\n", registers[argument_index++], args->token->value);
         args = args->next_sibling;
     }
 
@@ -198,8 +256,25 @@ static int _generate_assignment(tree_t* node, FILE* output) {
     tree_t* target = node->first_child;
     tree_t* value = target->next_sibling;
     
-    _generate_expression(value, output);
-    fprintf(output, "mov [%s], eax\n", target->token->value);
+    if ((target->token->t_type == ARR_VARIABLE_TOKEN || target->token->t_type == STR_VARIABLE_TOKEN) && target->first_child) {
+        array_info_t* arr_info = _find_array_info((char*)target->token->value);
+        int elem_size = arr_info ? arr_info->el_size : 1;
+
+        _generate_expression(target->first_child, output);
+        fprintf(output, "imul eax, %d\n", elem_size);
+        fprintf(output, "add eax, %s\n", target->token->value);
+        fprintf(output, "push eax\n");
+        
+        _generate_expression(value, output);
+        fprintf(output, "pop ebx\n");
+        if (elem_size == 1) fprintf(output, "mov byte [ebx], al\n");
+        else if (elem_size == 4) fprintf(output, "mov [ebx], eax\n");
+    } 
+    else {
+        _generate_expression(value, output);
+        fprintf(output, "mov [%s], eax\n", target->token->value);
+    }
+
     return 1;
 }
 

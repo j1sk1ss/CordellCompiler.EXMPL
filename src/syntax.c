@@ -7,6 +7,7 @@ static tree_t* _parse_while_loop(token_t** curr);
 static tree_t* _parse_if_statement(token_t** curr);
 static tree_t* _parse_syscall(token_t** curr);
 static tree_t* _parse_scope(token_t** curr_ptr, token_type_t exit_token);
+static tree_t* _parse_array_expression(token_t** curr);
 static tree_t* _parse_expression(token_t** curr);
 static tree_t* _parse_exit(token_t** curr);
 
@@ -118,20 +119,55 @@ static tree_t* _parse_array_declaration(token_t** curr) {
 static tree_t* _parse_expression(token_t** curr) {
     if (!curr || !*curr) return NULL;
     token_t* left = *curr;
+    if ((*curr)->t_type == ARR_VARIABLE_TOKEN || (*curr)->t_type == STR_VARIABLE_TOKEN) {
+        return _parse_array_expression(curr);
+    }
+
     tree_t* left_node = _create_tree_node(left);
     
     *curr = left->next;
     token_t* assign_token = left->next;
-    if (!assign_token || assign_token->t_type == DELIMITER_TOKEN) {
+    if (!assign_token || assign_token->t_type == DELIMITER_TOKEN || assign_token->t_type == CLOSE_INDEX_TOKEN) {
         return left_node;
     }
 
     tree_t* assign_node = _create_tree_node(assign_token);
     tree_t* right = _parse_expression(&(assign_token->next));
-    
+
     _add_child_node(assign_node, left_node);
     if (right) _add_child_node(assign_node, right);
     return assign_node;
+}
+
+static tree_t* _parse_array_expression(token_t** curr) {
+    if (!curr || !*curr) return NULL;
+    token_t* arr_name = *curr;
+    tree_t* arr_name_node = _create_tree_node(arr_name);
+    
+    *curr = arr_name->next;
+    if ((*curr)->t_type == OPEN_INDEX_TOKEN) {
+        tree_t* offset_exp = _parse_expression(&((*curr)->next));
+        while (*curr && (*curr)->t_type != CLOSE_INDEX_TOKEN) {
+            (*curr) = (*curr)->next;
+        }
+
+        _add_child_node(arr_name_node, offset_exp);
+
+        *curr = (*curr)->next;
+        token_t* assign_token = (*curr);
+        if (!assign_token || assign_token->t_type == DELIMITER_TOKEN) {
+            return arr_name_node;
+        }
+
+        tree_t* assign_node = _create_tree_node(assign_token);
+        tree_t* right = _parse_expression(&(assign_token->next));
+
+        _add_child_node(assign_node, arr_name_node);
+        if (right) _add_child_node(assign_node, right);
+        return assign_node;
+    }
+
+    return arr_name_node;
 }
 
 static tree_t* _parse_scope(token_t** curr_ptr, token_type_t exit_token) {

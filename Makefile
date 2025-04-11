@@ -54,7 +54,7 @@ force_build:
 	@if [ -e $(OUTPUT) ]; then rm -f $(OUTPUT); fi
 
 $(OUTPUT): $(SOURCES)
-	$(CC) $(CFLAGS) -o $(OUTPUT) $(SOURCES) -g
+	$(CC) $(CFLAGS) -o $(OUTPUT) $(SOURCES) -g -DPRINT_PARSE
 
 clean:
 	rm -f $(OUTPUT)
