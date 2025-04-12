@@ -226,8 +226,9 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     
     /*
     Add variable offset, if variable not static and global like arrays or strings.
+    int32 and string. String has 32 bit size pointer.
     */
-    if (type_token->t_type == INT_TYPE_TOKEN) {
+    if (type_token->t_type == INT_TYPE_TOKEN || type_token->t_type == STRING_TYPE_TOKEN) {
        decl_node->variable_offset = __add_variable_info((char*)name_token->value, 4);
        decl_node->function = __current_function;
        decl_node->variable_size = 4;

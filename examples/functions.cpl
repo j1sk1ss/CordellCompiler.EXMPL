@@ -3,6 +3,11 @@ start
     int g = 12;
     
     function printNum int num; fstart
+    :
+        Print number to console.
+        Params
+            - num - number for print.
+    :
         int buffIndex = 19;
         str buff = "                    ";
         int tmp = 0;
@@ -21,15 +26,29 @@ start
         syscall 4 1 buff 20;
     fend 1;
 
+    function printStr int ptr; int size; fstart
+    :
+        Print string to console.
+        Params 
+            - ptr - Pointer to string.
+            - size - String size.
+    :
+        syscall 4 1 ptr size;
+    fend 1;
+
     function sumfunc int a; int b; fstart
     fend a + b;
 
     function divfunc int a; int b; fstart
     fend a - b;
 
-    int ffuncres = callfunc sumfunc g c; : 24 + 12 = 36 :
-    int sfuncres = callfunc divfunc g c; : 24 - 12 = 12 :
+    int ffuncres = callfunc sumfunc g c;
+    int sfuncres = callfunc divfunc g c;
 
     callfunc printNum ffuncres;
     callfunc printNum sfuncres;
+
+    str printVal = "Hello from function!";
+    int printPtr = printVal;
+    callfunc printStr printPtr 20;
 exit 1;

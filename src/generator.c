@@ -42,7 +42,6 @@ static int _generate_data_section(tree_t* node, FILE* output) {
         /*
         Not global function.
         */
-        if (child->function > 1) continue;
         switch (child->token->t_type) {
             case INT_TYPE_TOKEN: {
                 // TODO: Constants instead integers
@@ -230,7 +229,18 @@ static int _generate_expression(tree_t* node, FILE* output) {
         int variables_size = 0;
         tree_t* func_name_node = node->first_child;
         tree_t* args_node = func_name_node->next_sibling;
+
+        /*
+        Saving params in stack.
+        */
+        tree_t* args[128];
+        int arg_count = 0;
         for (tree_t* arg = args_node->first_child; arg; arg = arg->next_sibling) {
+            args[arg_count++] = arg;
+        }
+
+        for (int i = arg_count - 1; i >= 0; --i) {
+            tree_t* arg = args[i];
             if (arg->token->t_type == INT_VARIABLE_TOKEN) {
                 fprintf(output, "%*smov eax, [ebp - %d]\n", _current_depth * 4, "", arg->variable_offset);
                 variables_size += 4;
@@ -248,6 +258,7 @@ static int _generate_expression(tree_t* node, FILE* output) {
     }
     else if (node->token->t_type == EXIT_TOKEN) {
         _generate_expression(node->first_child, output);
+
         /*
         Restore stack frame after programm.
         */
