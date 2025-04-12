@@ -1,9 +1,13 @@
 start
-    int c = 0;
-    int g = 10;
+    int c = 24;
+    int g = 12;
     
-    function sum 4 a 4 b; fstart
-        a = a - 1;
-        b = b + 1;
+    function sumfunc int a int b; fstart
     fend a + b;
-exit callfunc sum g c;
+
+    function divfunc int a int b; fstart
+    fend a - b;
+
+    int ffuncres = callfunc sumfunc g c; : 24 + 12 = 36 :
+    int sfuncres = callfunc divfunc g c; : 24 - 12 = 12 :
+exit ffuncres + sfuncres; : 36 + 12 = 48 :

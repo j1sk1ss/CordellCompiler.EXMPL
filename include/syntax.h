@@ -5,6 +5,7 @@
 #include "dict.h"
 #include "str.h"
 
+#define MAX_VARIABLES   256
 
 typedef struct tree {
     token_t* token;
@@ -12,6 +13,9 @@ typedef struct tree {
     struct tree* first_child;
     struct tree* next_sibling;
     int child_count;
+
+    int function;
+    int variable_offset;
 } tree_t;
 
 

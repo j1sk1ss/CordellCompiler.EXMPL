@@ -10,7 +10,7 @@
 void print_parse_tree(tree_t* node, int depth) {
     if (!node) return;
     for (int i = 0; i < depth; i++) printf("  ");
-    if (node->token) printf("Token(type=%d, value=%s)\n", node->token->t_type, (char*)node->token->value);
+    if (node->token) printf("Token(type=%d, value=%s, offset=%i, function=%i)\n", node->token->t_type, (char*)node->token->value, node->variable_offset, node->function);
     else printf("scope\n");
     
     tree_t* child = node->first_child;

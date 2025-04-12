@@ -34,12 +34,13 @@ static int _generate_data_section(tree_t* node, FILE* output) {
             continue;
         }
         
+        /*
+        Not global function.
+        */
+        if (child->function > 1) continue;
         switch (child->token->t_type) {
             case INT_TYPE_TOKEN: {
-                tree_t* name  = child->first_child;
-                tree_t* value = name->next_sibling;
-                if (value->token->t_type == INT_VALUE_TOKEN) fprintf(output, "%s dd %s\n", name->token->value, value->token->value);
-                else fprintf(output, "%s dd 0\n", name->token->value);
+                // TODO: Constants instead integers
                 break;
             }
             case ARRAY_TYPE_TOKEN: {
@@ -100,24 +101,38 @@ static int _generate_expression(tree_t* node, FILE* output) {
     else if (node->token->t_type == WHILE_TOKEN) _generate_while(node, output);
     else if (node->token->t_type == SYSCALL_TOKEN) _generate_syscall(node, output);
     else if (node->token->t_type == ASIGN_TOKEN) _generate_assignment(node, output);
-    else if (node->token->t_type == INT_TYPE_TOKEN) {
-        if (node->first_child->next_sibling->token->t_type != INT_VALUE_TOKEN) {
-            _generate_expression(node->first_child->next_sibling, output);
-            fprintf(output, "mov [%s], eax\n", node->first_child->token->value);
-        }
-    }
-    else if (node->token->t_type == STRING_TYPE_TOKEN) {
-        if (node->first_child->next_sibling->token->t_type != STRING_VALUE_TOKEN) {
-            _generate_expression(node->first_child->next_sibling, output);
-            fprintf(output, "mov %s, eax\n", node->first_child->token->value);
-        }
-    }
     else if (node->token->t_type == UNKNOWN_NUMERIC_TOKEN) {
+        /*
+        If it unknown num, we store it in eax register for other operations.
+        */
         fprintf(output, "mov eax, %s\n", node->token->value);
-        _generate_expression(node->first_child, output);
+    }
+    else if (node->token->t_type == INT_TYPE_TOKEN) {
+        /*
+        Init and saving variable in stack.
+        Getting variable name and memory offset.
+        */
+        tree_t* name_node = node->first_child;
+        const char* var_name = (char*)name_node->token->value;
+        
+        /*
+        Put value from eax to stack with variable offset.
+        EAX register is shared point of all recursive _generate calls.
+        */
+        int var_offset = node->variable_offset;
+        if (name_node->next_sibling) {
+            _generate_expression(name_node->next_sibling, output);
+            fprintf(output, "mov [ebp - %d], eax ; int %s = eax\n", var_offset, var_name);
+        } 
+        else {
+            fprintf(output, "mov dword [ebp - %d], 0 ; int %s = 0\n", var_offset, var_name);
+        }
     }
     else if (node->token->t_type == INT_VARIABLE_TOKEN) {
-        fprintf(output, "mov eax, [%s]\n", node->token->value);
+        /*
+        Getting integer from stack, and saving in EAX shared register.
+        */
+        fprintf(output, "mov eax, [ebp - %d] ; %s\n", node->variable_offset, node->token->value);
         _generate_expression(node->first_child, output);
     }
     else if (node->token->t_type == ARR_VARIABLE_TOKEN || node->token->t_type == STR_VARIABLE_TOKEN) {
@@ -127,7 +142,8 @@ static int _generate_expression(tree_t* node, FILE* output) {
             _generate_expression(node->first_child, output);
             fprintf(output, "imul eax, %d\n", elem_size); 
             fprintf(output, "add eax, %s\n", node->token->value);
-            fprintf(output, "mov eax, [eax]\n");
+            if (elem_size == 1) fprintf(output, "mov al, [eax]\n");
+            else if (elem_size == 4) fprintf(output, "mov eax, [eax]\n");
         }
         else {
             fprintf(output, "mov eax, %s\n", node->token->value);
@@ -192,11 +208,16 @@ static int _generate_expression(tree_t* node, FILE* output) {
         fprintf(output, "movzx eax, al\n");
     }
     else if (node->token->t_type == CALL_TOKEN) {
+        /*
+        Generating function preparations.
+        1) Getting function name and args.
+        2) Put args to the stack.
+        */
         tree_t* func_name_node = node->first_child;
         tree_t* args_node = func_name_node->next_sibling;
         int arg_count = 0;
         for (tree_t* arg = args_node->first_child; arg; arg = arg->next_sibling) {
-            _generate_expression(arg, output);
+            fprintf(output, "mov eax, [ebp - %d]\n", arg->variable_offset);
             fprintf(output, "push eax\n");
             arg_count++;
         }
@@ -206,16 +227,15 @@ static int _generate_expression(tree_t* node, FILE* output) {
             fprintf(output, "add esp, %d\n", arg_count * 4);
         }
     }
-    else if (node->token->t_type == FUNC_END_TOKEN) {
-        _generate_expression(node->first_child, output);
-        fprintf(output, "mov esp, ebp\n");
-        fprintf(output, "pop ebp\n");
-        fprintf(output, "ret\n");
-    }
     else if (node->token->t_type == EXIT_TOKEN) {
         _generate_expression(node->first_child, output);
+        /*
+        Restore stack frame after programm.
+        */
         fprintf(output, "mov ebx, eax\n");
         fprintf(output, "mov eax, 1\n");
+        fprintf(output, "mov esp, ebp\n");
+        fprintf(output, "pop ebp\n");
         fprintf(output, "int 0x80\n");
     }
 
@@ -226,36 +246,57 @@ static int _generate_function(tree_t* node, FILE* output) {
     tree_t* name_node = node->first_child;
     tree_t* params_node = name_node->next_sibling;
     tree_t* body_node = params_node->next_sibling;
+    tree_t* return_node = body_node->next_sibling;
 
+    fprintf(output, "jmp _end_%s\n", name_node->token->value);
     fprintf(output, "%s:\n", name_node->token->value);
     fprintf(output, "push ebp\n");
     fprintf(output, "mov ebp, esp\n");
 
+    /*
+    Reserving stack memory for local variables. (Creating stack frame).
+    We should go into function body and find all local variables.
+    */
     int local_vars_size = 0;
-    for (tree_t* param = params_node->first_child; param; param = param->next_sibling) {
-        local_vars_size += str_atoi((char*)param->token->value);
+    for (tree_t* arg = params_node->first_child; arg; arg = arg->next_sibling) {
+        if (arg->token->t_type == INT_TYPE_TOKEN) local_vars_size += 4;
+    }
+
+    for (tree_t* expression = body_node->first_child; expression; expression = expression->next_sibling) {
+        if (expression->token->t_type == INT_TYPE_TOKEN) local_vars_size += 4;
     }
 
     fprintf(output, "sub esp, %d\n", local_vars_size);
 
+    /*
+    Loading input args to stack.
+    */
     int param_offset = 8;
     for (tree_t* param = params_node->first_child; param; param = param->next_sibling) {
-        int param_size = str_atoi((char*)param->token->value);
         char* param_name = (char*)param->first_child->token->value;
-        
         fprintf(output, "mov eax, [ebp + %d]\n", param_offset);
-        fprintf(output, "mov [ebp - %d], eax\n", param_offset - param_size);
-        
-        param_offset += param_size;
+        fprintf(output, "mov [ebp - %d], eax\n", param_offset - 4);
+        param_offset += 4;
     }
 
+    /*
+    Function body without return statement.
+    All expressions will use one shared register EAX.
+    */
     for (tree_t* part = body_node->first_child; part; part = part->next_sibling) {
-        _generate_expression(part, output); // _generate_local_expression
+        _generate_expression(part, output);
     }
+
+    /*
+    Move to eax return expresion, and restore stack.
+    Now, result of function stored at EAX register.
+    */
+    _generate_expression(return_node->first_child, output);
 
     fprintf(output, "mov esp, ebp\n");
     fprintf(output, "pop ebp\n");
     fprintf(output, "ret\n");
+    fprintf(output, "_end_%s:\n", name_node->token->value);
     return 1;
 }
 
@@ -319,26 +360,35 @@ static int _generate_syscall(tree_t* node, FILE* output) {
 }
 
 static int _generate_assignment(tree_t* node, FILE* output) {
-    tree_t* target = node->first_child;
-    tree_t* value = target->next_sibling;
+    tree_t* left = node->first_child;
+    tree_t* right = left->next_sibling;
     
-    if ((target->token->t_type == ARR_VARIABLE_TOKEN || target->token->t_type == STR_VARIABLE_TOKEN) && target->first_child) {
-        array_info_t* arr_info = _find_array_info((char*)target->token->value);
+    /*
+    We store right result to EAX, and move it to stack with offset of left.
+    */
+    if ((left->token->t_type == ARR_VARIABLE_TOKEN || left->token->t_type == STR_VARIABLE_TOKEN) && left->first_child) {
+        /*
+        If left is array or string (array too) with elem size info.
+        */
+        array_info_t* arr_info = _find_array_info((char*)left->token->value);
         int elem_size = arr_info ? arr_info->el_size : 1;
 
-        _generate_expression(target->first_child, output);
+        _generate_expression(left->first_child, output);
         fprintf(output, "imul eax, %d\n", elem_size);
-        fprintf(output, "add eax, %s\n", target->token->value);
+        fprintf(output, "add eax, %s\n", left->token->value);
         fprintf(output, "push eax\n");
         
-        _generate_expression(value, output);
+        _generate_expression(right, output);
         fprintf(output, "pop ebx\n");
         if (elem_size == 1) fprintf(output, "mov byte [ebx], al\n");
         else if (elem_size == 4) fprintf(output, "mov [ebx], eax\n");
     } 
     else {
-        _generate_expression(value, output);
-        fprintf(output, "mov [%s], eax\n", target->token->value);
+        /*
+        Move to eax result of right operation, and store it in stack with offset.
+        */
+        _generate_expression(right, output);
+        fprintf(output, "mov [ebp - %d], eax\n", left->variable_offset);
     }
 
     return 1;
@@ -346,10 +396,19 @@ static int _generate_assignment(tree_t* node, FILE* output) {
 
 static int _generate_text_section(tree_t* node, FILE* output) {
     if (!node) return 0;
-    for (tree_t* child = node->first_child; child; child = child->next_sibling) {
-        _generate_expression(child, output);
+    /*
+    Before start, find all "global" variable and reserve stack frame.
+    */
+    int vars_size = 0;
+    for (tree_t* expression = node->first_child; expression; expression = expression->next_sibling) {
+        if (expression->token->t_type == INT_TYPE_TOKEN) vars_size += 4;
     }
 
+    fprintf(output, "push ebp\n");
+    fprintf(output, "mov ebp, esp\n");
+    fprintf(output, "sub esp, %d\n", vars_size);
+
+    for (tree_t* child = node->first_child; child; child = child->next_sibling) _generate_expression(child, output);
     _generate_expression(node->next_sibling, output);
     return 1;
 }

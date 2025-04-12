@@ -93,6 +93,8 @@ typedef struct token {
 } token_t;
 
 
+token_t* create_token(token_type_t type, const unsigned char* value, size_t len, int line);
+
 /*
 */
 token_t* tokenize(int fd);

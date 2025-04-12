@@ -79,7 +79,6 @@ int variable_markup(token_t* head) {
             if (next && next->t_type == UNKNOWN_STRING_TOKEN) {
                 variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
                 str_strncpy((char*)variables[var_count].name, (char*)next->value, TOKEN_MAX_SIZE);
-
                 if (curr->t_type == INT_TYPE_TOKEN) variables[var_count].type = INT_VARIABLE_TOKEN;
                 else if (curr->t_type == STRING_TYPE_TOKEN) variables[var_count].type = STR_VARIABLE_TOKEN;
                 else if (curr->t_type == ARRAY_TYPE_TOKEN) variables[var_count].type = ARR_VARIABLE_TOKEN;
