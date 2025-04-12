@@ -68,7 +68,6 @@ int command_markup(token_t* head) {
     return 1;
 }
 
-
 int variable_markup(token_t* head) {
     token_t* curr = head;
     variable_t* variables = NULL;

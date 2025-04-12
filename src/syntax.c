@@ -1,80 +1,84 @@
 #include "../include/syntax.h"
 
 
-static tree_t* _parse_function_call(token_t**);
-static tree_t* _parse_function_declaration(token_t**);
-static tree_t* _parse_variable_declaration(token_t**);
-static tree_t* _parse_array_declaration(token_t**);
-static tree_t* _parse_while_loop(token_t**);
-static tree_t* _parse_if_statement(token_t**);
-static tree_t* _parse_syscall(token_t**);
-static tree_t* _parse_scope(token_t**, token_type_t);
-static tree_t* _parse_array_expression(token_t**);
-static tree_t* _parse_expression(token_t**);
+#pragma region [Misc]
 
-typedef struct {
-    token_type_t type;
-    tree_t* (*parser)(token_t**);
-} command_handler_t;
+    static tree_t* _parse_function_call(token_t**);
+    static tree_t* _parse_function_declaration(token_t**);
+    static tree_t* _parse_variable_declaration(token_t**);
+    static tree_t* _parse_array_declaration(token_t**);
+    static tree_t* _parse_while_loop(token_t**);
+    static tree_t* _parse_if_statement(token_t**);
+    static tree_t* _parse_syscall(token_t**);
+    static tree_t* _parse_scope(token_t**, token_type_t);
+    static tree_t* _parse_array_expression(token_t**);
+    static tree_t* _parse_expression(token_t**);
 
-static const command_handler_t _command_handlers[] = {
-    { INT_TYPE_TOKEN,       _parse_variable_declaration },
-    { STRING_TYPE_TOKEN,    _parse_variable_declaration },
-    { ARRAY_TYPE_TOKEN,     _parse_array_declaration    },
-    { FUNC_TOKEN,           _parse_function_declaration },
-    { WHILE_TOKEN,          _parse_while_loop           },
-    { IF_TOKEN,             _parse_if_statement         },
-    { SYSCALL_TOKEN,        _parse_syscall              },
-    { STR_VARIABLE_TOKEN,   _parse_expression           },
-    { INT_VARIABLE_TOKEN,   _parse_expression           },
-    { ARR_VARIABLE_TOKEN,   _parse_expression           },
-    { UNKNOWN_STRING_TOKEN, _parse_expression           },
-    { CALL_TOKEN,           _parse_function_call        },
-    { -1, NULL }
-};
+    typedef struct {
+        token_type_t type;
+        tree_t* (*parser)(token_t**);
+    } command_handler_t;
 
-typedef struct {
-    char name[TOKEN_MAX_SIZE];
-    int function_include;
-    int offset;
-    int size;
-} variable_info_t;
+    static const command_handler_t _command_handlers[] = {
+        { INT_TYPE_TOKEN,       _parse_variable_declaration },
+        { STRING_TYPE_TOKEN,    _parse_variable_declaration },
+        { ARRAY_TYPE_TOKEN,     _parse_array_declaration    },
+        { FUNC_TOKEN,           _parse_function_declaration },
+        { WHILE_TOKEN,          _parse_while_loop           },
+        { IF_TOKEN,             _parse_if_statement         },
+        { SYSCALL_TOKEN,        _parse_syscall              },
+        { STR_VARIABLE_TOKEN,   _parse_expression           },
+        { INT_VARIABLE_TOKEN,   _parse_expression           },
+        { ARR_VARIABLE_TOKEN,   _parse_expression           },
+        { UNKNOWN_STRING_TOKEN, _parse_expression           },
+        { CALL_TOKEN,           _parse_function_call        },
+        { -1, NULL }
+    };
 
-static variable_info_t __variables_info[MAX_VARIABLES];
-static int __current_function = 1;
-static int __current_offset = 0;
-static int __vars_count = 0;
+    typedef struct {
+        char name[TOKEN_MAX_SIZE];
+        int function_include;
+        int offset;
+        int size;
+    } variable_info_t;
 
-static variable_info_t* __find_variable(char* name) {
-    for (int i = 0; i < MAX_VARIABLES; i++) {
-        if (!str_strcmp(name, __variables_info[i].name) && (__variables_info[i].function_include == 0 || __variables_info[i].function_include == __current_function)) {
-            return &__variables_info[i];
+    static variable_info_t __variables_info[MAX_VARIABLES];
+    static int __current_function = 1;
+    static int __current_offset = 0;
+    static int __vars_count = 0;
+
+    static variable_info_t* __find_variable(char* name) {
+        for (int i = 0; i < MAX_VARIABLES; i++) {
+            if (!str_strcmp(name, __variables_info[i].name) && (__variables_info[i].function_include == 0 || __variables_info[i].function_include == __current_function)) {
+                return &__variables_info[i];
+            }
         }
+
+        return NULL;
     }
 
-    return NULL;
-}
+    static int __fill_variable(tree_t* variable) {
+        if (!variable || !variable->token) return 0;
+        variable_info_t* info = __find_variable((char*)variable->token->value);
+        if (!info) return 0;
 
-static int __fill_variable(tree_t* variable) {
-    if (!variable || !variable->token) return 0;
-    variable_info_t* info = __find_variable((char*)variable->token->value);
-    if (!info) return 0;
+        variable->function = info->function_include;
+        variable->variable_offset = info->offset;
+        variable->variable_size = info->size;
+        return 1;
+    }
 
-    variable->function = info->function_include;
-    variable->variable_offset = info->offset;
-    variable->variable_size = info->size;
-    return 1;
-}
+    static int __add_variable_info(char* name, int size) {
+        str_strncpy(__variables_info[__vars_count].name, name, TOKEN_MAX_SIZE);
+        __variables_info[__vars_count].size = size;
+        __variables_info[__vars_count].offset = __current_offset + size;
+        __variables_info[__vars_count].function_include = __current_function;
+        __current_offset += size;
+        __vars_count++;
+        return __current_offset;
+    }
 
-static int __add_variable_info(char* name, int size) {
-    str_strncpy(__variables_info[__vars_count].name, name, TOKEN_MAX_SIZE);
-    __variables_info[__vars_count].size = size;
-    __variables_info[__vars_count].offset = __current_offset + size;
-    __variables_info[__vars_count].function_include = __current_function;
-    __current_offset += size;
-    __vars_count++;
-    return __current_offset;
-}
+#pragma endregion
 
 
 static tree_t* _create_tree_node(token_t* token) {
