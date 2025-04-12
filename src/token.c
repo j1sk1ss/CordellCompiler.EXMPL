@@ -1,34 +1,37 @@
 #include "../include/token.h"
 
 
-static char_type_t _get_char_type(unsigned char ch) {
-    if (isalpha(ch)) return CHAR_ALPHA;
-    else if (str_isdigit(ch)) return CHAR_DIGIT;
-    else if (ch == '"') return CHAR_QUOTE;
-    else if (ch == '\n') return CHAR_NEWLINE;
-    else if (ch == ' ') return CHAR_SPACE;
-    else if (ch == ';') return CHAR_DELIMITER;
-    else if (ch == ':') return CHAR_COMMENT;
-    else if (ch == '[') return CHAR_OPEN_INDEX;
-    else if (ch == ']') return CHAR_CLOSE_INDEX;
-    return CHAR_OTHER;
-}
+#pragma region [Misc]
 
-static int _add_token(token_t** head, token_t** tail, token_type_t type, const unsigned char* buffer, size_t len, int line) {
-    token_t* new_token = create_token(type, buffer, len, line);
-    if (!new_token) return 0;
-    if (!*head) *head = new_token;
-    else (*tail)->next = new_token;
-    *tail = new_token;
-    return 1;
-}
+    static char_type_t _get_char_type(unsigned char ch) {
+        if (isalpha(ch)) return CHAR_ALPHA;
+        else if (str_isdigit(ch)) return CHAR_DIGIT;
+        else if (ch == '"') return CHAR_QUOTE;
+        else if (ch == '\n') return CHAR_NEWLINE;
+        else if (ch == ' ') return CHAR_SPACE;
+        else if (ch == ';') return CHAR_DELIMITER;
+        else if (ch == ':') return CHAR_COMMENT;
+        else if (ch == '[') return CHAR_OPEN_INDEX;
+        else if (ch == ']') return CHAR_CLOSE_INDEX;
+        return CHAR_OTHER;
+    }
+
+    static int _add_token(token_t** head, token_t** tail, token_type_t type, const unsigned char* buffer, size_t len, int line) {
+        token_t* new_token = create_token(type, buffer, len, line);
+        if (!new_token) return 0;
+        if (!*head) *head = new_token;
+        else (*tail)->next = new_token;
+        *tail = new_token; 
+        return 1;
+    }
+
+#pragma endregion
 
 
 token_t* create_token(token_type_t type, const unsigned char* value, size_t len, int line) {
     if (len > TOKEN_MAX_SIZE) return NULL;
     token_t* token = mm_malloc(sizeof(token_t));
     if (!token) return NULL;
-    
     token->t_type = type;
     if (value) str_strncpy((char*)token->value, (char*)value, len);
     token->next        = NULL;

@@ -28,6 +28,7 @@
 // Symbols and statements (Operands)
 #define ASIGN_STATEMENT     "="
 #define COMPARE_STATEMENT   "=="
+#define NCOMPARE_STATEMENT  "!="
 #define PLUS_STATEMENT      "+"
 #define MINUS_STATEMENT     "-"
 #define DIVIDE_STATEMENT    "/"

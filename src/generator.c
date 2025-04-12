@@ -207,6 +207,15 @@ static int _generate_expression(tree_t* node, FILE* output) {
         fprintf(output, "sete al\n");
         fprintf(output, "movzx eax, al\n");
     }
+    else if (node->token->t_type == NCOMPARE_TOKEN) {
+        _generate_expression(node->first_child, output);
+        fprintf(output, "push eax\n");
+        _generate_expression(node->first_child->next_sibling, output);
+        fprintf(output, "pop ebx\n");
+        fprintf(output, "cmp ebx, eax\n");
+        fprintf(output, "setne al\n");
+        fprintf(output, "movzx eax, al\n");
+    }
     else if (node->token->t_type == CALL_TOKEN) {
         /*
         Generating function preparations.
@@ -217,7 +226,13 @@ static int _generate_expression(tree_t* node, FILE* output) {
         tree_t* args_node = func_name_node->next_sibling;
         int arg_count = 0;
         for (tree_t* arg = args_node->first_child; arg; arg = arg->next_sibling) {
-            fprintf(output, "mov eax, [ebp - %d]\n", arg->variable_offset);
+            if (arg->token->t_type == INT_VARIABLE_TOKEN) {
+                fprintf(output, "mov eax, [ebp - %d]\n", arg->variable_offset);
+            }
+            else {
+                fprintf(output, "mov eax, %s\n", arg->token->value);
+            }
+
             fprintf(output, "push eax\n");
             arg_count++;
         }
@@ -350,7 +365,7 @@ static int _generate_syscall(tree_t* node, FILE* output) {
     int argument_index = 0;
     tree_t* args = node->first_child;
     while (args) {
-        if (args->token->t_type == INT_VARIABLE_TOKEN) fprintf(output, "mov %s, [%s]\n", registers[argument_index++], args->token->value);
+        if (args->token->t_type == INT_VARIABLE_TOKEN) fprintf(output, "mov %s, [ebp - %d]\n", registers[argument_index++], args->variable_offset);
         else fprintf(output, "mov %s, %s\n", registers[argument_index++], args->token->value);
         args = args->next_sibling;
     }
@@ -394,19 +409,28 @@ static int _generate_assignment(tree_t* node, FILE* output) {
     return 1;
 }
 
+static int __get_variables_size(tree_t* head) {
+    if (!head) return 0;
+    int size = 0;
+    for (tree_t* expression = head; expression; expression = expression->next_sibling) {
+        if (!expression->token) continue;
+        if (expression->token->t_type == INT_TYPE_TOKEN) size += expression->variable_size;
+        else if (expression->token->t_type == WHILE_TOKEN || expression->token->t_type == IF_TOKEN) {
+            size += __get_variables_size(expression->first_child->next_sibling->first_child);
+        }
+    }
+    
+    return size;
+}
+
 static int _generate_text_section(tree_t* node, FILE* output) {
     if (!node) return 0;
     /*
-    Before start, find all "global" variable and reserve stack frame.
+    Before start, find all "global" variables and reserve stack frame.
     */
-    int vars_size = 0;
-    for (tree_t* expression = node->first_child; expression; expression = expression->next_sibling) {
-        if (expression->token->t_type == INT_TYPE_TOKEN) vars_size += 4;
-    }
-
     fprintf(output, "push ebp\n");
     fprintf(output, "mov ebp, esp\n");
-    fprintf(output, "sub esp, %d\n", vars_size);
+    fprintf(output, "sub esp, %d\n", __get_variables_size(node->first_child));
 
     for (tree_t* child = node->first_child; child; child = child->next_sibling) _generate_expression(child, output);
     _generate_expression(node->next_sibling, output);

@@ -2,7 +2,7 @@ start
     arr dummy 20 1 =;
     str source = "source string";
     int index = 0;
-    while source[index] > 0; lstart
+    while index < 13; lstart
         dummy[index] = source[index];
         index = index + 1;
     lend

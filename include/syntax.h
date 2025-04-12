@@ -16,6 +16,7 @@ typedef struct tree {
 
     int function;
     int variable_offset;
+    int variable_size;
 } tree_t;
 
 

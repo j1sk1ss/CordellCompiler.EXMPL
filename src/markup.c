@@ -42,6 +42,7 @@ static markup_token_t _markups[] = {
     // Operators
     { .value = ASIGN_STATEMENT,        .type = ASIGN_TOKEN       },
     { .value = COMPARE_STATEMENT,      .type = COMPARE_TOKEN     },
+    { .value = NCOMPARE_STATEMENT,     .type = NCOMPARE_TOKEN    },
     { .value = PLUS_STATEMENT,         .type = PLUS_TOKEN        },
     { .value = MINUS_STATEMENT,        .type = MINUS_TOKEN       },
     { .value = LARGER_STATEMENT,       .type = LARGER_TOKEN      },

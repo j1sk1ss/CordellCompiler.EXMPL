@@ -10,7 +10,7 @@
 #include "str.h"
 
 #define TOKEN_MAX_SIZE  128
-#define BUFFER_SIZE     4096
+#define BUFFER_SIZE     8192
 
 
 typedef enum {
@@ -59,6 +59,7 @@ typedef enum {
     DIVIDE_TOKEN,
     ASIGN_TOKEN,
     COMPARE_TOKEN,
+    NCOMPARE_TOKEN,
     LOWER_TOKEN,
     LARGER_TOKEN,
 
