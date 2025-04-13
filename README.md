@@ -118,8 +118,8 @@ Comments are written as annotations `:` within functions and code blocks:
 
             :
             Function description.
-            Params:
-                - name: Description
+            Params
+                - name Description
             :
 
 ---
