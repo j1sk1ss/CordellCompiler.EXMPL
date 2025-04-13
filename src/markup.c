@@ -26,6 +26,8 @@ static markup_token_t _markups[] = {
 
     // Variable
     { .value = INT_VARIABLE,           .type = INT_TYPE_TOKEN    },
+    { .value = SHORT_VARIABLE,         .type = SHORT_TYPE_TOKEN  },
+    { .value = CHAR_VARIABLE,          .type = CHAR_TYPE_TOKEN   },
     { .value = STR_VARIABLE,           .type = STRING_TYPE_TOKEN },
     { .value = ARR_VARIABLE,           .type = ARRAY_TYPE_TOKEN  },
 
@@ -74,12 +76,20 @@ int variable_markup(token_t* head) {
     size_t var_count = 0;
 
     while (curr) {
-        if (curr->t_type == INT_TYPE_TOKEN || curr->t_type == STRING_TYPE_TOKEN || curr->t_type == ARRAY_TYPE_TOKEN) {
+        if (
+            curr->t_type == INT_TYPE_TOKEN || 
+            curr->t_type == SHORT_TYPE_TOKEN || 
+            curr->t_type == CHAR_TYPE_TOKEN || 
+            curr->t_type == STRING_TYPE_TOKEN || 
+            curr->t_type == ARRAY_TYPE_TOKEN
+        ) {
             token_t* next = curr->next;
             if (next && next->t_type == UNKNOWN_STRING_TOKEN) {
                 variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
                 str_strncpy((char*)variables[var_count].name, (char*)next->value, TOKEN_MAX_SIZE);
                 if (curr->t_type == INT_TYPE_TOKEN) variables[var_count].type = INT_VARIABLE_TOKEN;
+                else if (curr->t_type == SHORT_TYPE_TOKEN) variables[var_count].type = SHORT_VARIABLE_TOKEN;
+                else if (curr->t_type == CHAR_TYPE_TOKEN) variables[var_count].type = CHAR_VARIABLE_TOKEN;
                 else if (curr->t_type == STRING_TYPE_TOKEN) variables[var_count].type = STR_VARIABLE_TOKEN;
                 else if (curr->t_type == ARRAY_TYPE_TOKEN) variables[var_count].type = ARR_VARIABLE_TOKEN;
                 var_count++;

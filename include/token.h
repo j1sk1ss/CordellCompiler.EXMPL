@@ -27,6 +27,8 @@ typedef enum {
 
     // Types
     INT_TYPE_TOKEN,
+    SHORT_TYPE_TOKEN,
+    CHAR_TYPE_TOKEN,
     STRING_TYPE_TOKEN,
     ARRAY_TYPE_TOKEN,
 
@@ -64,8 +66,10 @@ typedef enum {
     LARGER_TOKEN,
 
     // Vars
-    STR_VARIABLE_TOKEN,
     INT_VARIABLE_TOKEN,
+    SHORT_VARIABLE_TOKEN,
+    CHAR_VARIABLE_TOKEN,
+    STR_VARIABLE_TOKEN,
     ARR_VARIABLE_TOKEN,
 
     // Values

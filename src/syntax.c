@@ -21,6 +21,8 @@
 
     static const command_handler_t _command_handlers[] = {
         { INT_TYPE_TOKEN,       _parse_variable_declaration },
+        { SHORT_TYPE_TOKEN,     _parse_variable_declaration },
+        { CHAR_TYPE_TOKEN,      _parse_variable_declaration },
         { STRING_TYPE_TOKEN,    _parse_variable_declaration },
         { ARRAY_TYPE_TOKEN,     _parse_array_declaration    },
         { FUNC_TOKEN,           _parse_function_declaration },
@@ -230,10 +232,18 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     */
     if (type_token->t_type == INT_TYPE_TOKEN || type_token->t_type == STRING_TYPE_TOKEN) {
        decl_node->variable_offset = __add_variable_info((char*)name_token->value, 4);
-       decl_node->function = __current_function;
        decl_node->variable_size = 4;
     }
+    if (type_token->t_type == SHORT_TYPE_TOKEN) {
+        decl_node->variable_offset = __add_variable_info((char*)name_token->value, 2);
+        decl_node->variable_size = 2;
+    }
+    else if (type_token->t_type == CHAR_TYPE_TOKEN) {
+        decl_node->variable_offset = __add_variable_info((char*)name_token->value, 1);
+        decl_node->variable_size = 1;
+    }
     
+    decl_node->function = __current_function;
     _add_child_node(decl_node, name_node);
     if (!assign_token || assign_token->t_type != ASIGN_TOKEN) return decl_node;
 

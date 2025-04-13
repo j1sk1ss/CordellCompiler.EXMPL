@@ -39,16 +39,15 @@ start
     function sumfunc int a; int b; fstart
     fend a + b;
 
-    function divfunc int a; int b; fstart
+    function subfunc int a; int b; fstart
     fend a - b;
 
     int ffuncres = callfunc sumfunc g c;
-    int sfuncres = callfunc divfunc g c;
+    int sfuncres = callfunc subfunc c g;
 
     callfunc printNum ffuncres;
     callfunc printNum sfuncres;
 
     str printVal = "Hello from function!";
-    int printPtr = printVal;
-    callfunc printStr printPtr 20;
+    callfunc printStr printVal 20;
 exit 1;

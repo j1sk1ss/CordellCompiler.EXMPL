@@ -5,6 +5,9 @@ Little hobby code compiler
 
 # TODO list:
 -----------------------------------
+- byte operations   [ ]
+- variable cast     [ ]
+- structures        [ ]
 - lexic module      [V]
 - syntax tree       [V]
 - semantic module   [ ]
@@ -16,30 +19,59 @@ Little hobby code compiler
 # Code example:
 -----------------------------------
 
-        start
-            int a = 10 + 1 ;
-            int b = 20 / 2 ;
-            int c = a + b ;
-            str hello = "hello there!" ;
-            while c > 0 ; lstart
-                c = c - 1 ;
-                syscall 4 1 hello 12 ;
-            lend
+            start
+                int c = 24;
+                int g = 12;
+                
+                function printNum int num; fstart
+                :
+                    Print number to console.
+                    Params
+                        - num - number for print.
+                :
+                    int buffIndex = 19;
+                    str buff = "                    ";
+                    int tmp = 0;
+                    while num > 0; lstart
+                        tmp = num / 10;
+                        tmp = tmp * 10;
+                        tmp = num - tmp;
+                        tmp = tmp + 48;
 
-            arr array 7 4 = 1 2 3 4 5 6 7 ;
+                        buff[buffIndex] = tmp;
+                        buffIndex = buffIndex - 1;
 
-            str input = "         " ;
-            str output = "equals 100" ;
-            syscall 3 0 input 9 ;
-            syscall 4 1 input 9 ;
-            
-            if input == 10 ; ifstart
-                a = 100 ;
-                if a == 100 ; ifstart
-                    syscall 3 1 output 10 ;
-                ifend
-            ifend
-        exit a ;
+                        num = num / 10;
+                    lend
+
+                    syscall 4 1 buff 20;
+                fend 1;
+
+                function printStr int ptr; int size; fstart
+                :
+                    Print string to console.
+                    Params 
+                        - ptr - Pointer to string.
+                        - size - String size.
+                :
+                    syscall 4 1 ptr size;
+                fend 1;
+
+                function sumfunc int a; int b; fstart
+                fend a + b;
+
+                function subfunc int a; int b; fstart
+                fend a - b;
+
+                int ffuncres = callfunc sumfunc g c;
+                int sfuncres = callfunc subfunc c g;
+
+                callfunc printNum ffuncres;
+                callfunc printNum sfuncres;
+
+                str printVal = "Hello from function!";
+                callfunc printStr printVal 20;
+            exit 1;
 
 # Syntax:
 -----------------------------------

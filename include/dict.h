@@ -13,6 +13,8 @@
 
 // Types
 #define INT_VARIABLE    "int"
+#define SHORT_VARIABLE  "short"
+#define CHAR_VARIABLE   "char"
 #define STR_VARIABLE    "str"
 #define ARR_VARIABLE    "arr"
 

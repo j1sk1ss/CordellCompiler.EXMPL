@@ -73,16 +73,22 @@ token_t* tokenize(int fd) {
 
             if (comment_open && !quotes_open) continue;
             if ((ct != CHAR_SPACE && ct != CHAR_NEWLINE) || quotes_open) {
-                token_type_t new_type;
-                if (quotes_open) new_type = STRING_VALUE_TOKEN;
-                else {
-                    if (ct == CHAR_ALPHA)            new_type = UNKNOWN_STRING_TOKEN;
-                    else if (ct == CHAR_DIGIT)       new_type = UNKNOWN_NUMERIC_TOKEN;
-                    else if (ct == CHAR_DELIMITER)   new_type = DELIMITER_TOKEN;
-                    else if (ct == CHAR_OPEN_INDEX)  new_type = OPEN_INDEX_TOKEN;
-                    else if (ct == CHAR_CLOSE_INDEX) new_type = CLOSE_INDEX_TOKEN;
-                    else                             new_type = UNKNOWN_SYMBOL_TOKEN;
-                }
+                token_type_t new_type = UNKNOWN_STRING_TOKEN;
+
+                /*
+                If current type is UNKNOWS_STRING, we know, that this can be variable name.
+                */
+                //if (current_type != UNKNOWN_STRING_TOKEN) {
+                    if (quotes_open) new_type = STRING_VALUE_TOKEN;
+                    else {
+                        if (ct == CHAR_ALPHA)            new_type = UNKNOWN_STRING_TOKEN;
+                        else if (ct == CHAR_DIGIT)       new_type = UNKNOWN_NUMERIC_TOKEN;
+                        else if (ct == CHAR_DELIMITER)   new_type = DELIMITER_TOKEN;
+                        else if (ct == CHAR_OPEN_INDEX)  new_type = OPEN_INDEX_TOKEN;
+                        else if (ct == CHAR_CLOSE_INDEX) new_type = CLOSE_INDEX_TOKEN;
+                        else                             new_type = UNKNOWN_SYMBOL_TOKEN;
+                    }
+                //}
                 
                 if (in_token) {
                     if (current_type != new_type && new_type != STRING_VALUE_TOKEN) {
@@ -101,6 +107,7 @@ token_t* tokenize(int fd) {
                 token_buf[token_len++] = ch;
             } 
             else {
+                // current_type = UNKNOWN_COMMAND_TOKEN;
                 if (in_token) {
                     if (ct == CHAR_NEWLINE) line++;
                     if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) goto error;
