@@ -61,8 +61,8 @@ Basic arithmetic and logical operations are supported:
 
 ### While Loop
 
-            while x < 10; lstart ... 
-                        // loop body 
+            while x < 10; lstart 
+                        ... // loop body 
             lend
 
 ---
@@ -145,6 +145,22 @@ Comments are written as annotations `:` within functions and code blocks:
             
                 syscall 4 1 buff 20;
             fend 1;
+
+### Example of Fibonacci N-number print:
+
+            start
+                int a = 0;
+                int b = 1;
+                int c = 0;
+                int count = 0;
+                while count < 20; lstart
+                    c = a + b;
+                    a = b;
+                    b = c;
+                    callfunc printNum c;
+                    count = count + 1;
+                lend
+            exit 1;
 
 ---
 
