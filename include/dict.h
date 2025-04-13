@@ -12,6 +12,7 @@
 #define FUNCTION_END_COMMAND    "fend"
 
 // Types
+#define PTR_VARIABLE    "ptr"
 #define INT_VARIABLE    "int"
 #define SHORT_VARIABLE  "short"
 #define CHAR_VARIABLE   "char"

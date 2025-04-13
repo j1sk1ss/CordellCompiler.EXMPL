@@ -126,9 +126,6 @@ static int _generate_expression(tree_t* node, FILE* output) {
         if (name_node->next_sibling) {
             _generate_expression(name_node->next_sibling, output);
             fprintf(output, "%*smov [ebp - %d], eax ; int %s = eax\n", _current_depth * 4, "", var_offset, var_name);
-        } 
-        else {
-            fprintf(output, "%*smov dword [ebp - %d], 0 ; int %s = 0\n", _current_depth * 4, "", var_offset, var_name);
         }
     }
     else if (node->token->t_type == INT_VARIABLE_TOKEN) {
@@ -139,62 +136,35 @@ static int _generate_expression(tree_t* node, FILE* output) {
         _generate_expression(node->first_child, output);
     }
     else if (node->token->t_type == SHORT_TYPE_TOKEN) {
-        /*
-        Init and saving variable in stack.
-        Getting variable name and memory offset.
-        */
         tree_t* name_node = node->first_child;
         const char* var_name = (char*)name_node->token->value;
-        
-        /*
-        Put value from eax to stack with variable offset.
-        EAX register is shared point of all recursive _generate calls.
-        */
         int var_offset = node->variable_offset;
         if (name_node->next_sibling) {
             _generate_expression(name_node->next_sibling, output);
             fprintf(output, "%*smov [ebp - %d], ax ; short %s = eax\n", _current_depth * 4, "", var_offset, var_name);
-        } 
-        else {
-            fprintf(output, "%*smov [ebp - %d], 0 ; short %s = 0\n", _current_depth * 4, "", var_offset, var_name);
         }
     }
     else if (node->token->t_type == SHORT_VARIABLE_TOKEN) {
-        /*
-        Getting integer from stack, and saving in EAX shared register.
-        */
-       fprintf(output, "%*smov ax, [ebp - %d] ; short %s\n", _current_depth * 4, "", node->variable_offset, node->token->value);
-       _generate_expression(node->first_child, output);
+        fprintf(output, "%*smov ax, [ebp - %d] ; short %s\n", _current_depth * 4, "", node->variable_offset, node->token->value);
+        _generate_expression(node->first_child, output);
     }
     else if (node->token->t_type == CHAR_TYPE_TOKEN) {
-        /*
-        Init and saving variable in stack.
-        Getting variable name and memory offset.
-        */
         tree_t* name_node = node->first_child;
         const char* var_name = (char*)name_node->token->value;
-        
-        /*
-        Put value from eax to stack with variable offset.
-        EAX register is shared point of all recursive _generate calls.
-        */
         int var_offset = node->variable_offset;
         if (name_node->next_sibling) {
             _generate_expression(name_node->next_sibling, output);
             fprintf(output, "%*smov [ebp - %d], al ; char %s = eax\n", _current_depth * 4, "", var_offset, var_name);
-        } 
-        else {
-            fprintf(output, "%*smov byte [ebp - %d], 0 ; char %s = 0\n", _current_depth * 4, "", var_offset, var_name);
         }
     }
     else if (node->token->t_type == CHAR_VARIABLE_TOKEN) {
-        /*
-        Getting integer from stack, and saving in EAX shared register.
-        */
-       fprintf(output, "%*smov al, [ebp - %d] ; char %s\n", _current_depth * 4, "", node->variable_offset, node->token->value);
-       _generate_expression(node->first_child, output);
+        fprintf(output, "%*smov al, [ebp - %d] ; char %s\n", _current_depth * 4, "", node->variable_offset, node->token->value);
+        _generate_expression(node->first_child, output);
     }
-    else if (node->token->t_type == ARR_VARIABLE_TOKEN || node->token->t_type == STR_VARIABLE_TOKEN) {
+    else if (
+        node->token->t_type == ARR_VARIABLE_TOKEN || 
+        node->token->t_type == STR_VARIABLE_TOKEN
+    ) {
         if (node->first_child) {
             array_info_t* arr_info = _find_array_info((char*)node->token->value);
             int elem_size = arr_info ? arr_info->el_size : 1;
@@ -206,6 +176,23 @@ static int _generate_expression(tree_t* node, FILE* output) {
         }
         else {
             fprintf(output, "%*smov eax, %s\n", _current_depth * 4, "", node->token->value);
+        }
+    }
+    else if (node->token->t_type == PTR_TYPE_TOKEN) {
+        tree_t* name_node = node->first_child;
+        const char* var_name = (char*)name_node->token->value;
+        int var_offset = node->variable_offset;
+    
+        if (name_node->next_sibling) {
+            _generate_expression(name_node->next_sibling, output);
+            fprintf(output, "%*smov [ebp - %d], eax ; ptr %s = eax\n", _current_depth * 4, "", var_offset, var_name);
+        }
+    }
+    else if (node->token->t_type == PTR_VARIABLE_TOKEN) {
+        fprintf(output, "%*smov eax, [ebp - %d] ; ptr %s\n", _current_depth * 4, "", node->variable_offset, node->token->value);
+        if (node->first_child) {
+            _generate_expression(node->first_child, output);
+            fprintf(output, "%*smov eax, [eax]\n", _current_depth * 4, "");
         }
     }
     else if (node->token->t_type == PLUS_TOKEN) {
@@ -288,27 +275,28 @@ static int _generate_expression(tree_t* node, FILE* output) {
         /*
         Saving params in stack.
         */
-       int arg_count = 0;
-       tree_t* args[128] = { NULL };
+        int arg_count = 0;
+        tree_t* args[128] = { NULL };
         for (tree_t* arg = args_node->first_child; arg; arg = arg->next_sibling) {
             args[arg_count++] = arg;
         }
 
         fprintf(output, "\n ; --------------- Call function %s --------------- \n", func_name_node->token->value);
 
-        int current_offset = 0;
         for (int i = arg_count - 1; i >= 0; --i) {
             tree_t* arg = args[i];
-            if (arg->token->t_type == INT_VARIABLE_TOKEN) fprintf(output, "%*smov eax, [ebp - %d] ; int %s \n", _current_depth * 4, "", variables_size + 4, arg->token->value);
-            else if (arg->token->t_type == SHORT_VARIABLE_TOKEN) fprintf(output, "%*smov ax, [ebp - %d] ; short %s \n", _current_depth * 4, "", variables_size + 4, arg->token->value);
-            else if (arg->token->t_type == CHAR_VARIABLE_TOKEN) fprintf(output, "%*smov al, [ebp - %d] ; char %s \n", _current_depth * 4, "", variables_size + 4, arg->token->value);
-            else fprintf(output, "%*smov eax, %s ; ptr %s\n", _current_depth * 4, "", arg->token->value, arg->token->value);
+            if (
+                arg->token->t_type == INT_VARIABLE_TOKEN || 
+                arg->token->t_type == PTR_VARIABLE_TOKEN
+            ) fprintf(output, "%*smov eax, [ebp - %d] ; uint32 %s \n", _current_depth * 4, "", arg->variable_offset, arg->token->value);
+            else if (arg->token->t_type == SHORT_VARIABLE_TOKEN) fprintf(output, "%*smov ax, [ebp - %d] ; uint16 %s \n", _current_depth * 4, "", arg->variable_offset, arg->token->value);
+            else if (arg->token->t_type == CHAR_VARIABLE_TOKEN) fprintf(output, "%*smov al, [ebp - %d] ; uint8 %s \n", _current_depth * 4, "", arg->variable_offset, arg->token->value);
+            else fprintf(output, "%*smov eax, %s ; uint32 %s\n", _current_depth * 4, "", arg->token->value, arg->token->value);
             fprintf(output, "%*spush eax\n", _current_depth * 4, "");
-            variables_size += 4;
         }
     
         fprintf(output, "%*scall %s\n", _current_depth * 4, "", func_name_node->token->value);
-        if (variables_size > 0) fprintf(output, "%*sadd esp, %d\n", _current_depth * 4, "", variables_size);
+        if (arg_count > 0) fprintf(output, "%*sadd esp, %d\n", _current_depth * 4, "", arg_count * 4);
         fprintf(output, " ; --------------- \n");
     }
     else if (node->token->t_type == EXIT_TOKEN) {
@@ -373,6 +361,7 @@ static int _generate_function(tree_t* node, FILE* output) {
 
         if (
             param->first_child->token->t_type == INT_VARIABLE_TOKEN || 
+            param->first_child->token->t_type == PTR_VARIABLE_TOKEN || 
             param->first_child->token->t_type == STR_VARIABLE_TOKEN ||
             param->first_child->token->t_type == ARR_VARIABLE_TOKEN
         ) {
@@ -468,16 +457,20 @@ static int _generate_if(tree_t* node, FILE* output) {
 }
 
 static int _generate_syscall(tree_t* node, FILE* output) {
-    char* registers_32[] =  { "eax", "ebx", "ecx", "edx", "esx", "edi"  };
-    char* registers_16[] =  { "ax", "bx", "cx", "dx", "sx", "di"        };
-    char* registers_8[] =   { "al", "bl", "cl", "dl", "sl", "dil"       };
+    char* registers_32[] =  { "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp"  };
+    char* registers_16[] =  { "ax", "bx", "cx", "dx", "si", "di", "bp"         };
+    char* registers_8[] =   { "al", "bl", "cl", "dl", "sl", "dil", "bpl"       };
 
     fprintf(output, "\n ; --------------- system call --------------- \n");
+    // fprintf(output, "%*spush ebp\n", _current_depth * 4, "");
 
     int argument_index = 0;
     tree_t* args = node->first_child;
     while (args) {
-        if (args->token->t_type == INT_VARIABLE_TOKEN) fprintf(output, "%*smov %s, [ebp - %d]\n", _current_depth * 4, "", registers_32[argument_index++], args->variable_offset);
+        if (
+            args->token->t_type == INT_VARIABLE_TOKEN ||
+            args->token->t_type == PTR_VARIABLE_TOKEN
+        ) fprintf(output, "%*smov %s, [ebp - %d]\n", _current_depth * 4, "", registers_32[argument_index++], args->variable_offset);
         else if (args->token->t_type == SHORT_VARIABLE_TOKEN) fprintf(output, "%*smov %s, [ebp - %d]\n", _current_depth * 4, "", registers_16[argument_index++], args->variable_offset);
         else if (args->token->t_type == CHAR_VARIABLE_TOKEN) fprintf(output, "%*smov %s, %s\n", _current_depth * 4, "", registers_8[argument_index++], args->token->value);
         else fprintf(output, "%*smov %s, %s\n", _current_depth * 4, "", registers_32[argument_index++], args->token->value);
@@ -485,6 +478,7 @@ static int _generate_syscall(tree_t* node, FILE* output) {
     }
 
     fprintf(output, "%*sint 0x80\n", _current_depth * 4, "");
+    // fprintf(output, "%*spop ebp\n", _current_depth * 4, "");
     fprintf(output, " ; --------------- \n");
     return 1;
 }
@@ -497,8 +491,13 @@ static int _generate_assignment(tree_t* node, FILE* output) {
 
     /*
     We store right result to EAX, and move it to stack with offset of left.
+    Pointer assignment.
     */
-    if ((left->token->t_type == ARR_VARIABLE_TOKEN || left->token->t_type == STR_VARIABLE_TOKEN) && left->first_child) {
+    if ((
+        left->token->t_type == ARR_VARIABLE_TOKEN || 
+        left->token->t_type == STR_VARIABLE_TOKEN ||
+        left->token->t_type == PTR_VARIABLE_TOKEN
+    ) && left->first_child) {
         /*
         If left is array or string (array too) with elem size info.
         */
@@ -507,7 +506,8 @@ static int _generate_assignment(tree_t* node, FILE* output) {
 
         _generate_expression(left->first_child, output);
         fprintf(output, "%*simul eax, %d\n", _current_depth * 4, "", elem_size);
-        fprintf(output, "%*sadd eax, %s\n", _current_depth * 4, "", left->token->value);
+        if (left->token->t_type == PTR_VARIABLE_TOKEN) fprintf(output, "%*sadd eax, [ebp - %d]\n", _current_depth * 4, "", left->variable_offset);
+        else fprintf(output, "%*sadd eax, %s\n", _current_depth * 4, "", left->token->value);
         fprintf(output, "%*spush eax\n", _current_depth * 4, "");
         
         _generate_expression(right, output);

@@ -5,7 +5,7 @@
 
     static char_type_t _get_char_type(unsigned char ch) {
         if (isalpha(ch)) return CHAR_ALPHA;
-        else if (str_isdigit(ch)) return CHAR_DIGIT;
+        else if (str_isdigit(ch) || ch == '-') return CHAR_DIGIT;
         else if (ch == '"') return CHAR_QUOTE;
         else if (ch == '\n') return CHAR_NEWLINE;
         else if (ch == ' ') return CHAR_SPACE;

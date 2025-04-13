@@ -26,14 +26,14 @@ start
         syscall 4 1 buff 20;
     fend 1;
 
-    function printStr int ptr; int size; fstart
+    function printStr ptr strPtr; int size; fstart
     :
         Print string to console.
         Params 
             - ptr - Pointer to string.
             - size - String size.
     :
-        syscall 4 1 ptr size;
+        syscall 4 1 strPtr size;
     fend 1;
 
     function sumfunc int a; int b; fstart

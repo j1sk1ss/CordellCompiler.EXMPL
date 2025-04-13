@@ -20,6 +20,7 @@
     } command_handler_t;
 
     static const command_handler_t _command_handlers[] = {
+        { PTR_TYPE_TOKEN,       _parse_variable_declaration },
         { INT_TYPE_TOKEN,       _parse_variable_declaration },
         { SHORT_TYPE_TOKEN,     _parse_variable_declaration },
         { CHAR_TYPE_TOKEN,      _parse_variable_declaration },
@@ -29,8 +30,9 @@
         { WHILE_TOKEN,          _parse_while_loop           },
         { IF_TOKEN,             _parse_if_statement         },
         { SYSCALL_TOKEN,        _parse_syscall              },
-        { STR_VARIABLE_TOKEN,   _parse_expression           },
+        { PTR_VARIABLE_TOKEN,   _parse_expression           },
         { INT_VARIABLE_TOKEN,   _parse_expression           },
+        { STR_VARIABLE_TOKEN,   _parse_expression           },
         { ARR_VARIABLE_TOKEN,   _parse_expression           },
         { UNKNOWN_STRING_TOKEN, _parse_expression           },
         { CALL_TOKEN,           _parse_function_call        },
@@ -55,8 +57,7 @@
         for (int i = 0; i < MAX_VARIABLES; i++) {
             if (
                 (!__current_function_name || !str_strcmp(__current_function_name, __variables_info[i].func_name)) && 
-                !str_strcmp(name, __variables_info[i].name) && 
-                (__variables_info[i].function_include == __current_function)
+                !str_strcmp(name, __variables_info[i].name) && (__variables_info[i].function_include == __current_function)
             ) {
                 return &__variables_info[i];
             }
@@ -241,17 +242,13 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     Add variable offset, if variable not static and global like arrays or strings.
     int32 and string. String has 32 bit size pointer.
     */
-    if (type_token->t_type == INT_TYPE_TOKEN || type_token->t_type == STRING_TYPE_TOKEN) {
+    if (
+        type_token->t_type == INT_TYPE_TOKEN || type_token->t_type == STRING_TYPE_TOKEN ||
+        type_token->t_type == SHORT_TYPE_TOKEN || type_token->t_type == CHAR_TYPE_TOKEN ||
+        type_token->t_type == PTR_TYPE_TOKEN
+    ) {
        decl_node->variable_offset = __add_variable_info((char*)name_token->value, 4);
        decl_node->variable_size = 4;
-    }
-    if (type_token->t_type == SHORT_TYPE_TOKEN) {
-        decl_node->variable_offset = __add_variable_info((char*)name_token->value, 4);
-        decl_node->variable_size = 4;
-    }
-    else if (type_token->t_type == CHAR_TYPE_TOKEN) {
-        decl_node->variable_offset = __add_variable_info((char*)name_token->value, 4);
-        decl_node->variable_size = 4;
     }
     
     decl_node->function = __current_function;
@@ -265,7 +262,7 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
 
 static tree_t* _parse_array_declaration(token_t** curr) {
     token_t* arr_token = *curr;
-    token_t* name_token = (*curr)->next;
+    token_t* name_token = arr_token->next;
     token_t* size_token = name_token->next;
     token_t* elem_size_token = size_token->next;
     token_t* assign_token = elem_size_token->next;
@@ -304,14 +301,29 @@ static tree_t* _parse_array_declaration(token_t** curr) {
 static tree_t* _parse_expression(token_t** curr) {
     if (!curr || !*curr) return NULL;
     token_t* left = *curr;
-    if ((*curr)->t_type == ARR_VARIABLE_TOKEN || (*curr)->t_type == STR_VARIABLE_TOKEN) return _parse_array_expression(curr);
-    else if ((*curr)->t_type == CALL_TOKEN) return _parse_function_call(curr);
+
+    if ((*curr)->t_type == CALL_TOKEN) return _parse_function_call(curr);
     else if ((*curr)->t_type == SYSCALL_TOKEN) return _parse_syscall(curr);
     
-    tree_t* left_node = _create_tree_node(left);
+    /*
+    If variable is pointer type like array, string or ptr, 
+    we parse additional info about index, if it exist.
+    */
+    tree_t* left_node = NULL;
+    if (
+        (*curr)->t_type == ARR_VARIABLE_TOKEN || 
+        (*curr)->t_type == STR_VARIABLE_TOKEN ||
+        (*curr)->t_type == PTR_VARIABLE_TOKEN
+    ) { 
+        left_node = _parse_array_expression(curr);
+    }
+    else {
+        left_node = _create_tree_node(left);
+        *curr = left->next;
+    }
+    
     __fill_variable(left_node);
     
-    *curr = left->next;
     token_t* assign_token = *curr;
     if (!assign_token || assign_token->t_type == DELIMITER_TOKEN || assign_token->t_type == CLOSE_INDEX_TOKEN) {
         return left_node;
@@ -340,20 +352,8 @@ static tree_t* _parse_array_expression(token_t** curr) {
         tree_t* offset_exp = _parse_expression(&((*curr)->next));
         while (*curr && (*curr)->t_type != CLOSE_INDEX_TOKEN) (*curr) = (*curr)->next;
         _add_child_node(arr_name_node, offset_exp);
-
         *curr = (*curr)->next;
-        token_t* assign_token = *curr;
-        if (!assign_token || assign_token->t_type == DELIMITER_TOKEN) {
-            return arr_name_node;
-        }
-
-        tree_t* assign_node = _create_tree_node(assign_token);
-        *curr = (*curr)->next;
-        tree_t* right = _parse_expression(curr);
-
-        _add_child_node(assign_node, arr_name_node);
-        if (right) _add_child_node(assign_node, right);
-        return assign_node;
+        return arr_name_node;
     }
 
     return arr_name_node;
