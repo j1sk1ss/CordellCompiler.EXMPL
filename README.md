@@ -78,8 +78,8 @@ Functions are declared using the `function` keyword and defined within `fstart .
 
 ### Example:
 
-            function sumfunc int a; int b; 
-            fstart fend a + b;
+            function sumfunc int a; int b; fstart 
+            fend a + b;
 
 ---
 
