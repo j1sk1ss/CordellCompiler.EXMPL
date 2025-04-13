@@ -288,34 +288,23 @@ static int _generate_expression(tree_t* node, FILE* output) {
         /*
         Saving params in stack.
         */
-        tree_t* args[128];
-        int arg_count = 0;
+       int arg_count = 0;
+       tree_t* args[128] = { NULL };
         for (tree_t* arg = args_node->first_child; arg; arg = arg->next_sibling) {
             args[arg_count++] = arg;
         }
 
         fprintf(output, "\n ; --------------- Call function %s --------------- \n", func_name_node->token->value);
 
+        int current_offset = 0;
         for (int i = arg_count - 1; i >= 0; --i) {
             tree_t* arg = args[i];
-            if (arg->token->t_type == INT_VARIABLE_TOKEN) {
-                fprintf(output, "%*smov eax, [ebp - %d] ; int %s \n", _current_depth * 4, "", arg->variable_offset, arg->token->value);
-                variables_size += 4;
-            }
-            if (arg->token->t_type == SHORT_VARIABLE_TOKEN) {
-                fprintf(output, "%*smov ax, [ebp - %d] ; short %s \n", _current_depth * 4, "", arg->variable_offset, arg->token->value);
-                variables_size += 2;
-            }
-            else if (arg->token->t_type == CHAR_VARIABLE_TOKEN) {
-                fprintf(output, "%*smov al, [ebp - %d] ; char %s \n", _current_depth * 4, "", arg->variable_offset, arg->token->value);
-                variables_size += 1;
-            }
-            else {
-                fprintf(output, "%*smov eax, %s ; ptr %s\n", _current_depth * 4, "", arg->token->value, arg->token->value);
-                variables_size += 4;
-            }
-
+            if (arg->token->t_type == INT_VARIABLE_TOKEN) fprintf(output, "%*smov eax, [ebp - %d] ; int %s \n", _current_depth * 4, "", variables_size + 4, arg->token->value);
+            else if (arg->token->t_type == SHORT_VARIABLE_TOKEN) fprintf(output, "%*smov ax, [ebp - %d] ; short %s \n", _current_depth * 4, "", variables_size + 4, arg->token->value);
+            else if (arg->token->t_type == CHAR_VARIABLE_TOKEN) fprintf(output, "%*smov al, [ebp - %d] ; char %s \n", _current_depth * 4, "", variables_size + 4, arg->token->value);
+            else fprintf(output, "%*smov eax, %s ; ptr %s\n", _current_depth * 4, "", arg->token->value, arg->token->value);
             fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+            variables_size += 4;
         }
     
         fprintf(output, "%*scall %s\n", _current_depth * 4, "", func_name_node->token->value);
@@ -323,12 +312,11 @@ static int _generate_expression(tree_t* node, FILE* output) {
         fprintf(output, " ; --------------- \n");
     }
     else if (node->token->t_type == EXIT_TOKEN) {
-        _generate_expression(node->first_child, output);
-
         /*
         Restore stack frame after programm.
         */
         fprintf(output, "\n ; --------------- Exit --------------- \n");
+        _generate_expression(node->first_child, output);
         fprintf(output, "%*smov ebx, eax\n", _current_depth * 4, "");
         fprintf(output, "%*smov eax, 1\n", _current_depth * 4, "");
         fprintf(output, "%*smov esp, ebp\n", _current_depth * 4, "");
