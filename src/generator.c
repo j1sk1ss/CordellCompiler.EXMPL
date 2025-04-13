@@ -491,7 +491,8 @@ static int _generate_syscall(tree_t* node, FILE* output) {
     while (args) {
         if (args->token->t_type == INT_VARIABLE_TOKEN) fprintf(output, "%*smov %s, [ebp - %d]\n", _current_depth * 4, "", registers_32[argument_index++], args->variable_offset);
         else if (args->token->t_type == SHORT_VARIABLE_TOKEN) fprintf(output, "%*smov %s, [ebp - %d]\n", _current_depth * 4, "", registers_16[argument_index++], args->variable_offset);
-        else fprintf(output, "%*smov %s, %s\n", _current_depth * 4, "", registers_8[argument_index++], args->token->value);
+        else if (args->token->t_type == CHAR_VARIABLE_TOKEN) fprintf(output, "%*smov %s, %s\n", _current_depth * 4, "", registers_8[argument_index++], args->token->value);
+        else fprintf(output, "%*smov %s, %s\n", _current_depth * 4, "", registers_32[argument_index++], args->token->value);
         args = args->next_sibling;
     }
 
