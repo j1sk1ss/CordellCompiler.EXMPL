@@ -1,6 +1,6 @@
 # Cordell Compiler Language Reference
 
-**Cordell Compiler** is a compact hobby language with a simple syntax, inspired by C and assembly. It is designed for studying compilation, interpreter creation, translation, and low-level code generation.
+**Cordell Compiler** is a compact hobby compile for language with a simple syntax, inspired by C and assembly. It is designed for studying compilation, interpreter creation, translation, and low-level code generation.
 
 ---
 
