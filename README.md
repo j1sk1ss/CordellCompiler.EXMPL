@@ -106,8 +106,9 @@ Functions are declared using the `function` keyword and defined within `fstart .
                 syscall 4 1 ptr size; 
             fend 1;
             
-            function mult int a; int b; fstart 
-            fend a * b;
+            function getStr int ptr; int size; fstart 
+                syscall 3 0 ptr size; 
+            fend 1;
 
 ---
 
