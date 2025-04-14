@@ -31,6 +31,7 @@ The following types are supported:
             short b = 1234;
             char c = 48;
             str name = "Hello, World!";
+            ptr namePtr = name;
             arr farr 100 1 =; // Will allocate array with size 100 and elem size 1
             arr sarr 5 4 = 1 2 3 4 5; // Will allocate array for provided elements
 
@@ -49,6 +50,7 @@ Basic arithmetic and logical operations are supported:
 | `==`      | Equality            |
 | `!=`      | Inequality          |
 | `>` `<`   | Comparison          |
+| `>>` `<<` `&`  `\|` | Bit operations |
 
 ---
 
@@ -175,7 +177,6 @@ Comments are written as annotations `:` within functions and code blocks:
 | Conditions            | V       |
 | Loops                 | V       |
 | Arrays (`arr[...]`)   | V       |
+| Byte Operations       | V       |
 | Input/Output          | V (via syscall) |
-| Type Casting          | In development  |
 | Structures            | In development  |
-| Byte Operations       | In development  |

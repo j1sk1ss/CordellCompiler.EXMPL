@@ -14,44 +14,48 @@ typedef struct Variable {
 
 static markup_token_t _markups[] = {
     // Special
-    { .value = START_COMMAND,          .type = START_TOKEN       },
-    { .value = SYSCALL_COMMAND,        .type = SYSCALL_TOKEN     },
-    { .value = EXIT_COMMAND,           .type = EXIT_TOKEN        },
+    { .value = START_COMMAND,          .type = START_TOKEN         },
+    { .value = SYSCALL_COMMAND,        .type = SYSCALL_TOKEN       },
+    { .value = EXIT_COMMAND,           .type = EXIT_TOKEN          },
 
     // Function
-    { .value = CALLFUNC_COMMAND,       .type = CALL_TOKEN        },
-    { .value = FUNCTION_COMMAND,       .type = FUNC_TOKEN        },
-    { .value = FUNCTION_START_COMMAND, .type = FUNC_START_TOKEN  },
-    { .value = FUNCTION_END_COMMAND,   .type = FUNC_END_TOKEN    },
+    { .value = CALLFUNC_COMMAND,       .type = CALL_TOKEN          },
+    { .value = FUNCTION_COMMAND,       .type = FUNC_TOKEN          },
+    { .value = FUNCTION_START_COMMAND, .type = FUNC_START_TOKEN    },
+    { .value = FUNCTION_END_COMMAND,   .type = FUNC_END_TOKEN      },
 
     // Variable
-    { .value = PTR_VARIABLE,           .type = PTR_TYPE_TOKEN    },
-    { .value = INT_VARIABLE,           .type = INT_TYPE_TOKEN    },
-    { .value = SHORT_VARIABLE,         .type = SHORT_TYPE_TOKEN  },
-    { .value = CHAR_VARIABLE,          .type = CHAR_TYPE_TOKEN   },
-    { .value = STR_VARIABLE,           .type = STRING_TYPE_TOKEN },
-    { .value = ARR_VARIABLE,           .type = ARRAY_TYPE_TOKEN  },
+    { .value = PTR_VARIABLE,           .type = PTR_TYPE_TOKEN      },
+    { .value = INT_VARIABLE,           .type = INT_TYPE_TOKEN      },
+    { .value = SHORT_VARIABLE,         .type = SHORT_TYPE_TOKEN    },
+    { .value = CHAR_VARIABLE,          .type = CHAR_TYPE_TOKEN     },
+    { .value = STR_VARIABLE,           .type = STRING_TYPE_TOKEN   },
+    { .value = ARR_VARIABLE,           .type = ARRAY_TYPE_TOKEN    },
 
     // While
-    { .value = WHILE_COMAND,           .type = WHILE_TOKEN       },
-    { .value = WHILE_START_COMMAND,    .type = WHILE_START_TOKEN },
-    { .value = WHILE_END_COMMAND,      .type = WHILE_END_TOKEN   },
+    { .value = WHILE_COMAND,           .type = WHILE_TOKEN         },
+    { .value = WHILE_START_COMMAND,    .type = WHILE_START_TOKEN   },
+    { .value = WHILE_END_COMMAND,      .type = WHILE_END_TOKEN     },
 
     // If
-    { .value = IF_COMMAND,             .type = IF_TOKEN          },
-    { .value = IF_START_COMMAND,       .type = IF_START_TOKEN    },
-    { .value = IF_END_COMMAND,         .type = IF_END_TOKEN      },
+    { .value = IF_COMMAND,             .type = IF_TOKEN            },
+    { .value = IF_START_COMMAND,       .type = IF_START_TOKEN      },
+    { .value = IF_END_COMMAND,         .type = IF_END_TOKEN        },
 
     // Operators
-    { .value = ASIGN_STATEMENT,        .type = ASIGN_TOKEN       },
-    { .value = COMPARE_STATEMENT,      .type = COMPARE_TOKEN     },
-    { .value = NCOMPARE_STATEMENT,     .type = NCOMPARE_TOKEN    },
-    { .value = PLUS_STATEMENT,         .type = PLUS_TOKEN        },
-    { .value = MINUS_STATEMENT,        .type = MINUS_TOKEN       },
-    { .value = LARGER_STATEMENT,       .type = LARGER_TOKEN      },
-    { .value = LOWER_STATEMENT,        .type = LOWER_TOKEN       },
-    { .value = MULTIPLY_STATEMENT,     .type = MULTIPLY_TOKEN    },
-    { .value = DIVIDE_STATEMENT,       .type = DIVIDE_TOKEN      }
+    { .value = ASIGN_STATEMENT,        .type = ASIGN_TOKEN         },
+    { .value = COMPARE_STATEMENT,      .type = COMPARE_TOKEN       },
+    { .value = NCOMPARE_STATEMENT,     .type = NCOMPARE_TOKEN      },
+    { .value = PLUS_STATEMENT,         .type = PLUS_TOKEN          },
+    { .value = MINUS_STATEMENT,        .type = MINUS_TOKEN         },
+    { .value = LARGER_STATEMENT,       .type = LARGER_TOKEN        },
+    { .value = LOWER_STATEMENT,        .type = LOWER_TOKEN         },
+    { .value = MULTIPLY_STATEMENT,     .type = MULTIPLY_TOKEN      },
+    { .value = DIVIDE_STATEMENT,       .type = DIVIDE_TOKEN        },
+    { .value = BITMOVE_LEFT_STATEMENT, .type = BITMOVE_LEFT_TOKEN  },
+    { .value = BITMOVE_RIGHT_STATMENT, .type = BITMOVE_RIGHT_TOKEN },
+    { .value = BITAND_STATEMENT,       .type = BITAND_TOKEN        },
+    { .value = BITOR_STATEMENT,        .type = BITOR_TOKEN         }
 };
 
 

@@ -182,7 +182,6 @@ static int _generate_expression(tree_t* node, FILE* output) {
         tree_t* name_node = node->first_child;
         const char* var_name = (char*)name_node->token->value;
         int var_offset = node->variable_offset;
-    
         if (name_node->next_sibling) {
             _generate_expression(name_node->next_sibling, output);
             fprintf(output, "%*smov [ebp - %d], eax ; ptr %s = eax\n", _current_depth * 4, "", var_offset, var_name);
@@ -194,6 +193,38 @@ static int _generate_expression(tree_t* node, FILE* output) {
             _generate_expression(node->first_child, output);
             fprintf(output, "%*smov eax, [eax]\n", _current_depth * 4, "");
         }
+    }
+    else if (node->token->t_type == BITMOVE_LEFT_TOKEN) {
+        _generate_expression(node->first_child, output);
+        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        _generate_expression(node->first_child->next_sibling, output);
+        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
+        fprintf(output, "%*smov ecx, eax\n", _current_depth * 4, "");
+        fprintf(output, "%*sshl ebx, cl\n", _current_depth * 4, "");
+        fprintf(output, "%*smov eax, ebx\n", _current_depth * 4, "");
+    }
+    else if (node->token->t_type == BITMOVE_RIGHT_TOKEN) {
+        _generate_expression(node->first_child, output);
+        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        _generate_expression(node->first_child->next_sibling, output);
+        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
+        fprintf(output, "%*smov ecx, eax\n", _current_depth * 4, "");
+        fprintf(output, "%*sshr ebx, cl\n", _current_depth * 4, "");
+        fprintf(output, "%*smov eax, ebx\n", _current_depth * 4, "");
+    }
+    else if (node->token->t_type == BITAND_TOKEN) {
+        _generate_expression(node->first_child, output);
+        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        _generate_expression(node->first_child->next_sibling, output);
+        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
+        fprintf(output, "%*sand eax, ebx\n", _current_depth * 4, "");
+    }
+    else if (node->token->t_type == BITOR_TOKEN) {
+        _generate_expression(node->first_child, output);
+        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        _generate_expression(node->first_child->next_sibling, output);
+        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
+        fprintf(output, "%*sor eax, ebx\n", _current_depth * 4, "");
     }
     else if (node->token->t_type == PLUS_TOKEN) {
         _generate_expression(node->first_child, output);
