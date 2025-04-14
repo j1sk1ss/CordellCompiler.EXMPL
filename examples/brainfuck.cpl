@@ -6,14 +6,14 @@ Also hello world program
 :
 
 start
-    function printStr int ptr; int size; fstart
+    function printStr ptr string; int size; fstart
     :
         Print string to console.
         Params 
-            - ptr - Pointer to string.
+            - string - Pointer to string.
             - size - String size.
     :
-        syscall 4 1 ptr size;
+        syscall 4 1 string size;
     fend 1;
 
     str welcomeMsg = "Brainfuck interpriter! Input code ";

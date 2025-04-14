@@ -1,5 +1,5 @@
 CFLAGS = -Wall -Wextra -Ikernel/include -Wcomment -Wno-unknown-pragmas -Wno-unused-result -Wno-empty-body -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-variable -Wno-format-overflow
-CC = gcc
+CC = gcc-14
 
 # Logger flags
 ERROR_LOGS ?= 1

@@ -29,14 +29,18 @@
 #define SYSCALL_COMMAND     "syscall"
 
 // Symbols and statements (Operands)
-#define ASIGN_STATEMENT     "="
-#define COMPARE_STATEMENT   "=="
-#define NCOMPARE_STATEMENT  "!="
-#define PLUS_STATEMENT      "+"
-#define MINUS_STATEMENT     "-"
-#define DIVIDE_STATEMENT    "/"
-#define MULTIPLY_STATEMENT  "*"
-#define LOWER_STATEMENT     "<"
-#define LARGER_STATEMENT    ">"
+#define ASIGN_STATEMENT         "="
+#define COMPARE_STATEMENT       "=="
+#define NCOMPARE_STATEMENT      "!="
+#define PLUS_STATEMENT          "+"
+#define MINUS_STATEMENT         "-"
+#define DIVIDE_STATEMENT        "/"
+#define MULTIPLY_STATEMENT      "*"
+#define LOWER_STATEMENT         "<"
+#define LARGER_STATEMENT        ">"
+#define BITMOVE_RIGHT_STATMENT  ">>"
+#define BITMOVE_LEFT_STATEMENT  "<<"
+#define BITAND_STATEMENT        "&"
+#define BITOR_STATEMENT         "|"
 
 #endif

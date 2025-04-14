@@ -36,12 +36,12 @@ start
         syscall 4 1 strPtr size;
     fend 1;
 
-    function sumfunc int a; int b; fstart
+    function sumfunc int a; int b; fstart 
     fend a + b;
 
     function subfunc int a; int b; fstart
     fend a - b;
-
+    
     int ffuncres = callfunc sumfunc g c;
     int sfuncres = callfunc subfunc c g;
 

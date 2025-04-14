@@ -14,5 +14,5 @@ start
 
     ptr buffer = callfunc malloc 50;
     int inputSize = callfunc gets buffer 50;
-    callfunc prints buffer 10;
+    callfunc prints buffer inputSize;
 exit 1;
