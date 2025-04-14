@@ -2,6 +2,7 @@
 #define SEMANTIC_H_
 
 #include "str.h"
+#include "vars.h"
 #include "logg.h"
 #include "token.h"
 #include "syntax.h"

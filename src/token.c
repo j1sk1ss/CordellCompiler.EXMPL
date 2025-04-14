@@ -52,7 +52,7 @@ token_t* tokenize(int fd) {
     ssize_t bytes_read = 0;
     token_type_t current_type = UNKNOWN_STRING_TOKEN;
 
-    int line = 0;
+    int line = 1;
     while ((bytes_read = pread(fd, buffer, BUFFER_SIZE, file_offset)) > 0) {
         file_offset += bytes_read;
 

@@ -334,6 +334,7 @@ static tree_t* _parse_expression(token_t** curr) {
 static tree_t* _parse_array_expression(token_t** curr) {
     if (!curr || !*curr) return NULL;
     tree_t* arr_name_node = _create_tree_node(*curr);
+    __fill_variable(arr_name_node);
     
     *curr = (*curr)->next;
     if ((*curr)->t_type == OPEN_INDEX_TOKEN) {

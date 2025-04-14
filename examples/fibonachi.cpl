@@ -7,7 +7,7 @@ start
             tmp = tmp * 10;
             tmp = num - tmp;
             tmp = tmp + 48;
-
+            char assd = tmp;
             buffer[buffIndex] = tmp;
             buffIndex = buffIndex - 1;
 
@@ -17,8 +17,9 @@ start
         syscall 4 1 buffer size;
     fend 1;
     
-    arr printBuffer 20 1 =;
+    arr printBuffer 20 char =;
     ptr bufferPtr = printBuffer;
+    char incorrect = bufferPtr;
 
     int a = 0;
     int b = 1;
