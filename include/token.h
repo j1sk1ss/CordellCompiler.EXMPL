@@ -34,6 +34,8 @@ typedef enum {
     ARRAY_TYPE_TOKEN,
 
     // Commands
+    IMPORT_TOKEN,
+    IMPORT_SELECT_TOKEN,
     START_TOKEN,
     EXIT_TOKEN,
     SYSCALL_TOKEN,

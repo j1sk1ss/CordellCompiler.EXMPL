@@ -1,0 +1,84 @@
+#include "../include/builder.h"
+
+
+#ifdef PRINT_PARSE
+void print_parse_tree(tree_t* node, int depth) {
+    if (!node) return;
+    for (int i = 0; i < depth; i++) printf("  ");
+    if (node->token) printf("[%s] (t=%d, size=%i, off=%i, f=%i)\n", (char*)node->token->value, node->token->t_type, node->variable_size, node->variable_offset, node->function);
+    else printf("scope\n");
+    
+    tree_t* child = node->first_child;
+    while (child) {
+        print_parse_tree(child, depth + 1);
+        child = child->next_sibling;
+    }
+}
+#else
+void print_parse_tree(tree_t* node, int depth) {}
+#endif
+
+
+static params_t __params = {
+    .syntax = 0
+};
+
+static object_t __files[MAX_FILES];
+static int __current_file = 0;
+
+
+int __add_object(char* path, int is_main) {
+    __files[__current_file].main = is_main;
+    __files[__current_file].path = path;
+    __current_file++;
+    return 1;
+}
+
+int __compile(object_t* obj) {
+    int fd = open(obj->path, O_RDONLY);
+    if (fd < 0) return -1;
+    
+    token_t* tokens = tokenize(fd);
+    if (!tokens) return -2;
+
+    int markup_res = command_markup(tokens);
+    markup_res = variable_markup(tokens);
+    if (!markup_res) {
+        unload_tokens(tokens);
+        return -3;
+    }
+
+    tree_t* parse_tree = create_syntax_tree(tokens);
+    if (__params.syntax) print_parse_tree(parse_tree, 0);
+    int semantic_res = check_semantic(parse_tree);
+    if (semantic_res) {
+        char temp_output[256] = { 0 };
+        sprintf(temp_output, "%s.asm", obj->path);
+        FILE* output = fopen(temp_output, "w");
+        generate_asm(parse_tree, output);
+        fclose(output);
+    }
+
+    unload_syntax_tree(parse_tree);
+    unload_tokens(tokens);
+    return 1;
+}
+
+int build(char* path, int is_main) {
+    return __add_object(path, is_main);
+}
+
+int build_all() {
+    if (__current_file == 0) return 0;
+    for (int i = __current_file - 1; i >= 0; i--) {
+        int res = __compile(&__files[i]);
+        if (!res) return res;
+    }
+
+    return 1;
+}
+
+int set_params(params_t* params) {
+    str_memcpy(&__params, params, sizeof(params_t));
+    return 1;
+}

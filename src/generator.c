@@ -540,24 +540,54 @@ static int _generate_assignment(tree_t* node, FILE* output) {
 
 static int _generate_text_section(tree_t* node, FILE* output) {
     if (!node) return 0;
-    /*
-    Before start, find all "global" variables and reserve stack frame.
-    */
-    fprintf(output, "%*spush ebp\n", _current_depth * 4, "");
-    fprintf(output, "%*smov ebp, esp\n", _current_depth * 4, "");
-    fprintf(output, "%*ssub esp, %d\n", _current_depth * 4, "", __get_variables_size(node->first_child));
-
     for (tree_t* child = node->first_child; child; child = child->next_sibling) _generate_expression(child, output);
-    _generate_expression(node->next_sibling, output);
     return 1;
 }
 
 int generate_asm(tree_t* root, FILE* output) {
     fprintf(output, "section .data\n");
-    _generate_data_section(root->first_child, output);
+
+    tree_t* program_body = root->first_child;
+    tree_t* prestart = program_body;
+    tree_t* main_body = prestart->next_sibling;
+    if (prestart)  _generate_data_section(prestart, output);
+    if (main_body) _generate_data_section(main_body, output);
+
     fprintf(output, "\nsection .text\n");
-    fprintf(output, "    global _start\n\n");
-    fprintf(output, "_start:\n");
-    _generate_text_section(root->first_child, output);
+    if (prestart) {
+        for (tree_t* child = prestart->first_child; child; child = child->next_sibling) {
+            if (child->token) switch (child->token->t_type) {
+                case IMPORT_SELECT_TOKEN: {
+                    tree_t* module_name = child->first_child;
+                    for (tree_t* func = module_name->first_child; func; func = func->next_sibling)
+                    fprintf(output, "    extern %s\n", func->token->value);
+                    break;
+                }
+
+                case FUNC_TOKEN: {
+                    fprintf(output, "    global %s\n", child->first_child->token->value);
+                    break;
+                }
+
+                default: break;
+            }
+        }
+
+        _generate_text_section(prestart, output);
+    }
+
+    if (main_body) {
+        fprintf(output, "\nglobal _start\n\n");
+        fprintf(output, "    _start:\n");
+
+        /*
+        Before start, find all "global" variables and reserve stack frame.
+        */
+        fprintf(output, "%*spush ebp\n", _current_depth * 4, "");
+        fprintf(output, "%*smov ebp, esp\n", _current_depth * 4, "");
+        fprintf(output, "%*ssub esp, %d\n", _current_depth * 4, "", __get_variables_size(main_body->first_child));
+        _generate_text_section(main_body, output);
+    }
+
     return 1;
 }

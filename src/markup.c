@@ -14,6 +14,8 @@ typedef struct Variable {
 
 static markup_token_t _markups[] = {
     // Special
+    { .value = IMPORT_SELECT_COMMAND,  .type = IMPORT_SELECT_TOKEN },
+    { .value = IMPORT_COMMAND,         .type = IMPORT_TOKEN        },
     { .value = START_COMMAND,          .type = START_TOKEN         },
     { .value = SYSCALL_COMMAND,        .type = SYSCALL_TOKEN       },
     { .value = EXIT_COMMAND,           .type = EXIT_TOKEN          },

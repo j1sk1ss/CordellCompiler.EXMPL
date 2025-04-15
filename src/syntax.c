@@ -3,6 +3,7 @@
 
 #pragma region [Misc]
 
+    static tree_t* _parse_import(token_t**);
     static tree_t* _parse_function_call(token_t**);
     static tree_t* _parse_function_declaration(token_t**);
     static tree_t* _parse_variable_declaration(token_t**);
@@ -20,6 +21,7 @@
     } command_handler_t;
 
     static const command_handler_t _command_handlers[] = {
+        { IMPORT_SELECT_TOKEN,  _parse_import               },
         { PTR_TYPE_TOKEN,       _parse_variable_declaration },
         { INT_TYPE_TOKEN,       _parse_variable_declaration },
         { SHORT_TYPE_TOKEN,     _parse_variable_declaration },
@@ -118,6 +120,23 @@ static int _add_child_node(tree_t* parent, tree_t* child) {
 
     parent->child_count++;
     return 1;
+}
+
+static tree_t* _parse_import(token_t** curr) {
+    if (!curr || !*curr || (*curr)->t_type != IMPORT_SELECT_TOKEN) return NULL;
+    tree_t* import_node = _create_tree_node(*curr);
+    *curr = (*curr)->next;
+    tree_t* source_node = _create_tree_node(*curr);
+    *curr = (*curr)->next->next;
+
+    while (*curr && (*curr)->t_type != DELIMITER_TOKEN) {
+        tree_t* function_name = _create_tree_node(*curr);
+        if (function_name) _add_child_node(source_node, function_name);
+        *curr = (*curr)->next;
+    }
+
+    if (source_node) _add_child_node(import_node, source_node);
+    return import_node;
 }
 
 static tree_t* _parse_function_call(token_t** curr) {
@@ -439,27 +458,19 @@ static tree_t* _parse_syscall(token_t** curr) {
 }
 
 tree_t* create_syntax_tree(token_t* head) {
-    token_t* curr = head;
-    while (curr && curr->t_type != START_TOKEN) curr = curr->next;
-    if (!curr) return NULL;
+    tree_t* root     = _create_tree_node(NULL);
+    tree_t* prestart = _parse_scope(&head, START_TOKEN);
+    tree_t* body     = _parse_scope(&head, EXIT_TOKEN);
 
-    /*
-    Parse whole program body.
-    */
-    tree_t* root = _create_tree_node(curr);
-    curr = curr->next;
-    tree_t* body = _parse_scope(&curr, EXIT_TOKEN);
-    if (body) _add_child_node(root, body);
+    if (head) {
+        tree_t* exit_node = _create_tree_node(create_token(EXIT_TOKEN, NULL, 0, head->line_number));
+        tree_t* exit_exp  = _parse_expression(&head->next);
+        if (exit_exp)  _add_child_node(exit_node, exit_exp);
+        if (exit_node) _add_child_node(body, exit_node);
+    }
 
-    /*
-    Append exit code logic.
-    */
-    tree_t* exit_node = _create_tree_node(create_token(EXIT_TOKEN, NULL, 0, curr->line_number));
-    curr = curr->next;
-    tree_t* exit_exp = _parse_expression(&curr);
-    _add_child_node(exit_node, exit_exp);
-    _add_child_node(root, exit_node);
-
+    if (prestart) _add_child_node(root, prestart);
+    if (body)     _add_child_node(root, body);
     return root;
 }
 

@@ -1,3 +1,5 @@
+from "string.cpl" import prints gets;
+
 :
 Brainfuck interpriter on CPL
 For work test, input "++++++++[>++++++++<-]>+." sequence. Interpriter should return 'A' character.
@@ -9,18 +11,8 @@ Or tick-tac-toe
 :
 
 start
-    function printStr ptr string; int size; fstart
-    :
-        Print string to console.
-        Params 
-            - string - Pointer to string.
-            - size - String size.
-    :
-        syscall 4 1 string size;
-    fend 1;
-
     str welcomeMsg = "Brainfuck interpriter! Input code ";
-    callfunc printStr welcomeMsg 34;
+    callfunc prints welcomeMsg 34;
 
     arr code 10000 1 =;
     syscall 3 0 code 10000;
@@ -113,7 +105,7 @@ start
             if cmd == dot; ifstart
                 str fbuf = " ";
                 fbuf[0] = tape[pointer];
-                callfunc printStr fbuf 1;
+                callfunc prints fbuf 1;
                 pc = pc + 1;
                 processed = 1;
             ifend
@@ -122,7 +114,7 @@ start
         if processed == 0; ifstart
             if cmd == comma; ifstart
                 str sbuf = " ";
-                syscall 3 0 sbuf 1;
+                callfunc gets sbuf 1;
                 tape[pointer] = sbuf[0];
                 pc = pc + 1;
                 processed = 1;

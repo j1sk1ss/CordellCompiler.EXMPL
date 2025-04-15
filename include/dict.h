@@ -2,8 +2,10 @@
 #define DICT_H_
 
 // Misc
-#define START_COMMAND "start"
-#define EXIT_COMMAND  "exit"
+#define START_COMMAND           "start"
+#define EXIT_COMMAND            "exit"
+#define IMPORT_COMMAND          "import"
+#define IMPORT_SELECT_COMMAND   "from"
 
 // Function
 #define CALLFUNC_COMMAND        "callfunc"
