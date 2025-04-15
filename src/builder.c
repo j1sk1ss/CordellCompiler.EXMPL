@@ -52,11 +52,15 @@ int __compile(object_t* obj) {
     if (__params.syntax) print_parse_tree(parse_tree, 0);
     int semantic_res = check_semantic(parse_tree);
     if (semantic_res) {
-        char temp_output[256] = { 0 };
-        sprintf(temp_output, "%s.asm", obj->path);
-        FILE* output = fopen(temp_output, "w");
+        char save_path[128] = { 0 };
+        sprintf(save_path, "%s.asm", obj->path);
+        FILE* output = fopen(save_path, "w");
         generate_asm(parse_tree, output);
         fclose(output);
+
+        char compile_command[128] = { 0 };
+        sprintf(compile_command, "%s -f%s %s -o %s.o", DEFAULT_ASM_COMPILER, DEFAULT_ARCH, save_path, save_path);
+        system(compile_command);
     }
 
     unload_syntax_tree(parse_tree);
@@ -68,11 +72,40 @@ int build(char* path, int is_main) {
     return __add_object(path, is_main);
 }
 
-int build_all() {
+int build_all(char* output) {
     if (__current_file == 0) return 0;
+
+    /*
+    Production of .asm files with temporary saving in files directory.
+    */
     for (int i = __current_file - 1; i >= 0; i--) {
         int res = __compile(&__files[i]);
         if (!res) return res;
+    }
+
+    /*
+    Linking output files
+    */
+    char link_command[256] = { 0 };
+    sprintf(link_command, "%s -m %s ", DEFAULT_LINKER, DEFAULT_LINKER_ARCH);
+
+    for (int i = __current_file - 1; i >= 0; i--) {
+        char object_path[128] = { 0 };
+        sprintf(object_path, " %s.asm.o", __files[i].path);
+        str_strcat(link_command, object_path);
+    }
+
+    str_strcat(link_command, " -o ");
+    str_strcat(link_command, output);
+    system(link_command);
+
+    /*
+    Cleanup
+    */
+    for (int i = __current_file - 1; i >= 0; i--) {
+        char delete_command[128] = { 0 };
+        sprintf(delete_command, "rm %s.asm %s.asm.o", __files[i].path, __files[i].path);
+        system(delete_command);
     }
 
     return 1;

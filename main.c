@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    int build_res = build_all();
+    int build_res = build_all(output_location);
     if (!build_res) {
         print_error("Error via compilation! Code: %i", build_res);
     }

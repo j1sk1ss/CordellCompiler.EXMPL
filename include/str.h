@@ -13,6 +13,9 @@ char* str_strncpy(char* dst, char* src, int n);
 int str_strcmp(char* f, char* s);
 int str_strncmp(const char* str1, const char* str2, size_t n);
 int str_atoi(char *str);
+unsigned int str_strlen(const char* str);
+char* str_strcpy(char* dst, const char* src);
+char* str_strcat(char* dest, const char* src);
 
 int is_number(char* s);
 int str_isdigit(int c);

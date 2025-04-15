@@ -94,6 +94,34 @@ int str_atoi(char *str) {
 	return (num * neg);
 }
 
+unsigned int str_strlen(const char* str) {
+    unsigned int len = 0;
+    while (*str) {
+        ++len;
+        ++str;
+    }
+
+    return len;
+}
+
+char* str_strcpy(char* dst, const char* src) {
+    if (str_strlen(src) <= 0) return NULL;
+
+	int	i = 0;
+	while (src[i]) {
+		dst[i] = src[i];
+		i++;
+	}
+
+	dst[i] = '\0';
+	return (dst);
+}
+
+char* str_strcat(char* dest, const char* src) {
+    str_strcpy(dest + str_strlen(dest), src);
+    return dest;
+}
+
 int is_number(char* s) {
     while (*s) {
         if (!str_isdigit(*s)) return 0;
