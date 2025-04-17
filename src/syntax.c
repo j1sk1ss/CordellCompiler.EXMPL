@@ -4,16 +4,16 @@
 #pragma region [Misc]
 
     static tree_t* _parse_import(token_t**);
-    static tree_t* _parse_function_call(token_t**);
-    static tree_t* _parse_function_declaration(token_t**);
     static tree_t* _parse_variable_declaration(token_t**);
     static tree_t* _parse_array_declaration(token_t**);
-    static tree_t* _parse_while_loop(token_t**);
-    static tree_t* _parse_if_statement(token_t**);
+    static tree_t* _parse_function_call(token_t**);
+    static tree_t* _parse_function_declaration(token_t**);
+    static tree_t* _parse_return_declaration(token_t**);
+    static tree_t* _parse_condition_scope(token_t**);
     static tree_t* _parse_syscall(token_t**);
-    static tree_t* _parse_scope(token_t**, token_type_t);
-    static tree_t* _parse_array_expression(token_t**);
     static tree_t* _parse_expression(token_t**);
+    static tree_t* _parse_array_expression(token_t**);
+    static tree_t* _parse_scope(token_t**, token_type_t);
 
     typedef struct {
         token_type_t type;
@@ -28,16 +28,17 @@
         { CHAR_TYPE_TOKEN,      _parse_variable_declaration },
         { STRING_TYPE_TOKEN,    _parse_variable_declaration },
         { ARRAY_TYPE_TOKEN,     _parse_array_declaration    },
+        { CALL_TOKEN,           _parse_function_call        },
         { FUNC_TOKEN,           _parse_function_declaration },
-        { WHILE_TOKEN,          _parse_while_loop           },
-        { IF_TOKEN,             _parse_if_statement         },
+        { RETURN_TOKEN,         _parse_return_declaration   },
+        { WHILE_TOKEN,          _parse_condition_scope      },
+        { IF_TOKEN,             _parse_condition_scope      },
         { SYSCALL_TOKEN,        _parse_syscall              },
         { PTR_VARIABLE_TOKEN,   _parse_expression           },
         { INT_VARIABLE_TOKEN,   _parse_expression           },
         { STR_VARIABLE_TOKEN,   _parse_expression           },
         { ARR_VARIABLE_TOKEN,   _parse_expression           },
         { UNKNOWN_STRING_TOKEN, _parse_expression           },
-        { CALL_TOKEN,           _parse_function_call        },
         { -1, NULL }
     };
 
@@ -144,11 +145,7 @@ static tree_t* _parse_function_call(token_t** curr) {
     tree_t* call_node = _create_tree_node(*curr);
     *curr = (*curr)->next;
 
-    tree_t* name_node = _create_tree_node(*curr);
-    _add_child_node(call_node, name_node);
-
     tree_t* args_node = _create_tree_node(NULL);
-    *curr = (*curr)->next;
     while (*curr && (*curr)->t_type != DELIMITER_TOKEN) {
         tree_t* arg_name_node = _create_tree_node((*curr));
         __fill_variable(arg_name_node);
@@ -158,6 +155,17 @@ static tree_t* _parse_function_call(token_t** curr) {
 
     _add_child_node(call_node, args_node);
     return call_node;
+}
+
+static tree_t* _parse_return_declaration(token_t** curr) {
+    if (!curr || !*curr || (*curr)->t_type != RETURN_TOKEN) return NULL;
+    tree_t* return_node = _create_tree_node(*curr);
+    if (!return_node) return NULL;
+    
+    *curr = (*curr)->next;
+    tree_t* exp_node = _parse_expression(curr);
+    if (exp_node) _add_child_node(return_node, exp_node);
+    return return_node;
 }
 
 static tree_t* _parse_function_declaration(token_t** curr) {
@@ -203,7 +211,7 @@ static tree_t* _parse_function_declaration(token_t** curr) {
     */
     *curr = (*curr)->next;
     tree_t* args_node = _create_tree_node(NULL);
-    while (!*curr || (*curr)->t_type != FUNC_START_TOKEN) {
+    while (!*curr || (*curr)->t_type != OPEN_BLOCK_TOKEN) {
         tree_t* param_node = _parse_variable_declaration(curr);
         if (param_node) _add_child_node(args_node, param_node);
         *curr = (*curr)->next;
@@ -220,23 +228,8 @@ static tree_t* _parse_function_declaration(token_t** curr) {
         |_ <text_section_1>
         |_ ...
     */
-    tree_t* body_node = _parse_scope(curr, FUNC_END_TOKEN);
+    tree_t* body_node = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
     _add_child_node(func_node, body_node);
-
-    /*
-    Parse return statement.
-    Function
-    |_ <name>
-    |_ <args>
-    |_ <body>
-    |_ <return>
-        |_ <expression>
-    */
-    (*curr) = (*curr)->next;
-    tree_t* return_node = _create_tree_node(create_token(FUNC_END_TOKEN, NULL, 0, (*curr)->line_number));
-    tree_t* return_exp = _parse_expression(curr);
-    _add_child_node(return_node, return_exp);
-    _add_child_node(func_node, return_node);
 
     __current_function_name = temp_fname;
     __current_function -= 1;
@@ -320,11 +313,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
 static tree_t* _parse_expression(token_t** curr) {
     if (!curr || !*curr) return NULL;
     token_t* left = *curr;
-    if (
-        (*curr)->t_type == ARR_VARIABLE_TOKEN || 
-        (*curr)->t_type == STR_VARIABLE_TOKEN ||
-        (*curr)->t_type == PTR_VARIABLE_TOKEN
-    ) return _parse_array_expression(curr);
+    if ((*curr)->t_type == ARR_VARIABLE_TOKEN || (*curr)->t_type == STR_VARIABLE_TOKEN || (*curr)->t_type == PTR_VARIABLE_TOKEN) return _parse_array_expression(curr);
     else if ((*curr)->t_type == SYSCALL_TOKEN) return _parse_syscall(curr);
     else if ((*curr)->t_type == CALL_TOKEN) return _parse_function_call(curr);
     
@@ -401,7 +390,7 @@ static tree_t* _parse_scope(token_t** curr, token_type_t exit_token) {
     return scope_node;
 }
 
-static tree_t* __parse_condition_scope(token_t** curr, token_type_t start, token_type_t end) {
+static tree_t* _parse_condition_scope(token_t** curr) {
     if (!curr || !*curr) return NULL;
     tree_t* body_node = _create_tree_node(*curr);
     if (!body_node) return NULL;
@@ -422,22 +411,14 @@ static tree_t* __parse_condition_scope(token_t** curr, token_type_t start, token
     |_<scope>
     */
     *curr = (*curr)->next;
-    if (*curr && (*curr)->t_type == start) {
+    if (*curr && (*curr)->t_type == OPEN_BLOCK_TOKEN) {
         *curr = (*curr)->next;
-        tree_t* body = _parse_scope(curr, end);
+        tree_t* body = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
         if (body) _add_child_node(body_node, body);
-        if (*curr && (*curr)->t_type == end) *curr = (*curr)->next;
+        if (*curr && (*curr)->t_type == CLOSE_BLOCK_TOKEN) *curr = (*curr)->next;
     }
     
     return body_node;
-}
-
-static tree_t* _parse_while_loop(token_t** curr) {
-    return __parse_condition_scope(curr, WHILE_START_TOKEN, WHILE_END_TOKEN);
-}
-
-static tree_t* _parse_if_statement(token_t** curr) {
-    return __parse_condition_scope(curr, IF_START_TOKEN, IF_END_TOKEN);;
 }
 
 static tree_t* _parse_syscall(token_t** curr) {

@@ -24,6 +24,8 @@ typedef enum {
     DELIMITER_TOKEN,
     OPEN_INDEX_TOKEN,
     CLOSE_INDEX_TOKEN,
+    OPEN_BLOCK_TOKEN,
+    CLOSE_BLOCK_TOKEN,
 
     // Types
     PTR_TYPE_TOKEN,
@@ -37,6 +39,7 @@ typedef enum {
     IMPORT_TOKEN,
     IMPORT_SELECT_TOKEN,
     START_TOKEN,
+    RETURN_TOKEN,
     EXIT_TOKEN,
     SYSCALL_TOKEN,
     CALL_TOKEN,
@@ -44,18 +47,12 @@ typedef enum {
 
     // Function
     FUNC_TOKEN,
-    FUNC_START_TOKEN,
-    FUNC_END_TOKEN,
     
     // While
     WHILE_TOKEN,
-    WHILE_START_TOKEN,
-    WHILE_END_TOKEN,
     
     // If
     IF_TOKEN,
-    IF_START_TOKEN,
-    IF_END_TOKEN,
 
     // Statements
     PLUS_TOKEN,

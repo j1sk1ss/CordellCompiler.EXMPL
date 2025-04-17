@@ -19,12 +19,12 @@ static markup_token_t _markups[] = {
     { .value = START_COMMAND,          .type = START_TOKEN         },
     { .value = SYSCALL_COMMAND,        .type = SYSCALL_TOKEN       },
     { .value = EXIT_COMMAND,           .type = EXIT_TOKEN          },
+    { .value = OPEN_BLOCK,             .type = OPEN_BLOCK_TOKEN    },
+    { .value = CLOSE_BLOCK,            .type = CLOSE_BLOCK_TOKEN   },
 
     // Function
-    { .value = CALLFUNC_COMMAND,       .type = CALL_TOKEN          },
     { .value = FUNCTION_COMMAND,       .type = FUNC_TOKEN          },
-    { .value = FUNCTION_START_COMMAND, .type = FUNC_START_TOKEN    },
-    { .value = FUNCTION_END_COMMAND,   .type = FUNC_END_TOKEN      },
+    { .value = RETURN_COMMAND,         .type = RETURN_TOKEN        },
 
     // Variable
     { .value = PTR_VARIABLE,           .type = PTR_TYPE_TOKEN      },
@@ -36,13 +36,9 @@ static markup_token_t _markups[] = {
 
     // While
     { .value = WHILE_COMAND,           .type = WHILE_TOKEN         },
-    { .value = WHILE_START_COMMAND,    .type = WHILE_START_TOKEN   },
-    { .value = WHILE_END_COMMAND,      .type = WHILE_END_TOKEN     },
 
     // If
     { .value = IF_COMMAND,             .type = IF_TOKEN            },
-    { .value = IF_START_COMMAND,       .type = IF_START_TOKEN      },
-    { .value = IF_END_COMMAND,         .type = IF_END_TOKEN        },
 
     // Operators
     { .value = ASIGN_STATEMENT,        .type = ASIGN_TOKEN         },
@@ -86,7 +82,8 @@ int variable_markup(token_t* head) {
         if (
             curr->t_type == INT_TYPE_TOKEN || curr->t_type == SHORT_TYPE_TOKEN || 
             curr->t_type == CHAR_TYPE_TOKEN || curr->t_type == STRING_TYPE_TOKEN || 
-            curr->t_type == ARRAY_TYPE_TOKEN || curr->t_type == PTR_TYPE_TOKEN
+            curr->t_type == ARRAY_TYPE_TOKEN || curr->t_type == PTR_TYPE_TOKEN ||
+            curr->t_type == FUNC_TOKEN
         ) {
             token_t* next = curr->next;
             if (next && next->t_type == UNKNOWN_STRING_TOKEN) {
@@ -98,6 +95,7 @@ int variable_markup(token_t* head) {
                 else if (curr->t_type == STRING_TYPE_TOKEN) variables[var_count].type = STR_VARIABLE_TOKEN;
                 else if (curr->t_type == ARRAY_TYPE_TOKEN)  variables[var_count].type = ARR_VARIABLE_TOKEN;
                 else if (curr->t_type == PTR_TYPE_TOKEN)    variables[var_count].type = PTR_VARIABLE_TOKEN;
+                else if (curr->t_type == FUNC_TOKEN)        variables[var_count].type = CALL_TOKEN;
                 var_count++;
             }
         }

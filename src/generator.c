@@ -283,8 +283,8 @@ static int _generate_expression(tree_t* node, FILE* output) {
         2) Put args to the stack.
         */
         int variables_size = 0;
-        tree_t* func_name_node = node->first_child;
-        tree_t* args_node = func_name_node->next_sibling;
+        tree_t* func_name_node = node;
+        tree_t* args_node = func_name_node->first_child;
 
         /*
         Saving params in stack.
@@ -324,6 +324,18 @@ static int _generate_expression(tree_t* node, FILE* output) {
         fprintf(output, "%*smov esp, ebp\n", _current_depth * 4, "");
         fprintf(output, "%*spop ebp\n", _current_depth * 4, "");
         fprintf(output, "%*sint 0x80\n", _current_depth * 4, "");
+    }
+    else if (node->token->t_type == RETURN_TOKEN) {
+        fprintf(output, "\n ; --------------- Return --------------- \n");
+        /*
+        Move to eax return expresion, and restore stack.
+        Now, result of function stored at EAX register.
+        */
+        _generate_expression(node->first_child, output);
+
+        fprintf(output, "%*smov esp, ebp\n", _current_depth * 4, "");
+        fprintf(output, "%*spop ebp\n", _current_depth * 4, "");
+        fprintf(output, "%*sret\n", _current_depth * 4, "");
     }
 
     return 1;
@@ -400,16 +412,6 @@ static int _generate_function(tree_t* node, FILE* output) {
     for (tree_t* part = body_node->first_child; part; part = part->next_sibling) {
         _generate_expression(part, output);
     }
-
-    /*
-    Move to eax return expresion, and restore stack.
-    Now, result of function stored at EAX register.
-    */
-    _generate_expression(return_node->first_child, output);
-
-    fprintf(output, "%*smov esp, ebp\n", _current_depth * 4, "");
-    fprintf(output, "%*spop ebp\n", _current_depth * 4, "");
-    fprintf(output, "%*sret\n", _current_depth * 4, "");
 
     fprintf(output, " ; --------------- \n");
     _current_depth -= 1;
