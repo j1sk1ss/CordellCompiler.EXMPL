@@ -12,16 +12,16 @@ Or tick-tac-toe
 
 start
     str welcomeMsg = "Brainfuck interpriter! Input code ";
-    callfunc prints welcomeMsg 34;
+    prints welcomeMsg 34;
 
     arr code 10000 1 =;
-    syscall 3 0 code 10000;
+    gets code 10000;
 
     char brk = 0;
     int codelength = 0;
-    while code[codelength] != brk; lstart
+    while code[codelength] != brk; {
         codelength = codelength + 1;
-    lend
+    }
 
     arr bracketmap 10000 4 =;
     arr stack 10000 4 =;
@@ -37,117 +37,117 @@ start
     char openBracket    = 91; : [ :
     char closedBracket  = 93; : ] :
 
-    while pos < codelength; lstart
+    while pos < codelength; {
         char c = code[pos];
         int handled = 0;
 
-        if c == openBracket; ifstart
+        if c == openBracket; {
             stack[stackptr] = pos;
             stackptr = stackptr + 1;
             handled = 1;
-        ifend
+        }
         
-        if handled == 0; ifstart
-            if c == closedBracket; ifstart
-                if stackptr > 0; ifstart
+        if handled == 0; {
+            if c == closedBracket; {
+                if stackptr > 0; {
                     stackptr = stackptr - 1;
                     int matchpos = stack[stackptr];
                     bracketmap[pos] = matchpos;
                     bracketmap[matchpos] = pos;
-                ifend
+                }
 
                 handled = 1;
-            ifend
-        ifend
+            }
+        }
         
         pos = pos + 1;
-    lend
+    }
     
     arr tape 30000 1 =;
     int pointer = 0;
     int pc = 0;
 
-    while pc < codelength; lstart
+    while pc < codelength; {
         char cmd = code[pc];
         int processed = 0;
         
-        if cmd == rightMove; ifstart
+        if cmd == rightMove; {
             pointer = pointer + 1;
             pc = pc + 1;
             processed = 1;
-        ifend
+        }
 
-        if processed == 0; ifstart
-            if cmd == leftMove; ifstart
+        if processed == 0; {
+            if cmd == leftMove; {
                 pointer = pointer - 1;
                 pc = pc + 1;
                 processed = 1;
-            ifend
-        ifend
+            }
+        }
 
-        if processed == 0; ifstart
-            if cmd == plus; ifstart
+        if processed == 0; {
+            if cmd == plus; {
                 tape[pointer] = tape[pointer] + 1;
                 pc = pc + 1;
                 processed = 1;
-            ifend
-        ifend
+            }
+        }
         
-        if processed == 0; ifstart
-            if cmd == minus; ifstart
+        if processed == 0; {
+            if cmd == minus; {
                 tape[pointer] = tape[pointer] - 1;
                 pc = pc + 1;
                 processed = 1;
-            ifend
-        ifend
+            }
+        }
         
-        if processed == 0; ifstart
-            if cmd == dot; ifstart
+        if processed == 0; {
+            if cmd == dot; {
                 str fbuf = " ";
                 fbuf[0] = tape[pointer];
-                callfunc prints fbuf 1;
+                prints fbuf 1;
                 pc = pc + 1;
                 processed = 1;
-            ifend
-        ifend
+            }
+        }
         
-        if processed == 0; ifstart
-            if cmd == comma; ifstart
+        if processed == 0; {
+            if cmd == comma; {
                 str sbuf = " ";
-                callfunc gets sbuf 1;
+                gets sbuf 1;
                 tape[pointer] = sbuf[0];
                 pc = pc + 1;
                 processed = 1;
-            ifend
-        ifend
+            }
+        }
         
-        if processed == 0; ifstart
-            if cmd == openBracket; ifstart
-                if tape[pointer] == brk; ifstart
+        if processed == 0; {
+            if cmd == openBracket; {
+                if tape[pointer] == brk; {
                     pc = bracketmap[pc] + 1;
-                ifend
-                if tape[pointer] != brk; ifstart
+                }
+                if tape[pointer] != brk; {
                     pc = pc + 1;
-                ifend
+                }
                 processed = 1;
-            ifend
-        ifend
+            }
+        }
         
-        if processed == 0; ifstart
-            if cmd == closedBracket; ifstart
-                if tape[pointer] != brk; ifstart
+        if processed == 0; {
+            if cmd == closedBracket; {
+                if tape[pointer] != brk; {
                     pc = bracketmap[pc] + 1;
-                ifend
-                if tape[pointer] == brk; ifstart
+                }
+                if tape[pointer] == brk; {
                     pc = pc + 1;
-                ifend
+                }
                 processed = 1;
-            ifend
-        ifend
+            }
+        }
         
-        if processed == 0; ifstart
+        if processed == 0; {
             pc = pc + 1;
-        ifend
-    lend
+        }
+    }
 
 exit 0;

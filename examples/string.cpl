@@ -19,8 +19,3 @@ function strlen ptr string; {
 
     return index;
 }
-
-start
-    str val = "Hello!";
-    prints val 6;
-exit 1;

@@ -20,7 +20,7 @@ void print_parse_tree(tree_t* node, int depth) {}
 
 
 static params_t __params = {
-    .syntax = 0
+    .syntax = 0, .save_asm = 0
 };
 
 static object_t __files[MAX_FILES];
@@ -104,7 +104,7 @@ int build_all(char* output) {
     */
     for (int i = __current_file - 1; i >= 0; i--) {
         char delete_command[128] = { 0 };
-        sprintf(delete_command, "rm %s.asm %s.asm.o", __files[i].path, __files[i].path);
+        if (!__params.save_asm) sprintf(delete_command, "rm %s.asm %s.asm.o", __files[i].path, __files[i].path);
         system(delete_command);
     }
 

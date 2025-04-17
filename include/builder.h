@@ -22,6 +22,7 @@ typedef struct {
 
 typedef struct {
     int syntax;
+    int save_asm;
 } params_t;
 
 

@@ -9,6 +9,7 @@ int main(int argc, char* argv[]) {
     }
     
     mm_init();
+    params_t p = { .save_asm = 0, .syntax = 0 };
 
     int first = 1;
     char* output_location = NULL;
@@ -20,8 +21,10 @@ int main(int argc, char* argv[]) {
             print_info("Show this message: -h");
         }
         else if (!str_strcmp(argv[i], "--syntax")) {
-            params_t p = { .syntax = 1 };
-            set_params(&p);
+            p.syntax = 1;
+        }
+        else if (!str_strcmp(argv[i], "--asm")) {
+            p.save_asm = 1;
         }
         else if (!str_strcmp(argv[i], "-o")) {
             output_location = argv[++i];
@@ -37,6 +40,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    set_params(&p);
     int build_res = build_all(output_location);
     if (!build_res) {
         print_error("Error via compilation! Code: %i", build_res);

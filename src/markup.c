@@ -79,6 +79,18 @@ int variable_markup(token_t* head) {
     size_t var_count = 0;
 
     while (curr) {
+        if (curr->t_type == IMPORT_TOKEN) {
+            curr = curr->next;
+            while (curr->t_type != DELIMITER_TOKEN) {
+                variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
+                str_strncpy((char*)variables[var_count].name, (char*)curr->value, TOKEN_MAX_SIZE);
+                variables[var_count].type = CALL_TOKEN;
+                var_count++;
+                
+                curr = curr->next;
+            }
+        }
+
         if (
             curr->t_type == INT_TYPE_TOKEN || curr->t_type == SHORT_TYPE_TOKEN || 
             curr->t_type == CHAR_TYPE_TOKEN || curr->t_type == STRING_TYPE_TOKEN || 
