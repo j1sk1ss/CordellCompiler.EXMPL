@@ -12,8 +12,6 @@ typedef struct tree {
     struct tree* parent;
     struct tree* first_child;
     struct tree* next_sibling;
-    int child_count;
-
     int function;
     int variable_offset;
     int variable_size;

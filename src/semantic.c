@@ -14,7 +14,6 @@ int check_semantic(tree_t* node) {
                 tree_t* name = node->first_child;
                 tree_t* args = name->next_sibling;
                 tree_t* body = args->next_sibling;
-                tree_t* retn = body->next_sibling;
 
                 for (tree_t* param = args->first_child; param; param = param->next_sibling) {
                     if (!is_variable(param->token->t_type)) {
