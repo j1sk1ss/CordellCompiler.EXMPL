@@ -3,6 +3,7 @@
 
 #include "token.h"
 
+int get_variable_type(token_type_t token);
 int get_variable_size(token_type_t token);
 int is_variable(token_type_t token);
 int is_operand(token_type_t token);

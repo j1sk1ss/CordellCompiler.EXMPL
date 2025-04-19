@@ -1,6 +1,26 @@
 #include "../include/vars.h"
 
 
+/*
+Return 1 if variable is an array-like data object.
+Return 32 if 32bit variable
+Return 16 if 16bit variable
+Return 8 if 8bit variable
+*/
+int get_variable_type(token_type_t token) {
+    switch (token) {
+        case UNKNOWN_NUMERIC_TOKEN:
+        case STR_VARIABLE_TOKEN:
+        case ARR_VARIABLE_TOKEN:
+        case STRING_VALUE_TOKEN: return 1;
+        case PTR_VARIABLE_TOKEN:
+        case INT_VARIABLE_TOKEN: return 32;
+        case SHORT_VARIABLE_TOKEN: return 16;
+        case CHAR_VARIABLE_TOKEN: return 8;
+        default: return 0;
+    }
+} 
+
 int get_variable_size(token_type_t token) {
     switch (token) {
         case UNKNOWN_NUMERIC_TOKEN:

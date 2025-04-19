@@ -14,7 +14,7 @@ start
     str welcomeMsg = "Brainfuck interpriter! Input code ";
     prints welcomeMsg 34;
 
-    arr code 10000 1 =;
+    arr code 10000 char =;
     gets code 10000;
 
     char brk = 0;
@@ -23,8 +23,8 @@ start
         codelength = codelength + 1;
     }
 
-    arr bracketmap 10000 4 =;
-    arr stack 10000 4 =;
+    arr bracketmap 10000 int =;
+    arr stack 10000 int =;
     int stackptr = 0;
     int pos = 0;
 
@@ -63,7 +63,7 @@ start
         pos = pos + 1;
     }
     
-    arr tape 30000 1 =;
+    arr tape 30000 char =;
     int pointer = 0;
     int pc = 0;
 
