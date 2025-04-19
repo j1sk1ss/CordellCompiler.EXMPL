@@ -465,7 +465,8 @@ static int _generate_if(tree_t* node, FILE* output) {
     if (!node) return 0;
     int current_label = _label_counter++;
     tree_t* condition = node->first_child;
-    tree_t* body = condition->next_sibling->first_child;
+    tree_t* body = condition->next_sibling;
+    tree_t* else_body = body->next_sibling;
 
     fprintf(output, "\n ; --------------- if statement [%i] --------------- \n", current_label);
     _generate_expression(condition, output);
@@ -473,14 +474,23 @@ static int _generate_if(tree_t* node, FILE* output) {
     fprintf(output, "%*sje end_if_%d\n", _current_depth * 4, "", current_label);
     _current_depth += 1;
 
-    while (body) {
-        _generate_expression(body, output);
-        body = body->next_sibling;
+    tree_t* body_exp = body->first_child;
+    while (body_exp) {
+        _generate_expression(body_exp, output);
+        body_exp = body_exp->next_sibling;
     }
 
-    _current_depth -= 1;
     fprintf(output, " ; --------------- \n");
     fprintf(output, "%*send_if_%d:\n", _current_depth * 4, "", current_label);
+    if (else_body) {
+        tree_t* else_body_exp = else_body->first_child;
+        while (else_body_exp) {
+            _generate_expression(else_body_exp, output);
+            else_body_exp = else_body_exp->next_sibling;
+        }
+    }
+    
+    _current_depth -= 1;
     return 1;
 }
 

@@ -34,11 +34,10 @@ static markup_token_t _markups[] = {
     { .value = STR_VARIABLE,           .type = STRING_TYPE_TOKEN   },
     { .value = ARR_VARIABLE,           .type = ARRAY_TYPE_TOKEN    },
 
-    // While
+    // Scope
     { .value = WHILE_COMAND,           .type = WHILE_TOKEN         },
-
-    // If
     { .value = IF_COMMAND,             .type = IF_TOKEN            },
+    { .value = ELSE_COMMAND,           .type = ELSE_TOKEN          },
 
     // Operators
     { .value = ASIGN_STATEMENT,        .type = ASIGN_TOKEN         },

@@ -48,11 +48,10 @@ typedef enum {
     // Function
     FUNC_TOKEN,
     
-    // While
+    // Condition scope
     WHILE_TOKEN,
-    
-    // If
     IF_TOKEN,
+    ELSE_TOKEN,
 
     // Statements
     PLUS_TOKEN,

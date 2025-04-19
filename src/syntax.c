@@ -500,14 +500,26 @@ static tree_t* _parse_condition_scope(token_t** curr) {
     *curr = (*curr)->next;
     if (*curr && (*curr)->t_type == OPEN_BLOCK_TOKEN) {
         *curr = (*curr)->next;
-        tree_t* body = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
-        if (!body) {
+        tree_t* if_body = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
+        if (!if_body) {
             unload_syntax_tree(body_node);
             unload_syntax_tree(cond);
             return NULL;
         }
 
-        _add_child_node(body_node, body);
+        _add_child_node(body_node, if_body);
+        if (*curr && (*curr)->t_type == CLOSE_BLOCK_TOKEN) *curr = (*curr)->next;
+    }
+
+    if (*curr && (*curr)->t_type == ELSE_TOKEN) {
+        *curr = (*curr)->next->next;
+        tree_t* else_body = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
+        if (!else_body) {
+            unload_syntax_tree(body_node);
+            unload_syntax_tree(cond);
+        }
+
+        _add_child_node(body_node, else_body);
         if (*curr && (*curr)->t_type == CLOSE_BLOCK_TOKEN) *curr = (*curr)->next;
     }
     

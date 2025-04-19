@@ -12,7 +12,7 @@
 #define CLOSE_BLOCK     "}"
 
 // Function
-#define FUNCTION_COMMAND        "function"
+#define FUNCTION_COMMAND "function"
 
 // Types
 #define PTR_VARIABLE    "ptr"
@@ -23,9 +23,10 @@
 #define ARR_VARIABLE    "arr"
 
 // Commands
-#define WHILE_COMAND        "while"
-#define IF_COMMAND          "if"
-#define SYSCALL_COMMAND     "syscall"
+#define WHILE_COMAND    "while"
+#define IF_COMMAND      "if"
+#define ELSE_COMMAND    "else"
+#define SYSCALL_COMMAND "syscall"
 
 // Symbols and statements (Operands)
 #define ASIGN_STATEMENT         "="
