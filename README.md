@@ -9,7 +9,7 @@
 Every program begins with the `start` keyword and ends with the `exit [return_code];` statement.
 
             start 
-                        ... // code 
+                ... // code 
             exit 0;
 
 ---
@@ -32,7 +32,7 @@ The following types are supported:
             char c = 48;
             str name = "Hello, World!";
             ptr namePtr = name;
-            arr farr 100 1 =; // Will allocate array with size 100 and elem size 1
+            arr farr 100 char =; // Will allocate array with size 100 and elem size 1 byte
             arr sarr 5 4 = 1 2 3 4 5; // Will allocate array for provided elements
 
 ---
@@ -58,15 +58,18 @@ Basic arithmetic and logical operations are supported:
 
 ### If Condition
 
-            if a > b; ifstart 
-                        ... // code 
-            ifend
+            if a > b; {
+                ... // if code
+            }
+            else {
+                ... // else code
+            }
 
 ### While Loop
 
-            while x < 10; lstart 
-                        ... // loop body 
-            lend
+            while x < 10; {
+                ... // loop body 
+            }
 
 ---
 
@@ -75,23 +78,24 @@ Basic arithmetic and logical operations are supported:
 Functions are declared using the `function` keyword and defined within `fstart ... fend`.
 
 ### Function Signature:
-            function [name] [type1] arg1; [type2] arg2; ...; fstart 
-                        // function body 
-            fend [expression]; // to return a value
+            function [name] [type1] arg1; [type2] arg2; ...; {
+                : function body :
+                return something;
+            }
 
 ### Example:
 
-            function sumfunc int a; int b; fstart 
-            fend a + b;
+            function sumfunc int a; int b; {
+                return a + b;
+            }
 
 ---
 
 ## Function Calls
 
-            int result = callfunc sumfunc 5 10;
-            
-            // Functions without return values can be called directly:
-            callfunc printStr strptr size;
+            int result = sumfunc 5 10;
+            : Functions without return values can be called directly :
+            printStr strptr size;
 
 ---
 
@@ -102,22 +106,23 @@ Functions are declared using the `function` keyword and defined within `fstart .
             syscall 4 1 ptr size;
             syscall 3 0 ptr size;
 
-
 ### Wrapping in a function:
 
-            function printStr int ptr; int size; fstart 
-                syscall 4 1 ptr size; 
-            fend 1;
+            function printStr int ptr; int size; {
+                return syscall 4 1 ptr size; 
+            }
             
-            function getStr int ptr; int size; fstart 
-                syscall 3 0 ptr size; 
-            fend 1;
+            function getStr int ptr; int size; {
+                return syscall 3 0 ptr size; 
+            }
 
 ---
 
 ## Comments
 
 Comments are written as annotations `:` within functions and code blocks:
+
+            : Comment in one line :
 
             :
             Function description.
@@ -131,23 +136,33 @@ Comments are written as annotations `:` within functions and code blocks:
 
 ### Example of Printing a Number:
 
-            function printNum int num; fstart 
-                int buffIndex = 19; 
-                str buff = " "; int 
-                tmp = 0; 
-            
-                while num > 0; lstart 
-                    tmp = num / 10; 
-                    tmp = tmp * 10; 
-                    tmp = num - tmp; 
+            function itoa ptr buffer; int dsize; int num; {
+                int index = dsize - 1;
+                int tmp = 0;
+
+                int isNegative = 0;
+                if num < 0; {
+                    isNegative = 1;
+                    num = num * -1;
+                }
+
+                while num > 0; {
+                    tmp = num / 10;
+                    tmp = tmp * 10;
+                    tmp = num - tmp;
                     tmp = tmp + 48;
-                    buff[buffIndex] = tmp;
-                    buffIndex = buffIndex - 1;
+                    buffer[index] = tmp;
+                    index = index - 1;
                     num = num / 10;
-                lend
-            
-                syscall 4 1 buff 20;
-            fend 1;
+                }
+
+                if isNegative == 1; {
+                    char minus = 45;
+                    buffer[index - 1] = minus;
+                }
+
+                return 1;
+            }
 
 ### Example of Fibonacci N-number print:
 
@@ -156,13 +171,17 @@ Comments are written as annotations `:` within functions and code blocks:
                 int b = 1;
                 int c = 0;
                 int count = 0;
-                while count < 20; lstart
+                while count < 20; {
                     c = a + b;
                     a = b;
                     b = c;
-                    callfunc printNum c;
+                    
+                    arr buffer 40 char =;
+                    itoa buffer 40 c;
+                    printf buffer 40;
+
                     count = count + 1;
-                lend
+                }
             exit 1;
 
 ---
