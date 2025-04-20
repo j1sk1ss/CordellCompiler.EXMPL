@@ -11,8 +11,7 @@ Or tick-tac-toe
 :
 
 start
-    str welcomeMsg = "Brainfuck interpriter! Input code ";
-    prints welcomeMsg;
+    prints "Brainfuck interpriter! Input code ";
 
     arr code 10000 char =;
     gets code 10000;

@@ -32,6 +32,30 @@
 #pragma endregion
 
 
+static int _generate_rodata_section(tree_t* node, FILE* output) {
+    if (!node) return 0;
+    static int num = 0;
+    for (tree_t* child = node->first_child; child; child = child->next_sibling) {
+        if (!child->token) {
+            _generate_rodata_section(child, output);
+            continue;
+        }
+
+        switch (child->token->t_type) {
+            case IF_TOKEN:
+            case CALL_TOKEN:
+            case WHILE_TOKEN: _generate_rodata_section(child, output); break;
+            case STRING_VALUE_TOKEN: 
+                iprintf(output, "string_%d db '%s'\n", num, child->token->value);
+                sprintf((char*)child->token->value, "string_%d", num++);
+                break;
+            default: break;
+        }
+    }
+
+    return 1;
+}
+
 static int _generate_data_section(tree_t* node, FILE* output) {
     if (!node) return 0;
     for (tree_t* child = node->first_child; child; child = child->next_sibling) {
@@ -39,14 +63,14 @@ static int _generate_data_section(tree_t* node, FILE* output) {
             _generate_data_section(child, output);
             continue;
         }
-        
+
         /*
         Not global function.
         */
         switch (child->token->t_type) {
-            case INT_TYPE_TOKEN:
-            case SHORT_TYPE_TOKEN:
-            case CHAR_TYPE_TOKEN: break;
+            case IF_TOKEN:
+            case FUNC_TOKEN:
+            case WHILE_TOKEN: _generate_data_section(child, output); break;
             case ARRAY_TYPE_TOKEN: {
                 tree_t* size   = child->first_child;
                 tree_t* t_type = size->next_sibling;
@@ -99,7 +123,7 @@ static int _generate_data_section(tree_t* node, FILE* output) {
                 iprintf(output, "%s db '%s', 0\n", name->token->value, value->token->value);
                 break;
             }
-            default: _generate_data_section(child, output); break;
+            default: break;
         }
     }
 
@@ -577,14 +601,30 @@ static int _generate_text_section(tree_t* node, FILE* output) {
 }
 
 int generate_asm(tree_t* root, FILE* output) {
-    fprintf(output, "section .data\n");
-
     tree_t* program_body = root->first_child;
     tree_t* prestart = program_body;
     tree_t* main_body = prestart->next_sibling;
+
+    /*
+    Generate data section. Here we store static arrays,
+    static strings and etc. 
+    Also we store here global vars.
+    */
+    fprintf(output, "\nsection .data\n");
     _generate_data_section(prestart, output);
     _generate_data_section(main_body, output);
 
+    /*
+    Generate rodata section. Here we store strings, that
+    not assign to any variable.
+    */
+    fprintf(output, "\nsection .rodata\n");
+    _generate_rodata_section(prestart, output);
+    _generate_rodata_section(main_body, output);
+
+    /*
+    Generate text sction were placed while program code.
+    */
     fprintf(output, "\nsection .text\n");
     if (prestart) {
         for (tree_t* child = prestart->first_child; child; child = child->next_sibling) {
