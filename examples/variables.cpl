@@ -6,4 +6,7 @@ start
     glob str asdASd = "GlobalString in .data section!";
 
     ro char s = 48; : Read-only int8 :
+
+    int local = -100; : Local variable :
+
 exit 1;

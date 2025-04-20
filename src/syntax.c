@@ -293,10 +293,10 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     token_t* assign_token = name_token->next;
     if (!type_token || !name_token) return NULL;
     
-    tree_t* decl_node  = _create_tree_node(type_token);
+    tree_t* decl_node = _create_tree_node(type_token);
     if (!decl_node) return NULL;
     
-    tree_t* name_node  = _create_tree_node(name_token);
+    tree_t* name_node = _create_tree_node(name_token);
     if (!name_node) {
         unload_syntax_tree(decl_node);
         return NULL;
@@ -310,11 +310,12 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     Add variable offset, if variable not static and global like arrays or strings.
     int32 and string. String has 32 bit size pointer.
     */
-    if (get_variable_type(type_token->t_type) != 1) {
+    if (get_variable_type(type_token->t_type) != 1 && !decl_node->token->ro && !decl_node->token->glob) {
        decl_node->variable_offset = __add_variable_info((char*)name_token->value, 4);
        decl_node->variable_size = 4;
     }
     
+    __fill_variable(name_node);
     decl_node->function = __current_function;
     _add_child_node(decl_node, name_node);
     if (!assign_token || assign_token->t_type != ASIGN_TOKEN) return decl_node;

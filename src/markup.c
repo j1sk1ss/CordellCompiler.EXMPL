@@ -10,6 +10,8 @@ typedef struct {
 typedef struct Variable {
     unsigned char name[TOKEN_MAX_SIZE];
     token_type_t type;
+    int glob;
+    int ro;
 } variable_t;
 
 static markup_token_t _markups[] = {
@@ -128,6 +130,8 @@ int variable_markup(token_t* head) {
 
                     curr->ro = is_ro;
                     curr->glob = is_glob;
+                    variables[var_count].ro = is_ro;
+                    variables[var_count].glob = is_glob;
                     var_count++;
                 }
 
@@ -146,6 +150,8 @@ int variable_markup(token_t* head) {
             for (size_t i = 0; i < var_count; i++) {
                 if (str_strncmp((char*)curr->value, (char*)variables[i].name, TOKEN_MAX_SIZE) == 0) {
                     curr->t_type = variables[i].type;
+                    curr->glob = variables[i].glob;
+                    curr->ro = variables[i].ro;
                     break;
                 }
             }

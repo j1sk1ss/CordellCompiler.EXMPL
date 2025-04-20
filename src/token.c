@@ -74,7 +74,7 @@ token_t* tokenize(int fd) {
                 quotes_open = !quotes_open;
                 continue;
             }
-            else if (ct == CHAR_COMMENT) {
+            else if (ct == CHAR_COMMENT && !quotes_open) {
                 comment_open = !comment_open;
                 continue;
             }

@@ -17,6 +17,19 @@ function gets ptr buffer; int size; {
     return syscall 3 0 buffer size;
 }
 
+function atoi ptr buffer; int bsize; {
+    int num = 0;
+    bsize = bsize - 1;
+
+    while bsize > 0; {
+        num = num * 10;
+        char sym = buffer[bsize];
+        num = num + sym - 48;
+    }
+
+    return num;
+}
+
 function itoa ptr buffer; int dsize; int num; {
     int index = dsize - 1;
     int tmp = 0;
