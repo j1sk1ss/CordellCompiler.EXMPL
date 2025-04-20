@@ -117,7 +117,7 @@ static int _generate_data_section(tree_t* node, FILE* output) {
 
                 break;
             }
-            case STRING_TYPE_TOKEN: {
+            case STR_TYPE_TOKEN: {
                 tree_t* name  = child->first_child;
                 tree_t* value = name->next_sibling;
                 iprintf(output, "%s db '%s', 0\n", name->token->value, value->token->value);

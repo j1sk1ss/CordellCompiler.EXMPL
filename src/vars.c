@@ -41,7 +41,7 @@ int is_variable(token_type_t token) {
         case INT_TYPE_TOKEN:
         case SHORT_TYPE_TOKEN:
         case CHAR_TYPE_TOKEN:
-        case STRING_TYPE_TOKEN: return 1;
+        case STR_TYPE_TOKEN: return 1;
         default: return 0;
     }
 }

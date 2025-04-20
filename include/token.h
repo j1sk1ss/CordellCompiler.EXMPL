@@ -32,7 +32,7 @@ typedef enum {
     INT_TYPE_TOKEN,
     SHORT_TYPE_TOKEN,
     CHAR_TYPE_TOKEN,
-    STRING_TYPE_TOKEN,
+    STR_TYPE_TOKEN,
     ARRAY_TYPE_TOKEN,
 
     // Commands
@@ -77,7 +77,6 @@ typedef enum {
     ARR_VARIABLE_TOKEN,
 
     // Values
-    INT_VALUE_TOKEN,
     STRING_VALUE_TOKEN
 } token_type_t;
 

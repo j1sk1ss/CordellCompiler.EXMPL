@@ -31,7 +31,7 @@ static markup_token_t _markups[] = {
     { .value = INT_VARIABLE,           .type = INT_TYPE_TOKEN      },
     { .value = SHORT_VARIABLE,         .type = SHORT_TYPE_TOKEN    },
     { .value = CHAR_VARIABLE,          .type = CHAR_TYPE_TOKEN     },
-    { .value = STR_VARIABLE,           .type = STRING_TYPE_TOKEN   },
+    { .value = STR_VARIABLE,           .type = STR_TYPE_TOKEN   },
     { .value = ARR_VARIABLE,           .type = ARRAY_TYPE_TOKEN    },
 
     // Scope
@@ -92,7 +92,7 @@ int variable_markup(token_t* head) {
 
         if (
             curr->t_type == INT_TYPE_TOKEN || curr->t_type == SHORT_TYPE_TOKEN || 
-            curr->t_type == CHAR_TYPE_TOKEN || curr->t_type == STRING_TYPE_TOKEN || 
+            curr->t_type == CHAR_TYPE_TOKEN || curr->t_type == STR_TYPE_TOKEN || 
             curr->t_type == ARRAY_TYPE_TOKEN || curr->t_type == PTR_TYPE_TOKEN ||
             curr->t_type == FUNC_TOKEN
         ) {
@@ -103,7 +103,7 @@ int variable_markup(token_t* head) {
                 if (curr->t_type == INT_TYPE_TOKEN)         variables[var_count].type = INT_VARIABLE_TOKEN;
                 else if (curr->t_type == SHORT_TYPE_TOKEN)  variables[var_count].type = SHORT_VARIABLE_TOKEN;
                 else if (curr->t_type == CHAR_TYPE_TOKEN)   variables[var_count].type = CHAR_VARIABLE_TOKEN;
-                else if (curr->t_type == STRING_TYPE_TOKEN) variables[var_count].type = STR_VARIABLE_TOKEN;
+                else if (curr->t_type == STR_TYPE_TOKEN) variables[var_count].type = STR_VARIABLE_TOKEN;
                 else if (curr->t_type == ARRAY_TYPE_TOKEN)  variables[var_count].type = ARR_VARIABLE_TOKEN;
                 else if (curr->t_type == PTR_TYPE_TOKEN)    variables[var_count].type = PTR_VARIABLE_TOKEN;
                 else if (curr->t_type == FUNC_TOKEN)        variables[var_count].type = CALL_TOKEN;
