@@ -10,9 +10,6 @@ typedef struct {
 typedef struct Variable {
     unsigned char name[TOKEN_MAX_SIZE];
     token_type_t type;
-
-    int ro;
-    int glob;
 } variable_t;
 
 static markup_token_t _markups[] = {
@@ -92,7 +89,6 @@ int variable_markup(token_t* head) {
                     variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
                     str_strncpy((char*)variables[var_count].name, (char*)curr->value, TOKEN_MAX_SIZE);
                     variables[var_count].type = CALL_TOKEN;
-                    variables[var_count].ro = 0;
                     var_count++;
                     
                     curr = curr->next;
@@ -101,12 +97,10 @@ int variable_markup(token_t* head) {
 
             case GLOB_TYPE_TOKEN:
                 is_glob = 1;
-                curr = curr->next;
             break;
 
             case RO_TYPE_TOKEN:
                 is_ro = 1;
-                curr = curr->next;
             break;
 
             case INT_TYPE_TOKEN:
@@ -132,8 +126,9 @@ int variable_markup(token_t* head) {
                         default: break;
                     }
 
-                    variables[var_count].ro = is_ro;
-                    variables[var_count].ro = is_glob;
+                    curr->ro = is_ro;
+                    curr->glob = is_glob;
+                    print_debug("%s is glob=%i ro=%i", next->value, is_ro, is_glob);
                     var_count++;
                 }
 
@@ -152,8 +147,6 @@ int variable_markup(token_t* head) {
             for (size_t i = 0; i < var_count; i++) {
                 if (str_strncmp((char*)curr->value, (char*)variables[i].name, TOKEN_MAX_SIZE) == 0) {
                     curr->t_type = variables[i].type;
-                    curr->ro = variables[i].ro;
-                    curr->glob = variables[i].glob;
                     break;
                 }
             }

@@ -1,11 +1,13 @@
 #include "../include/builder.h"
 
 
-#ifdef PRINT_PARSE
-void print_parse_tree(tree_t* node, int depth) {
-    if (!node) return;
+int print_parse_tree(tree_t* node, int depth) {
+    if (!node) return 0;
     for (int i = 0; i < depth; i++) printf("  ");
-    if (node->token) printf("[%s] (t=%d, size=%i, off=%i, f=%i)\n", (char*)node->token->value, node->token->t_type, node->variable_size, node->variable_offset, node->function);
+    if (node->token) printf(
+        "[%s] (t=%d, size=%i, off=%i, f=%i ro=%i glob=%i)\n", 
+        (char*)node->token->value, node->token->t_type, node->variable_size, node->variable_offset, node->function, node->token->ro, node->token->glob
+    );
     else printf("scope\n");
     
     tree_t* child = node->first_child;
@@ -13,11 +15,9 @@ void print_parse_tree(tree_t* node, int depth) {
         print_parse_tree(child, depth + 1);
         child = child->next_sibling;
     }
+    
+    return 1;
 }
-#else
-void print_parse_tree(tree_t* node, int depth) {}
-#endif
-
 
 static params_t __params = {
     .syntax = 0, .save_asm = 0

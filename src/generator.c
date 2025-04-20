@@ -41,15 +41,29 @@ static int _generate_rodata_section(tree_t* node, FILE* output) {
             continue;
         }
 
-        switch (child->token->t_type) {
-            case IF_TOKEN:
-            case CALL_TOKEN:
-            case WHILE_TOKEN: _generate_rodata_section(child, output); break;
-            case STRING_VALUE_TOKEN: 
-                iprintf(output, "string_%d db '%s'\n", num, child->token->value);
-                sprintf((char*)child->token->value, "string_%d", num++);
-                break;
-            default: break;
+        if (child->token->ro) {
+            tree_t* name  = child->first_child;
+            tree_t* value = name->next_sibling;
+            switch (child->token->t_type) {
+                case STR_TYPE_TOKEN:   iprintf(output, "%s db '%s'\n", name->token->value, value->token->value); break;
+                case PTR_TYPE_TOKEN:   iprintf(output, "%s dd '%s'\n", name->token->value, value->token->value); break;
+                case INT_TYPE_TOKEN:   iprintf(output, "%s dd '%s'\n", name->token->value, value->token->value); break;
+                case SHORT_TYPE_TOKEN: iprintf(output, "%s dw '%s'\n", name->token->value, value->token->value); break;
+                case CHAR_TYPE_TOKEN:  iprintf(output, "%s db '%s'\n", name->token->value, value->token->value); break;
+                default: break;
+            }
+        }
+        else if (!child->token->glob) {
+            switch (child->token->t_type) {
+                case IF_TOKEN:
+                case CALL_TOKEN:
+                case WHILE_TOKEN: _generate_rodata_section(child, output); break;
+                case STRING_VALUE_TOKEN: 
+                    iprintf(output, "string_%d db '%s'\n", num, child->token->value);
+                    sprintf((char*)child->token->value, "string_%d", num++);
+                    break;
+                default: break;
+            }
         }
     }
 
@@ -64,66 +78,77 @@ static int _generate_data_section(tree_t* node, FILE* output) {
             continue;
         }
 
-        /*
-        Not global function.
-        */
-        switch (child->token->t_type) {
-            case IF_TOKEN:
-            case FUNC_TOKEN:
-            case WHILE_TOKEN: _generate_data_section(child, output); break;
-            case ARRAY_TYPE_TOKEN: {
-                tree_t* size   = child->first_child;
-                tree_t* t_type = size->next_sibling;
-                tree_t* name   = t_type->next_sibling;
-            
-                array_info_t info;
-                const char* directive = NULL;
-                str_strncpy(info.name, (char*)name->token->value, 32);
-                if (!str_strcmp((char*)t_type->token->value, CHAR_VARIABLE)) {
-                    directive = "db";
-                    info.el_size = 1;
-                }
-                else if (!str_strcmp((char*)t_type->token->value, SHORT_VARIABLE)) {
-                    directive = "dw";
-                    info.el_size = 2;
-                }
-                else if (!str_strcmp((char*)t_type->token->value, INT_VARIABLE)) {
-                    directive = "dd";
-                    info.el_size = 4;
-                }
-                else {
-                    directive = "dq";
-                    info.el_size = 8;
-                }
-            
-                _arrays_info[_array_count++] = info;
-                if (!name->next_sibling) iprintf(output, "%s times %s %s 0\n", name->token->value, size->token->value, directive);
-                else {
-                    iprintf(output, "%s %s ", name->token->value, directive);
-                    for (tree_t* elem = name->next_sibling; elem; elem = elem->next_sibling) {
-                        if (elem->token->t_type == UNKNOWN_NUMERIC_TOKEN) fprintf(output, "%s%s", elem->token->value, elem->next_sibling ? "," : "\n");
-                        else {
-                            int value = 0;
-                            char* token_start = (char*)elem->token->value;
-                            while (*token_start) {
-                                value += *token_start;
-                                token_start++;
-                            }
+        if (child->token->glob) {
+            tree_t* name  = child->first_child;
+            tree_t* value = name->next_sibling;
+            switch (child->token->t_type) {
+                case PTR_TYPE_TOKEN:   iprintf(output, "%s dd '%s'\n", name->token->value, value->token->value); break;
+                case INT_TYPE_TOKEN:   iprintf(output, "%s dd '%s'\n", name->token->value, value->token->value); break;
+                case SHORT_TYPE_TOKEN: iprintf(output, "%s dw '%s'\n", name->token->value, value->token->value); break;
+                case CHAR_TYPE_TOKEN:  iprintf(output, "%s db '%s'\n", name->token->value, value->token->value); break;
+                default: break;
+            }
+        }
+        else if (!child->token->ro) {
+            switch (child->token->t_type) {
+                case IF_TOKEN:
+                case FUNC_TOKEN:
+                case WHILE_TOKEN: _generate_data_section(child, output); break;
+                case ARRAY_TYPE_TOKEN: {
+                    tree_t* size   = child->first_child;
+                    tree_t* t_type = size->next_sibling;
+                    tree_t* name   = t_type->next_sibling;
+                
+                    array_info_t info;
+                    const char* directive = NULL;
+                    str_strncpy(info.name, (char*)name->token->value, 32);
+                    if (!str_strcmp((char*)t_type->token->value, CHAR_VARIABLE)) {
+                        directive = "db";
+                        info.el_size = 1;
+                    }
+                    else if (!str_strcmp((char*)t_type->token->value, SHORT_VARIABLE)) {
+                        directive = "dw";
+                        info.el_size = 2;
+                    }
+                    else if (!str_strcmp((char*)t_type->token->value, INT_VARIABLE)) {
+                        directive = "dd";
+                        info.el_size = 4;
+                    }
+                    else {
+                        directive = "dq";
+                        info.el_size = 8;
+                    }
+                
+                    _arrays_info[_array_count++] = info;
+                    if (!name->next_sibling) iprintf(output, "%s times %s %s 0\n", name->token->value, size->token->value, directive);
+                    else {
+                        iprintf(output, "%s %s ", name->token->value, directive);
+                        for (tree_t* elem = name->next_sibling; elem; elem = elem->next_sibling) {
+                            if (elem->token->t_type == UNKNOWN_NUMERIC_TOKEN) fprintf(output, "%s%s", elem->token->value, elem->next_sibling ? "," : "\n");
+                            else {
+                                int value = 0;
+                                char* token_start = (char*)elem->token->value;
+                                while (*token_start) {
+                                    value += *token_start;
+                                    token_start++;
+                                }
 
-                            fprintf(output, "%i%s", value, elem->next_sibling ? "," : "\n");
+                                fprintf(output, "%i%s", value, elem->next_sibling ? "," : "\n");
+                            }
                         }
                     }
+
+                    break;
                 }
 
-                break;
+                case STR_TYPE_TOKEN: 
+                    tree_t* name  = child->first_child;
+                    tree_t* value = name->next_sibling;
+                    iprintf(output, "%s db '%s', 0\n", name->token->value, value->token->value);
+                    break;
+
+                default: break;
             }
-            case STR_TYPE_TOKEN: {
-                tree_t* name  = child->first_child;
-                tree_t* value = name->next_sibling;
-                iprintf(output, "%s db '%s', 0\n", name->token->value, value->token->value);
-                break;
-            }
-            default: break;
         }
     }
 
