@@ -128,7 +128,6 @@ int variable_markup(token_t* head) {
 
                     curr->ro = is_ro;
                     curr->glob = is_glob;
-                    print_debug("%s is glob=%i ro=%i", next->value, is_ro, is_glob);
                     var_count++;
                 }
 
