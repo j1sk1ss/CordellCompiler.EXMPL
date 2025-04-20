@@ -15,6 +15,8 @@
 #define FUNCTION_COMMAND "function"
 
 // Types
+#define RO_COMMAND      "ro"
+#define GLOB_COMMAND    "glob"
 #define PTR_VARIABLE    "ptr"
 #define INT_VARIABLE    "int"
 #define SHORT_VARIABLE  "short"

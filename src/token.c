@@ -35,11 +35,16 @@ token_t* create_token(token_type_t type, const unsigned char* value, size_t len,
     if (!token) return NULL;
 
     token->t_type = type;
-    if (value) str_strncpy((char*)token->value, (char*)value, len);
+    if (value) {
+        str_strncpy((char*)token->value, (char*)value, len);
+        token->value[len] = '\0';
+    }
+    
     token->next = NULL;
-    token->value[len] = '\0';
     token->line_number = line;
-    token->ro = 0;
+
+    token->ro   = 0;
+    token->glob = 0;
     return token;
 }
 

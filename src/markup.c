@@ -10,7 +10,9 @@ typedef struct {
 typedef struct Variable {
     unsigned char name[TOKEN_MAX_SIZE];
     token_type_t type;
+
     int ro;
+    int glob;
 } variable_t;
 
 static markup_token_t _markups[] = {
@@ -28,11 +30,13 @@ static markup_token_t _markups[] = {
     { .value = RETURN_COMMAND,         .type = RETURN_TOKEN        },
 
     // Variable
+    { .value = RO_COMMAND,             .type = RO_TYPE_TOKEN       },
+    { .value = GLOB_COMMAND,           .type = GLOB_TYPE_TOKEN     },
     { .value = PTR_VARIABLE,           .type = PTR_TYPE_TOKEN      },
     { .value = INT_VARIABLE,           .type = INT_TYPE_TOKEN      },
     { .value = SHORT_VARIABLE,         .type = SHORT_TYPE_TOKEN    },
     { .value = CHAR_VARIABLE,          .type = CHAR_TYPE_TOKEN     },
-    { .value = STR_VARIABLE,           .type = STR_TYPE_TOKEN   },
+    { .value = STR_VARIABLE,           .type = STR_TYPE_TOKEN      },
     { .value = ARR_VARIABLE,           .type = ARRAY_TYPE_TOKEN    },
 
     // Scope
@@ -79,6 +83,7 @@ int variable_markup(token_t* head) {
     size_t var_count = 0;
 
     int is_ro = 0;
+    int is_glob = 0;
     while (curr) {
         switch (curr->t_type) {
             case IMPORT_TOKEN:
@@ -94,7 +99,12 @@ int variable_markup(token_t* head) {
                 }
             break;
 
-            case CONST_TYPE_TOKEN:
+            case GLOB_TYPE_TOKEN:
+                is_glob = 1;
+                curr = curr->next;
+            break;
+
+            case RO_TYPE_TOKEN:
                 is_ro = 1;
                 curr = curr->next;
             break;
@@ -123,10 +133,12 @@ int variable_markup(token_t* head) {
                     }
 
                     variables[var_count].ro = is_ro;
+                    variables[var_count].ro = is_glob;
                     var_count++;
                 }
 
                 is_ro = 0;
+                is_glob = 0;
             break;
             default: break;
         }
@@ -141,6 +153,7 @@ int variable_markup(token_t* head) {
                 if (str_strncmp((char*)curr->value, (char*)variables[i].name, TOKEN_MAX_SIZE) == 0) {
                     curr->t_type = variables[i].type;
                     curr->ro = variables[i].ro;
+                    curr->glob = variables[i].glob;
                     break;
                 }
             }

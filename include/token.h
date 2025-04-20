@@ -27,14 +27,13 @@ typedef enum {
     CLOSE_BLOCK_TOKEN,
 
     // Types
-    CONST_TYPE_TOKEN,
     PTR_TYPE_TOKEN,
     INT_TYPE_TOKEN,
     SHORT_TYPE_TOKEN,
     CHAR_TYPE_TOKEN,
     STR_TYPE_TOKEN,
     ARRAY_TYPE_TOKEN,
-
+    
     // Commands
     IMPORT_TOKEN,
     IMPORT_SELECT_TOKEN,
@@ -44,7 +43,7 @@ typedef enum {
     SYSCALL_TOKEN,
     CALL_TOKEN,
     LABEL_TOKEN,
-
+    
     // Function
     FUNC_TOKEN,
     
@@ -52,7 +51,7 @@ typedef enum {
     WHILE_TOKEN,
     IF_TOKEN,
     ELSE_TOKEN,
-
+    
     // Statements
     PLUS_TOKEN,
     MINUS_TOKEN,
@@ -67,8 +66,10 @@ typedef enum {
     BITMOVE_RIGHT_TOKEN,
     BITAND_TOKEN,
     BITOR_TOKEN,
-
+    
     // Vars
+    RO_TYPE_TOKEN,
+    GLOB_TYPE_TOKEN,
     PTR_VARIABLE_TOKEN,
     INT_VARIABLE_TOKEN,
     SHORT_VARIABLE_TOKEN,
@@ -98,6 +99,7 @@ typedef struct token {
     token_type_t t_type;
     unsigned char value[TOKEN_MAX_SIZE];
     int ro;
+    int glob;
 
     // Arch information
     struct token* next;
