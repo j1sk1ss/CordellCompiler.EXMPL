@@ -12,7 +12,6 @@
 #define TOKEN_MAX_SIZE  128
 #define BUFFER_SIZE     8192
 
-
 typedef enum {
     // Unknowns
     UNKNOWN_STRING_TOKEN,
@@ -28,6 +27,7 @@ typedef enum {
     CLOSE_BLOCK_TOKEN,
 
     // Types
+    CONST_TYPE_TOKEN,
     PTR_TYPE_TOKEN,
     INT_TYPE_TOKEN,
     SHORT_TYPE_TOKEN,
@@ -94,10 +94,16 @@ typedef enum {
 } char_type_t;
 
 typedef struct token {
+    // Token compiler infarmation
     token_type_t t_type;
-    int line_number;
     unsigned char value[TOKEN_MAX_SIZE];
+    int ro;
+
+    // Arch information
     struct token* next;
+    
+    // Symantic information
+    int line_number;
 } token_t;
 
 

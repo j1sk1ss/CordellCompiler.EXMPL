@@ -6,13 +6,13 @@
     static char_type_t _get_char_type(unsigned char ch) {
         if (isalpha(ch)) return CHAR_ALPHA;
         else if (str_isdigit(ch) || ch == '-') return CHAR_DIGIT;
-        else if (ch == '"') return CHAR_QUOTE;
+        else if (ch == '"')  return CHAR_QUOTE;
         else if (ch == '\n') return CHAR_NEWLINE;
-        else if (ch == ' ') return CHAR_SPACE;
-        else if (ch == ';') return CHAR_DELIMITER;
-        else if (ch == ':') return CHAR_COMMENT;
-        else if (ch == '[') return CHAR_OPEN_INDEX;
-        else if (ch == ']') return CHAR_CLOSE_INDEX;
+        else if (ch == ' ')  return CHAR_SPACE;
+        else if (ch == ';')  return CHAR_DELIMITER;
+        else if (ch == ':')  return CHAR_COMMENT;
+        else if (ch == '[')  return CHAR_OPEN_INDEX;
+        else if (ch == ']')  return CHAR_CLOSE_INDEX;
         return CHAR_OTHER;
     }
 
@@ -30,13 +30,16 @@
 
 token_t* create_token(token_type_t type, const unsigned char* value, size_t len, int line) {
     if (len > TOKEN_MAX_SIZE) return NULL;
+
     token_t* token = mm_malloc(sizeof(token_t));
     if (!token) return NULL;
+
     token->t_type = type;
     if (value) str_strncpy((char*)token->value, (char*)value, len);
-    token->next        = NULL;
-    token->value[len]  = '\0';
+    token->next = NULL;
+    token->value[len] = '\0';
     token->line_number = line;
+    token->ro = 0;
     return token;
 }
 

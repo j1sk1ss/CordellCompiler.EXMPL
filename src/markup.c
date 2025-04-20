@@ -10,6 +10,7 @@ typedef struct {
 typedef struct Variable {
     unsigned char name[TOKEN_MAX_SIZE];
     token_type_t type;
+    int ro;
 } variable_t;
 
 static markup_token_t _markups[] = {
@@ -77,38 +78,57 @@ int variable_markup(token_t* head) {
     variable_t* variables = NULL;
     size_t var_count = 0;
 
+    int is_ro = 0;
     while (curr) {
-        if (curr->t_type == IMPORT_TOKEN) {
-            curr = curr->next;
-            while (curr->t_type != DELIMITER_TOKEN) {
-                variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
-                str_strncpy((char*)variables[var_count].name, (char*)curr->value, TOKEN_MAX_SIZE);
-                variables[var_count].type = CALL_TOKEN;
-                var_count++;
-                
+        switch (curr->t_type) {
+            case IMPORT_TOKEN:
                 curr = curr->next;
-            }
-        }
+                while (curr->t_type != DELIMITER_TOKEN) {
+                    variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
+                    str_strncpy((char*)variables[var_count].name, (char*)curr->value, TOKEN_MAX_SIZE);
+                    variables[var_count].type = CALL_TOKEN;
+                    variables[var_count].ro = 0;
+                    var_count++;
+                    
+                    curr = curr->next;
+                }
+            break;
 
-        if (
-            curr->t_type == INT_TYPE_TOKEN || curr->t_type == SHORT_TYPE_TOKEN || 
-            curr->t_type == CHAR_TYPE_TOKEN || curr->t_type == STR_TYPE_TOKEN || 
-            curr->t_type == ARRAY_TYPE_TOKEN || curr->t_type == PTR_TYPE_TOKEN ||
-            curr->t_type == FUNC_TOKEN
-        ) {
-            token_t* next = curr->next;
-            if (next && next->t_type == UNKNOWN_STRING_TOKEN) {
-                variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
-                str_strncpy((char*)variables[var_count].name, (char*)next->value, TOKEN_MAX_SIZE);
-                if (curr->t_type == INT_TYPE_TOKEN)         variables[var_count].type = INT_VARIABLE_TOKEN;
-                else if (curr->t_type == SHORT_TYPE_TOKEN)  variables[var_count].type = SHORT_VARIABLE_TOKEN;
-                else if (curr->t_type == CHAR_TYPE_TOKEN)   variables[var_count].type = CHAR_VARIABLE_TOKEN;
-                else if (curr->t_type == STR_TYPE_TOKEN) variables[var_count].type = STR_VARIABLE_TOKEN;
-                else if (curr->t_type == ARRAY_TYPE_TOKEN)  variables[var_count].type = ARR_VARIABLE_TOKEN;
-                else if (curr->t_type == PTR_TYPE_TOKEN)    variables[var_count].type = PTR_VARIABLE_TOKEN;
-                else if (curr->t_type == FUNC_TOKEN)        variables[var_count].type = CALL_TOKEN;
-                var_count++;
-            }
+            case CONST_TYPE_TOKEN:
+                is_ro = 1;
+                curr = curr->next;
+            break;
+
+            case INT_TYPE_TOKEN:
+            case SHORT_TYPE_TOKEN:
+            case CHAR_TYPE_TOKEN:
+            case STR_TYPE_TOKEN:
+            case ARRAY_TYPE_TOKEN:
+            case PTR_TYPE_TOKEN:
+            case FUNC_TOKEN:
+                token_t* next = curr->next;
+                if (next && next->t_type == UNKNOWN_STRING_TOKEN) {
+                    variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
+                    str_strncpy((char*)variables[var_count].name, (char*)next->value, TOKEN_MAX_SIZE);
+                    
+                    switch (curr->t_type) {
+                        case INT_TYPE_TOKEN:    variables[var_count].type = INT_VARIABLE_TOKEN; break;
+                        case SHORT_TYPE_TOKEN:  variables[var_count].type = SHORT_VARIABLE_TOKEN; break;
+                        case CHAR_TYPE_TOKEN:   variables[var_count].type = CHAR_VARIABLE_TOKEN; break;
+                        case STR_TYPE_TOKEN:    variables[var_count].type = STR_VARIABLE_TOKEN; break;
+                        case ARRAY_TYPE_TOKEN:  variables[var_count].type = ARR_VARIABLE_TOKEN; break;
+                        case PTR_TYPE_TOKEN:    variables[var_count].type = PTR_VARIABLE_TOKEN; break;
+                        case FUNC_TOKEN:        variables[var_count].type = CALL_TOKEN; break;
+                        default: break;
+                    }
+
+                    variables[var_count].ro = is_ro;
+                    var_count++;
+                }
+
+                is_ro = 0;
+            break;
+            default: break;
         }
 
         curr = curr->next;
@@ -120,6 +140,7 @@ int variable_markup(token_t* head) {
             for (size_t i = 0; i < var_count; i++) {
                 if (str_strncmp((char*)curr->value, (char*)variables[i].name, TOKEN_MAX_SIZE) == 0) {
                     curr->t_type = variables[i].type;
+                    curr->ro = variables[i].ro;
                     break;
                 }
             }

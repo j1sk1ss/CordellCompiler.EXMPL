@@ -18,8 +18,8 @@ void* str_memcpy(void* destination, void* source, size_t num) {
 void* str_memset(void* pointer, unsigned char value, size_t num) {
     unsigned int num_dwords = num / 4;
     unsigned int num_bytes  = num % 4;
-    unsigned int *dest32 = (unsigned int*)pointer;
-    unsigned char *dest8 = ((unsigned char*)pointer) + num_dwords * 4;
+    unsigned int* dest32 = (unsigned int*)pointer;
+    unsigned char* dest8 = ((unsigned char*)pointer) + num_dwords * 4;
     unsigned char val8   = (unsigned char)value;
     unsigned int val32   = value | (value << 8) | (value << 16) | (value << 24);
     unsigned int i = 0;

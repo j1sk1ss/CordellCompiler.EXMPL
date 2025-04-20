@@ -21,9 +21,9 @@
             case INT_TYPE_TOKEN:
             case SHORT_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN:
-            case STR_TYPE_TOKEN: return _parse_variable_declaration;
+            case STR_TYPE_TOKEN:        return _parse_variable_declaration;
             case WHILE_TOKEN:
-            case IF_TOKEN: return _parse_condition_scope;
+            case IF_TOKEN:              return _parse_condition_scope;
             case PTR_VARIABLE_TOKEN:
             case INT_VARIABLE_TOKEN:
             case STR_VARIABLE_TOKEN:
