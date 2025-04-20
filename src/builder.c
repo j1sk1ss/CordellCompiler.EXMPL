@@ -87,7 +87,7 @@ int build_all(char* output) {
     Linking output files
     */
     char link_command[256] = { 0 };
-    sprintf(link_command, "%s -m %s ", DEFAULT_LINKER, DEFAULT_LINKER_ARCH);
+    sprintf(link_command, "%s -m %s %s ", DEFAULT_LINKER, DEFAULT_LINKER_ARCH, LINKER_FLAGS);
 
     for (int i = __current_file - 1; i >= 0; i--) {
         char object_path[128] = { 0 };

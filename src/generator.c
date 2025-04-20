@@ -45,7 +45,7 @@ static int _generate_rodata_section(tree_t* node, FILE* output) {
             tree_t* name  = child->first_child;
             tree_t* value = name->next_sibling;
             switch (child->token->t_type) {
-                case STR_TYPE_TOKEN:   iprintf(output, "%s db '%s'\n", name->token->value, value->token->value); break;
+                case STR_TYPE_TOKEN:   iprintf(output, "%s db '%s', 0\n", name->token->value, value->token->value); break;
                 case PTR_TYPE_TOKEN:   iprintf(output, "%s dd %s\n", name->token->value, value->token->value); break;
                 case INT_TYPE_TOKEN:   iprintf(output, "%s dd %s\n", name->token->value, value->token->value); break;
                 case SHORT_TYPE_TOKEN: iprintf(output, "%s dw %s\n", name->token->value, value->token->value); break;
@@ -59,7 +59,7 @@ static int _generate_rodata_section(tree_t* node, FILE* output) {
                 case CALL_TOKEN:
                 case WHILE_TOKEN: _generate_rodata_section(child, output); break;
                 case STRING_VALUE_TOKEN: 
-                    iprintf(output, "string_%d db '%s'\n", num, child->token->value);
+                    iprintf(output, "string_%d db '%s', 0\n", num, child->token->value);
                     sprintf((char*)child->token->value, "string_%d", num++);
                     break;
                 default: break;
@@ -82,7 +82,7 @@ static int _generate_data_section(tree_t* node, FILE* output) {
             tree_t* name  = child->first_child;
             tree_t* value = name->next_sibling;
             switch (child->token->t_type) {
-                case STR_TYPE_TOKEN:   iprintf(output, "%s db '%s'\n", name->token->value, value->token->value); break;
+                case STR_TYPE_TOKEN:   iprintf(output, "%s db '%s', 0\n", name->token->value, value->token->value); break;
                 case PTR_TYPE_TOKEN:   iprintf(output, "%s dd %s\n", name->token->value, value->token->value); break;
                 case INT_TYPE_TOKEN:   iprintf(output, "%s dd %s\n", name->token->value, value->token->value); break;
                 case SHORT_TYPE_TOKEN: iprintf(output, "%s dw %s\n", name->token->value, value->token->value); break;
