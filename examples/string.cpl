@@ -1,9 +1,16 @@
-function prints ptr string; int size; {
-    if size == 0; {
-        return 1;
+function strlen ptr string; {
+    char brk = 0;
+    int index = 0;
+    while string[index] != brk; {
+        index = index + 1;
     }
-    
-    return syscall 4 1 string size;
+
+    return index;
+}
+
+function prints ptr string; {
+    int strSize = strlen string;
+    return syscall 4 1 string strSize;
 }
 
 function gets ptr buffer; int size; {
@@ -31,14 +38,4 @@ function itoa ptr buffer; int dsize; int num; {
     }
 
     return 1;
-}
-
-function strlen ptr string; {
-    char brk = 0;
-    int index = 0;
-    while string[index] != brk; {
-        index = index + 1;
-    }
-
-    return index;
 }

@@ -4,6 +4,7 @@
 #include "token.h"
 #include "dict.h"
 #include "str.h"
+#include "vars.h"
 
 #define MAX_VARIABLES   256
 

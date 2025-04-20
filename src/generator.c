@@ -73,9 +73,9 @@ static int _generate_data_section(tree_t* node, FILE* output) {
                 }
             
                 _arrays_info[_array_count++] = info;
-                if (!name->next_sibling) fprintf(output, "%*s%s times %s %s 0\n", _current_depth * 4, "", name->token->value, size->token->value, directive);
+                if (!name->next_sibling) iprintf(output, "%s times %s %s 0\n", name->token->value, size->token->value, directive);
                 else {
-                    fprintf(output, "%*s%s %s ", _current_depth * 4, "", name->token->value, directive);
+                    iprintf(output, "%s %s ", name->token->value, directive);
                     for (tree_t* elem = name->next_sibling; elem; elem = elem->next_sibling) {
                         if (elem->token->t_type == UNKNOWN_NUMERIC_TOKEN) fprintf(output, "%s%s", elem->token->value, elem->next_sibling ? "," : "\n");
                         else {
@@ -96,7 +96,7 @@ static int _generate_data_section(tree_t* node, FILE* output) {
             case STRING_TYPE_TOKEN: {
                 tree_t* name  = child->first_child;
                 tree_t* value = name->next_sibling;
-                fprintf(output, "%*s%s db '%s', 0\n", _current_depth * 4, "", name->token->value, value->token->value);
+                iprintf(output, "%s db '%s', 0\n", name->token->value, value->token->value);
                 break;
             }
             default: _generate_data_section(child, output); break;
@@ -117,7 +117,7 @@ static int _generate_expression(tree_t* node, FILE* output) {
         /*
         If it unknown num, we store it in eax register for other operations.
         */
-        fprintf(output, "%*smov eax, %s\n", _current_depth * 4, "", node->token->value);
+       iprintf(output, "mov eax, %s\n", node->token->value);
     }
     else if (node->token->t_type == INT_TYPE_TOKEN) {
         /*
@@ -129,162 +129,163 @@ static int _generate_expression(tree_t* node, FILE* output) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling) {
             _generate_expression(name_node->next_sibling, output);
-            fprintf(output, "%*smov [ebp - %d], eax ; int %s = eax\n", _current_depth * 4, "", node->variable_offset, (char*)name_node->token->value);
+            iprintf(output, "mov [ebp - %d], eax ; int %s = eax\n", node->variable_offset, (char*)name_node->token->value);
         }
     }
     else if (node->token->t_type == INT_VARIABLE_TOKEN) {
         /*
         Getting integer from stack, and saving in EAX shared register.
         */
-        fprintf(output, "%*smov eax, [ebp - %d] ; int %s\n", _current_depth * 4, "", node->variable_offset, node->token->value);
+       iprintf(output, "mov eax, [ebp - %d] ; int %s\n", node->variable_offset, node->token->value);
         _generate_expression(node->first_child, output);
     }
     else if (node->token->t_type == SHORT_TYPE_TOKEN) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling) {
             _generate_expression(name_node->next_sibling, output);
-            fprintf(output, "%*smov [ebp - %d], ax ; short %s = eax\n", _current_depth * 4, "", node->variable_offset, (char*)name_node->token->value);
+            iprintf(output, "mov [ebp - %d], ax ; short %s = eax\n", node->variable_offset, (char*)name_node->token->value);
         }
     }
     else if (node->token->t_type == SHORT_VARIABLE_TOKEN) {
-        fprintf(output, "%*smov ax, [ebp - %d] ; short %s\n", _current_depth * 4, "", node->variable_offset, node->token->value);
+        iprintf(output, "mov ax, [ebp - %d] ; short %s\n", node->variable_offset, node->token->value);
         _generate_expression(node->first_child, output);
     }
     else if (node->token->t_type == CHAR_TYPE_TOKEN) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling) {
             _generate_expression(name_node->next_sibling, output);
-            fprintf(output, "%*smov [ebp - %d], al ; char %s = eax\n", _current_depth * 4, "", node->variable_offset, (char*)name_node->token->value);
+            iprintf(output, "mov [ebp - %d], al ; char %s = eax\n", node->variable_offset, (char*)name_node->token->value);
         }
     }
     else if (node->token->t_type == CHAR_VARIABLE_TOKEN) {
-        fprintf(output, "%*smov al, [ebp - %d] ; char %s\n", _current_depth * 4, "", node->variable_offset, node->token->value);
+        iprintf(output, "mov al, [ebp - %d] ; char %s\n", node->variable_offset, node->token->value);
         _generate_expression(node->first_child, output);
     }
     else if (node->token->t_type == ARR_VARIABLE_TOKEN || node->token->t_type == STR_VARIABLE_TOKEN) {
-        if (!node->first_child) fprintf(output, "%*smov eax, %s\n", _current_depth * 4, "", node->token->value);
+        if (!node->first_child) iprintf(output, "mov eax, %s\n", node->token->value);
         else {
             array_info_t* arr_info = _find_array_info((char*)node->token->value);
             int elem_size = arr_info ? arr_info->el_size : 1;
             _generate_expression(node->first_child, output);
-            if (elem_size > 1) fprintf(output, "%*simul eax, %d\n", _current_depth * 4, "", elem_size); 
-            fprintf(output, "%*sadd eax, %s\n", _current_depth * 4, "", node->token->value);
-            if (elem_size == 1) fprintf(output, "%*smov al, [eax]\n", _current_depth * 4, "");
-            else if (elem_size == 4) fprintf(output, "%*smov eax, [eax]\n", _current_depth * 4, "");
+            if (elem_size > 1) iprintf(output, "imul eax, %d\n", elem_size); 
+            iprintf(output, "add eax, %s\n", node->token->value);
+            if (elem_size == 1) iprintf(output, "mov al, [eax]\n");
+            else if (elem_size == 4) iprintf(output, "mov eax, [eax]\n");
         }
     }
     else if (node->token->t_type == PTR_TYPE_TOKEN) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling) {
             _generate_expression(name_node->next_sibling, output);
-            fprintf(output, "%*smov [ebp - %d], eax ; ptr %s = eax\n", _current_depth * 4, "", node->variable_offset, (char*)name_node->token->value);
+            iprintf(output, "mov [ebp - %d], eax ; ptr %s = eax\n", node->variable_offset, (char*)name_node->token->value);
         }
     }
     else if (node->token->t_type == PTR_VARIABLE_TOKEN) {
-        fprintf(output, "%*smov eax, [ebp - %d] ; ptr %s\n", _current_depth * 4, "", node->variable_offset, node->token->value);
-        if (node->first_child) {
+        if (!node->first_child) iprintf(output, "mov eax, [ebp - %d]\n", node->variable_offset);
+        else {
             _generate_expression(node->first_child, output);
-            fprintf(output, "%*smov eax, [eax]\n", _current_depth * 4, "");
+            iprintf(output, "add eax, [ebp - %d]\n", node->variable_offset);
+            iprintf(output, "mov eax, [eax]\n");
         }
     }
     else if (node->token->t_type == BITMOVE_LEFT_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*smov ecx, eax\n", _current_depth * 4, "");
-        fprintf(output, "%*sshl ebx, cl\n", _current_depth * 4, "");
-        fprintf(output, "%*smov eax, ebx\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "mov ecx, eax\n");
+        iprintf(output, "shl ebx, cl\n");
+        iprintf(output, "mov eax, ebx\n");
     }
     else if (node->token->t_type == BITMOVE_RIGHT_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*smov ecx, eax\n", _current_depth * 4, "");
-        fprintf(output, "%*sshr ebx, cl\n", _current_depth * 4, "");
-        fprintf(output, "%*smov eax, ebx\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "mov ecx, eax\n");
+        iprintf(output, "shr ebx, cl\n");
+        iprintf(output, "mov eax, ebx\n");
     }
     else if (node->token->t_type == BITAND_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*sand eax, ebx\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "and eax, ebx\n");
     }
     else if (node->token->t_type == BITOR_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*sor eax, ebx\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "or eax, ebx\n");
     }
     else if (node->token->t_type == PLUS_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*sadd eax, ebx\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "add eax, ebx\n");
     }
     else if (node->token->t_type == MINUS_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*ssub ebx, eax\n", _current_depth * 4, "");
-        fprintf(output, "%*smov eax, ebx\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "sub ebx, eax\n");
+        iprintf(output, "mov eax, ebx\n");
     }
     else if (node->token->t_type == MULTIPLY_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*simul eax, ebx\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "imul eax, ebx\n");
     }
     else if (node->token->t_type == DIVIDE_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*smov ebx, eax\n", _current_depth * 4, "");
-        fprintf(output, "%*spop eax\n", _current_depth * 4, "");
-        fprintf(output, "%*scdq\n", _current_depth * 4, "");
-        fprintf(output, "%*sidiv ebx\n", _current_depth * 4, "");
+        iprintf(output, "mov ebx, eax\n");
+        iprintf(output, "pop eax\n");
+        iprintf(output, "cdq\n");
+        iprintf(output, "idiv ebx\n");
     }
     else if (node->token->t_type == LARGER_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*scmp ebx, eax\n", _current_depth * 4, "");
-        fprintf(output, "%*ssetg al\n", _current_depth * 4, "");
-        fprintf(output, "%*smovzx eax, al\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "cmp ebx, eax\n");
+        iprintf(output, "setg al\n");
+        iprintf(output, "movzx eax, al\n");
     }
     else if (node->token->t_type == LOWER_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*scmp ebx, eax\n", _current_depth * 4, "");
-        fprintf(output, "%*ssetl al\n", _current_depth * 4, "");
-        fprintf(output, "%*smovzx eax, al\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "cmp ebx, eax\n");
+        iprintf(output, "setl al\n");
+        iprintf(output, "movzx eax, al\n");
     }
     else if (node->token->t_type == COMPARE_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*scmp ebx, eax\n", _current_depth * 4, "");
-        fprintf(output, "%*ssete al\n", _current_depth * 4, "");
-        fprintf(output, "%*smovzx eax, al\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "cmp ebx, eax\n");
+        iprintf(output, "sete al\n");
+        iprintf(output, "movzx eax, al\n");
     }
     else if (node->token->t_type == NCOMPARE_TOKEN) {
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        iprintf(output, "push eax\n");
         _generate_expression(node->first_child->next_sibling, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        fprintf(output, "%*scmp ebx, eax\n", _current_depth * 4, "");
-        fprintf(output, "%*ssetne al\n", _current_depth * 4, "");
-        fprintf(output, "%*smovzx eax, al\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        iprintf(output, "cmp ebx, eax\n");
+        iprintf(output, "setne al\n");
+        iprintf(output, "movzx eax, al\n");
     }
     else if (node->token->t_type == CALL_TOKEN) {
         /*
@@ -310,18 +311,18 @@ static int _generate_expression(tree_t* node, FILE* output) {
         for (int i = arg_count - 1; i >= 0; --i) {
             tree_t* arg = args[i];
             switch (get_variable_type(arg->token->t_type)) {
-                case 32: fprintf(output, "%*smov eax, [ebp - %d] ; uint32 %s \n", _current_depth * 4, "", arg->variable_offset, arg->token->value); break;
-                case 16: fprintf(output, "%*smov ax, [ebp - %d] ; uint16 %s \n", _current_depth * 4, "", arg->variable_offset, arg->token->value); break;
-                case 8:  fprintf(output, "%*smov al, [ebp - %d] ; uint8 %s \n", _current_depth * 4, "", arg->variable_offset, arg->token->value); break;
-                case 1:  fprintf(output, "%*smov eax, %s ; ptr32 %s\n", _current_depth * 4, "", arg->token->value, arg->token->value); break;
+                case 32: iprintf(output, "mov eax, [ebp - %d] ; uint32 %s \n", arg->variable_offset, arg->token->value); break;
+                case 16: iprintf(output, "mov ax, [ebp - %d] ; uint16 %s \n", arg->variable_offset, arg->token->value); break;
+                case 8:  iprintf(output, "mov al, [ebp - %d] ; uint8 %s \n", arg->variable_offset, arg->token->value); break;
+                case 1:  iprintf(output, "mov eax, %s ; ptr32 %s\n", arg->token->value, arg->token->value); break;
                 default: break;
             }
             
-            fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+            iprintf(output, "push eax\n");
         }
     
-        fprintf(output, "%*scall %s\n", _current_depth * 4, "", func_name_node->token->value);
-        if (arg_count > 0) fprintf(output, "%*sadd esp, %d\n", _current_depth * 4, "", arg_count * 4);
+        iprintf(output, "call %s\n", func_name_node->token->value);
+        if (arg_count > 0) iprintf(output, "add esp, %d\n", arg_count * 4);
         fprintf(output, " ; --------------- \n");
     }
     else if (node->token->t_type == EXIT_TOKEN) {
@@ -330,11 +331,11 @@ static int _generate_expression(tree_t* node, FILE* output) {
         */
         fprintf(output, "\n ; --------------- Exit --------------- \n");
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*smov ebx, eax\n",    _current_depth * 4, "");
-        fprintf(output, "%*smov eax, 1\n",      _current_depth * 4, "");
-        fprintf(output, "%*smov esp, ebp\n",    _current_depth * 4, "");
-        fprintf(output, "%*spop ebp\n",         _current_depth * 4, "");
-        fprintf(output, "%*sint 0x80\n",        _current_depth * 4, "");
+        iprintf(output, "mov ebx, eax\n");
+        iprintf(output, "mov eax, 1\n");
+        iprintf(output, "mov esp, ebp\n");
+        iprintf(output, "pop ebp\n");
+        iprintf(output, "int 0x80\n");
     }
     else if (node->token->t_type == RETURN_TOKEN) {
         fprintf(output, "\n ; --------------- Return --------------- \n");
@@ -343,9 +344,9 @@ static int _generate_expression(tree_t* node, FILE* output) {
         Now, result of function stored at EAX register.
         */
         _generate_expression(node->first_child, output);
-        fprintf(output, "%*smov esp, ebp\n",    _current_depth * 4, "");
-        fprintf(output, "%*spop ebp\n",         _current_depth * 4, "");
-        fprintf(output, "%*sret\n",             _current_depth * 4, "");
+        iprintf(output, "mov esp, ebp\n");
+        iprintf(output, "pop ebp\n");
+        iprintf(output, "ret\n");
     }
 
     return 1;
@@ -373,12 +374,12 @@ static int _generate_function(tree_t* node, FILE* output) {
     tree_t* return_node = body_node->next_sibling;
 
     fprintf(output, "\n ; --------------- Function %s --------------- \n", name_node->token->value);
-    fprintf(output, "%*sjmp _end_%s\n", _current_depth * 4, "", name_node->token->value);
-    fprintf(output, "%*s%s:\n", _current_depth * 4, "", name_node->token->value);
+    iprintf(output, "jmp _end_%s\n", name_node->token->value);
+    iprintf(output, "%s:\n", name_node->token->value);
 
     _current_depth += 1;
-    fprintf(output, "%*spush ebp\n", _current_depth * 4, "");
-    fprintf(output, "%*smov ebp, esp\n", _current_depth * 4, "");
+    iprintf(output, "push ebp\n");
+    iprintf(output, "mov ebp, esp\n");
 
     /*
     Reserving stack memory for local variables. (Creating stack frame).
@@ -386,7 +387,7 @@ static int _generate_function(tree_t* node, FILE* output) {
     Also we remember input variables.
     */
     int local_vars_size = __get_variables_size(params_node->first_child) + __get_variables_size(body_node->first_child);
-    fprintf(output, "%*ssub esp, %d\n", _current_depth * 4, "", local_vars_size);
+    iprintf(output, "sub esp, %d\n", local_vars_size);
 
     /*
     Loading input args to stack.
@@ -397,22 +398,22 @@ static int _generate_function(tree_t* node, FILE* output) {
         char* param_name = (char*)param->first_child->token->value;
         switch (get_variable_type(param->first_child->token->t_type)) {
             case 32:
-                fprintf(output, "%*smov eax, [ebp + %d] ; int %s \n", _current_depth * 4, "", param_offset, param_name);
-                fprintf(output, "%*smov [ebp - %d], eax\n", _current_depth * 4, "", param_offset - param_size);
+                iprintf(output, "mov eax, [ebp + %d] ; int %s \n", param_offset, param_name);
+                iprintf(output, "mov [ebp - %d], eax\n", param_offset - param_size);
                 break;
 
             case 16:
-                fprintf(output, "%*smov ax, [ebp + %d] ; short %s \n", _current_depth * 4, "", param_offset, param_name);
-                fprintf(output, "%*smov [ebp - %d], ax\n", _current_depth * 4, "", param_offset - param_size);
+                iprintf(output, "mov ax, [ebp + %d] ; short %s \n", param_offset, param_name);
+                iprintf(output, "mov [ebp - %d], ax\n", param_offset - param_size);
                 break;
 
             case 8:
-                fprintf(output, "%*smov al, [ebp + %d] ; char %s \n", _current_depth * 4, "", param_offset, param_name);
-                fprintf(output, "%*smov [ebp - %d], al\n", _current_depth * 4, "", param_offset - param_size);
+                iprintf(output, "mov al, [ebp + %d] ; char %s \n", param_offset, param_name);
+                iprintf(output, "mov [ebp - %d], al\n", param_offset - param_size);
                 break;
 
             case 1:
-                fprintf(output, "%*smov [ebp - %d], %s\n", _current_depth * 4, "", param_offset - param_size, param_name);
+                iprintf(output, "mov [ebp - %d], %s\n", param_offset - param_size, param_name);
                 break;
             default: break;
         }
@@ -430,7 +431,7 @@ static int _generate_function(tree_t* node, FILE* output) {
 
     _current_depth -= 1;
     fprintf(output, " ; --------------- \n");
-    fprintf(output, "%*s_end_%s:\n", _current_depth * 4, "", name_node->token->value);
+    iprintf(output, "_end_%s:\n", name_node->token->value);
     return 1;
 }
 
@@ -441,23 +442,23 @@ static int _generate_while(tree_t* node, FILE* output) {
     tree_t* body = condition->next_sibling->first_child;
 
     fprintf(output, "\n ; --------------- while cycle [%i] --------------- \n", current_label);
-    fprintf(output, "%*swhile_%d:\n", _current_depth * 4, "", current_label);
+    iprintf(output, "while_%d:\n", current_label);
     _current_depth += 1;
 
     _generate_expression(condition, output);
-    fprintf(output, "%*scmp eax, 0\n", _current_depth * 4, "");
-    fprintf(output, "%*sje end_while_%d\n", _current_depth * 4, "", current_label);
+    iprintf(output, "cmp eax, 0\n");
+    iprintf(output, "je end_while_%d\n", current_label);
 
     while (body) {
         _generate_expression(body, output);
         body = body->next_sibling;
     }
 
-    fprintf(output, "%*sjmp while_%d\n", _current_depth * 4, "", current_label);
+    iprintf(output, "jmp while_%d\n", current_label);
     
     _current_depth -= 1;
     fprintf(output, " ; --------------- \n");
-    fprintf(output, "%*send_while_%d:\n", _current_depth * 4, "", current_label);
+    iprintf(output, "end_while_%d:\n", current_label);
     return 1;
 }
 
@@ -470,8 +471,8 @@ static int _generate_if(tree_t* node, FILE* output) {
 
     fprintf(output, "\n ; --------------- if statement [%i] --------------- \n", current_label);
     _generate_expression(condition, output);
-    fprintf(output, "%*scmp eax, 0\n", _current_depth * 4, "");
-    fprintf(output, "%*sje end_if_%d\n", _current_depth * 4, "", current_label);
+    iprintf(output, "cmp eax, 0\n");
+    iprintf(output, "je end_if_%d\n", current_label);
     _current_depth += 1;
 
     tree_t* body_exp = body->first_child;
@@ -481,7 +482,7 @@ static int _generate_if(tree_t* node, FILE* output) {
     }
 
     fprintf(output, " ; --------------- \n");
-    fprintf(output, "%*send_if_%d:\n", _current_depth * 4, "", current_label);
+    iprintf(output, "end_if_%d:\n", current_label);
     if (else_body) {
         tree_t* else_body_exp = else_body->first_child;
         while (else_body_exp) {
@@ -506,17 +507,17 @@ static int _generate_syscall(tree_t* node, FILE* output) {
     tree_t* args = node->first_child;
     while (args) {
         switch (get_variable_type(args->token->t_type)) {
-            case 32: fprintf(output, "%*smov %s, [ebp - %d]\n", _current_depth * 4, "", registers_32[argument_index++], args->variable_offset); break;
-            case 16: fprintf(output, "%*smov %s, [ebp - %d]\n", _current_depth * 4, "", registers_16[argument_index++], args->variable_offset); break;
-            case 8:  fprintf(output, "%*smov %s, [ebp - %d]\n", _current_depth * 4, "", registers_8[argument_index++], args->variable_offset); break;
-            case 1:  fprintf(output, "%*smov %s, %s\n", _current_depth * 4, "", registers_32[argument_index++], args->token->value); break;
+            case 32: iprintf(output, "mov %s, [ebp - %d]\n", registers_32[argument_index++], args->variable_offset); break;
+            case 16: iprintf(output, "mov %s, [ebp - %d]\n", registers_16[argument_index++], args->variable_offset); break;
+            case 8:  iprintf(output, "mov %s, [ebp - %d]\n", registers_8[argument_index++], args->variable_offset); break;
+            case 1:  iprintf(output, "mov %s, %s\n", registers_32[argument_index++], args->token->value); break;
             default: break;
         }
         
         args = args->next_sibling;
     }
 
-    fprintf(output, "%*sint 0x80\n", _current_depth * 4, "");
+    iprintf(output, "int 0x80\n");
     fprintf(output, " ; --------------- \n");
     return 1;
 }
@@ -544,24 +545,24 @@ static int _generate_assignment(tree_t* node, FILE* output) {
         Then multiply it by arr el_size.
         */
         _generate_expression(left->first_child, output);
-        if (elem_size > 1) fprintf(output, "%*simul eax, %d\n", _current_depth * 4, "", elem_size);
+        if (elem_size > 1) iprintf(output, "imul eax, %d\n", elem_size);
 
-        if (left->token->t_type == PTR_VARIABLE_TOKEN) fprintf(output, "%*sadd eax, [ebp - %d]\n", _current_depth * 4, "", left->variable_offset);
-        else fprintf(output, "%*sadd eax, %s\n", _current_depth * 4, "", left->token->value);
-        fprintf(output, "%*spush eax\n", _current_depth * 4, "");
+        if (left->token->t_type == PTR_VARIABLE_TOKEN) iprintf(output, "add eax, [ebp - %d]\n", left->variable_offset);
+        else iprintf(output, "add eax, %s\n", left->token->value);
+        iprintf(output, "push eax\n");
         
         _generate_expression(right, output);
-        fprintf(output, "%*spop ebx\n", _current_depth * 4, "");
-        if (elem_size == 1)      fprintf(output, "%*smov byte [ebx], al\n", _current_depth * 4, "");
-        else if (elem_size == 2) fprintf(output, "%*smov word [ebx], ax\n", _current_depth * 4, "");
-        else if (elem_size == 4) fprintf(output, "%*smov [ebx], eax\n", _current_depth * 4, "");
+        iprintf(output, "pop ebx\n");
+        if (elem_size == 1)      iprintf(output, "mov byte [ebx], al\n");
+        else if (elem_size == 2) iprintf(output, "mov word [ebx], ax\n");
+        else if (elem_size == 4) iprintf(output, "mov [ebx], eax\n");
     } 
     else {
         /*
         Move to eax result of right operation, and store it in stack with offset in the left.
         */
         _generate_expression(right, output);
-        fprintf(output, "%*smov [ebp - %d], eax\n", _current_depth * 4, "", left->variable_offset);
+        iprintf(output, "mov [ebp - %d], eax\n", left->variable_offset);
     }
 
     fprintf(output, " ; --------------- \n");
@@ -611,9 +612,9 @@ int generate_asm(tree_t* root, FILE* output) {
         /*
         Before start, find all "global" variables and reserve stack frame.
         */
-        fprintf(output, "%*spush ebp\n", _current_depth * 4, "");
-        fprintf(output, "%*smov ebp, esp\n", _current_depth * 4, "");
-        fprintf(output, "%*ssub esp, %d\n", _current_depth * 4, "", __get_variables_size(main_body->first_child));
+        iprintf(output, "push ebp\n");
+        iprintf(output, "mov ebp, esp\n");
+        iprintf(output, "sub esp, %d\n", __get_variables_size(main_body->first_child));
         _generate_text_section(main_body, output);
     }
 
