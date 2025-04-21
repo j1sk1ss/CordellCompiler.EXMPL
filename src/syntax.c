@@ -289,7 +289,7 @@ static tree_t* _parse_function_declaration(token_t** curr) {
 
 static tree_t* _parse_variable_declaration(token_t** curr) {
     token_t* type_token = *curr;
-    token_t* name_token = (*curr)->next;
+    token_t* name_token = type_token->next;
     token_t* assign_token = name_token->next;
     if (!type_token || !name_token) return NULL;
     
@@ -320,7 +320,8 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     _add_child_node(decl_node, name_node);
     if (!assign_token || assign_token->t_type != ASIGN_TOKEN) return decl_node;
 
-    tree_t* value_node = _parse_expression(&assign_token->next);
+    token_t* value_token = assign_token->next;
+    tree_t* value_node = _parse_expression(&value_token);
     if (!value_node) {
         unload_syntax_tree(decl_node);
         unload_syntax_tree(name_node);
@@ -443,7 +444,8 @@ static tree_t* _parse_array_expression(token_t** curr) {
     
     *curr = (*curr)->next;
     if ((*curr)->t_type == OPEN_INDEX_TOKEN) {
-        tree_t* offset_exp = _parse_expression(&((*curr)->next));
+        token_t* offset_token = (*curr)->next;
+        tree_t* offset_exp = _parse_expression(&offset_token);
         if (!offset_exp) {
             unload_syntax_tree(arr_name_node);
             return NULL;
@@ -547,20 +549,21 @@ static tree_t* _parse_syscall(token_t** curr) {
 }
 
 tree_t* create_syntax_tree(token_t* head) {
+    token_t* curr_head = head;
     tree_t* root = _create_tree_node(NULL);
     if (!root) return NULL;
 
-    tree_t* prestart = _parse_scope(&head, START_TOKEN);
+    tree_t* prestart = _parse_scope(&curr_head, START_TOKEN);
     if (!prestart) {
         print_error("Prestart parse error!");
         unload_syntax_tree(root);
         return NULL;
     }
 
-    tree_t* body = _parse_scope(&head, EXIT_TOKEN);
+    tree_t* body = _parse_scope(&curr_head, EXIT_TOKEN);
     if (!body) print_warn("No body in file!");
     else {
-        tree_t* exit_node = _create_tree_node(create_token(EXIT_TOKEN, NULL, 0, head->line_number));
+        tree_t* exit_node = _create_tree_node(create_token(EXIT_TOKEN, NULL, 0, curr_head->line_number));
         if (!exit_node) {
             print_error("Exit parse error!");
             unload_syntax_tree(root);
@@ -568,7 +571,8 @@ tree_t* create_syntax_tree(token_t* head) {
             return NULL;
         }
 
-        tree_t* exit_exp = _parse_expression(&head->next);
+        token_t* exit_token = curr_head->next;
+        tree_t* exit_exp = _parse_expression(&exit_token);
         if (!exit_exp) {
             print_error("Exit expression parse error!");
             unload_syntax_tree(root);
@@ -590,7 +594,6 @@ int unload_syntax_tree(tree_t* node) {
     if (!node) return 0;
     unload_syntax_tree(node->first_child);
     unload_syntax_tree(node->next_sibling);
-    if (node->token) mm_free(node->token);
     mm_free(node);
     return 1;
 }

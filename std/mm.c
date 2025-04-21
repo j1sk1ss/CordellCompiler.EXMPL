@@ -76,9 +76,9 @@ void* mm_malloc(size_t size) {
 void* mm_realloc(void* ptr, size_t elem) {
     void* new_data = NULL;
     if (elem) {
-        if(!ptr) return mm_malloc(elem);
+        if (!ptr) return mm_malloc(elem);
         new_data = mm_malloc(elem);
-        if(new_data) {
+        if (new_data) {
             str_memcpy(new_data, ptr, elem);
             mm_free(ptr);
         }
