@@ -19,6 +19,7 @@
     static int _add_token(token_t** head, token_t** tail, token_type_t type, const unsigned char* buffer, size_t len, int line) {
         token_t* new_token = create_token(type, buffer, len, line);
         if (!new_token) return 0;
+
         if (!*head) *head = new_token;
         else (*tail)->next = new_token;
         *tail = new_token; 
@@ -43,8 +44,9 @@ token_t* create_token(token_type_t type, const unsigned char* value, size_t len,
     token->next = NULL;
     token->line_number = line;
 
-    token->ro   = 0;
-    token->glob = 0;
+    token->ro = 0;
+    if (type == UNKNOWN_NUMERIC_TOKEN) token->glob = 1;
+    else token->glob = 0;
     return token;
 }
 

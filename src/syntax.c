@@ -314,7 +314,7 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
        decl_node->variable_offset = __add_variable_info((char*)name_token->value, 4);
        decl_node->variable_size = 4;
     }
-    
+
     __fill_variable(name_node);
     decl_node->function = __current_function;
     _add_child_node(decl_node, name_node);
@@ -326,6 +326,12 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
         unload_syntax_tree(decl_node);
         unload_syntax_tree(name_node);
         return NULL;
+    }
+
+    if (type_token->t_type == STRING_VALUE_TOKEN  && !decl_node->token->ro && !decl_node->token->glob) {
+        int str_size = str_strlen((char*)value_token->value);
+        decl_node->variable_size = ALIGN_TO(str_size, 4);
+        decl_node->variable_offset = __add_variable_info((char*)name_token->value, str_size);
     }
 
     _add_child_node(decl_node, value_node);
@@ -349,12 +355,17 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     tree_t* arr_node  = _create_tree_node(arr_token);
     if (!arr_node) return NULL;
 
+    int array_size = str_atoi((char*)size_token->value);
     tree_t* size_node = _create_tree_node(size_token);
     if (!size_node) {
         unload_syntax_tree(arr_node);
         return NULL;
     }
 
+    int el_size = 1;
+    if (!str_strcmp((char*)elem_size_token->value, SHORT_VARIABLE)) el_size = 2;
+    else if (!str_strcmp((char*)elem_size_token->value, INT_VARIABLE)) el_size = 4;
+    
     tree_t* elem_size_node = _create_tree_node(elem_size_token);
     if (!elem_size_node) {
         unload_syntax_tree(arr_node);
@@ -373,7 +384,12 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     _add_child_node(arr_node, size_node);
     _add_child_node(arr_node, elem_size_node);
     _add_child_node(arr_node, name_node);
-    
+
+    if (!arr_token->ro && !arr_token->glob) {
+        arr_node->variable_size = ALIGN_TO(array_size * el_size, 4);
+        arr_node->variable_offset = __add_variable_info((char*)name_token->value, arr_node->variable_size);
+    }
+
     int arr_size = str_atoi((char*)size_token->value);
     token_t* val_token = assign_token->next;
     for (int i = 0; i < arr_size && val_token; i++) {

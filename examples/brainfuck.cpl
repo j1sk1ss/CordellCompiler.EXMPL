@@ -13,7 +13,7 @@ Or tick-tac-toe
 start
     prints "Brainfuck interpriter! Input code ";
 
-    arr code 10000 char =;
+    glob arr code 10000 char =;
     gets code 10000;
 
     char brk = 0;
@@ -22,8 +22,8 @@ start
         codelength = codelength + 1;
     }
 
-    arr bracketmap 10000 int =;
-    arr stack 10000 int =;
+    glob arr bracketmap 10000 int =;
+    glob arr stack 10000 int =;
     int stackptr = 0;
     int pos = 0;
 
@@ -102,7 +102,7 @@ start
         
         if processed == 0; {
             if cmd == dot; {
-                str fbuf = " ";
+                arr fbuf 2 char = 10 0;
                 fbuf[0] = tape[pointer];
                 prints fbuf 1;
                 pc = pc + 1;
@@ -112,7 +112,7 @@ start
         
         if processed == 0; {
             if cmd == comma; {
-                str sbuf = " ";
+                arr sbuf 2 char = 10 0;
                 gets sbuf 1;
                 tape[pointer] = sbuf[0];
                 pc = pc + 1;

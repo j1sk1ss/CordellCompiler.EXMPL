@@ -18,9 +18,7 @@ static inline char* format_from_stack(int offset) {
 }
 
 static inline char* format_from_data(unsigned char* name) {
-    static char buf[64] = { 0 };
-    snprintf(buf, sizeof(buf), "[%s]", name);
-    return buf;
+    return (char*)name;
 }
 
 

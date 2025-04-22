@@ -6,6 +6,7 @@
 #include "str.h"
 #include "vars.h"
 
+#define ALIGN_TO(x, a) (((x) + (a) - 1) & ~((a) - 1))
 #define MAX_VARIABLES   256
 
 typedef struct tree {
