@@ -47,26 +47,26 @@
         int size;
     } variable_info_t;
 
-    static variable_info_t __variables_info[MAX_VARIABLES];
-    static char* __current_function_name = NULL;
-    static int __current_function        = 1;
-    static int __current_offset          = 0;
-    static int __vars_count              = 0;
+    static variable_info_t _variables_info[MAX_VARIABLES];
+    static char* _current_function_name = NULL;
+    static int _current_function        = 1;
+    static int _current_offset          = 0;
+    static int _vars_count              = 0;
 
-    static variable_info_t* __find_variable(char* name) {
+    static variable_info_t* _find_variable(char* name) {
         for (int i = 0; i < MAX_VARIABLES; i++) {
-            if ((!__current_function_name || !str_strcmp(__current_function_name, __variables_info[i].func_name)) && 
-                !str_strcmp(name, __variables_info[i].name) && (__variables_info[i].function_include == __current_function)) {
-                return &__variables_info[i];
+            if ((!_current_function_name || !str_strcmp(_current_function_name, _variables_info[i].func_name)) && 
+                !str_strcmp(name, _variables_info[i].name) && (_variables_info[i].function_include == _current_function)) {
+                return &_variables_info[i];
             }
         }
 
         return NULL;
     }
 
-    static int __fill_variable(tree_t* variable) {
+    static int _fill_variable(tree_t* variable) {
         if (!variable || !variable->token) return 0;
-        variable_info_t* info = __find_variable((char*)variable->token->value);
+        variable_info_t* info = _find_variable((char*)variable->token->value);
         if (!info) return 0;
 
         variable->function = info->function_include;
@@ -75,15 +75,15 @@
         return 1;
     }
 
-    static int __add_variable_info(char* name, int size) {
-        str_strncpy(__variables_info[__vars_count].name, name, TOKEN_MAX_SIZE);
-        if (__current_function_name) str_strncpy(__variables_info[__vars_count].func_name, __current_function_name, TOKEN_MAX_SIZE);
-        __variables_info[__vars_count].size = size;
-        __variables_info[__vars_count].offset = __current_offset + size;
-        __variables_info[__vars_count].function_include = __current_function;
-        __current_offset += size;
-        __vars_count++;
-        return __current_offset;
+    static int _add_variable_info(char* name, int size) {
+        str_strncpy(_variables_info[_vars_count].name, name, TOKEN_MAX_SIZE);
+        if (_current_function_name) str_strncpy(_variables_info[_vars_count].func_name, _current_function_name, TOKEN_MAX_SIZE);
+        _variables_info[_vars_count].size = size;
+        _variables_info[_vars_count].offset = _current_offset + size;
+        _variables_info[_vars_count].function_include = _current_function;
+        _current_offset += size;
+        _vars_count++;
+        return _current_offset;
     }
 
 #pragma endregion
@@ -201,7 +201,7 @@ static tree_t* _parse_function_call(token_t** curr) {
             return NULL;
         }
         
-        __fill_variable(arg_name_node);
+        _fill_variable(arg_name_node);
         _add_child_node(args_node, arg_name_node);
         *curr = (*curr)->next;
     }
@@ -229,11 +229,11 @@ static tree_t* _parse_return_declaration(token_t** curr) {
 static tree_t* _parse_function_declaration(token_t** curr) {
     if (!curr || !*curr || (*curr)->t_type != FUNC_TOKEN) return NULL;
 
-    int temp_off = __current_offset;
-    char* temp_fname = __current_function_name;
+    int temp_off = _current_offset;
+    char* temp_fname = _current_function_name;
 
-    __current_function += 1;
-    __current_offset = 0;
+    _current_function += 1;
+    _current_offset = 0;
 
     tree_t* func_node = _create_tree_node(*curr);
     if (!func_node) return NULL;
@@ -245,7 +245,7 @@ static tree_t* _parse_function_declaration(token_t** curr) {
         return NULL;
     }
 
-    __current_function_name = (char*)name_node->token->value;
+    _current_function_name = (char*)name_node->token->value;
     _add_child_node(func_node, name_node);
 
     *curr = (*curr)->next;
@@ -280,9 +280,9 @@ static tree_t* _parse_function_declaration(token_t** curr) {
     }
 
     _add_child_node(func_node, body_node);
-    __current_function_name = temp_fname;
-    __current_function -= 1;
-    __current_offset = temp_off;
+    _current_function_name = temp_fname;
+    _current_function -= 1;
+    _current_offset = temp_off;
 
     return func_node;
 }
@@ -311,12 +311,12 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     int32 and string. String has 32 bit size pointer.
     */
     if (get_variable_type(type_token->t_type) != 1 && !decl_node->token->ro && !decl_node->token->glob) {
-       decl_node->variable_offset = __add_variable_info((char*)name_token->value, 4);
+       decl_node->variable_offset = _add_variable_info((char*)name_token->value, 4);
        decl_node->variable_size = 4;
     }
 
-    __fill_variable(name_node);
-    decl_node->function = __current_function;
+    _fill_variable(name_node);
+    decl_node->function = _current_function;
     _add_child_node(decl_node, name_node);
     if (!assign_token || assign_token->t_type != ASIGN_TOKEN) return decl_node;
 
@@ -331,7 +331,7 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     if (type_token->t_type == STRING_VALUE_TOKEN  && !decl_node->token->ro && !decl_node->token->glob) {
         int str_size = str_strlen((char*)value_token->value);
         decl_node->variable_size = ALIGN_TO(str_size, 4);
-        decl_node->variable_offset = __add_variable_info((char*)name_token->value, str_size);
+        decl_node->variable_offset = _add_variable_info((char*)name_token->value, str_size);
     }
 
     _add_child_node(decl_node, value_node);
@@ -387,7 +387,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
 
     if (!arr_token->ro && !arr_token->glob) {
         arr_node->variable_size = ALIGN_TO(array_size * el_size, 4);
-        arr_node->variable_offset = __add_variable_info((char*)name_token->value, arr_node->variable_size);
+        arr_node->variable_offset = _add_variable_info((char*)name_token->value, arr_node->variable_size);
     }
 
     int arr_size = str_atoi((char*)size_token->value);
@@ -401,7 +401,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
             return NULL;
         }
 
-        __fill_variable(val_node);
+        _fill_variable(val_node);
         _add_child_node(arr_node, val_node);
         val_token = val_token->next;
     }
@@ -421,7 +421,7 @@ static tree_t* _parse_expression(token_t** curr) {
     
     tree_t* left_node = _create_tree_node(left);
     if (!left_node) return NULL;
-    __fill_variable(left_node);
+    _fill_variable(left_node);
     
     *curr = left->next;
     token_t* assign_token = *curr;
@@ -456,7 +456,7 @@ static tree_t* _parse_array_expression(token_t** curr) {
     if (!curr || !*curr) return NULL;
     tree_t* arr_name_node = _create_tree_node(*curr);
     if (!arr_name_node) return NULL;
-    __fill_variable(arr_name_node);
+    _fill_variable(arr_name_node);
     
     *curr = (*curr)->next;
     if ((*curr)->t_type == OPEN_INDEX_TOKEN) {
@@ -556,7 +556,7 @@ static tree_t* _parse_syscall(token_t** curr) {
             return NULL;
         }
 
-        __fill_variable(arg_node);
+        _fill_variable(arg_node);
         _add_child_node(syscall_node, arg_node);
         *curr = (*curr)->next;
     }

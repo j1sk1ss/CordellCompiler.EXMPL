@@ -1,7 +1,7 @@
 #include "../include/builder.h"
 
 
-int print_parse_tree(tree_t* node, int depth) {
+static int _print_parse_tree(tree_t* node, int depth) {
     if (!node) return 0;
     for (int i = 0; i < depth; i++) printf("  ");
     if (node->token) printf(
@@ -12,29 +12,29 @@ int print_parse_tree(tree_t* node, int depth) {
     
     tree_t* child = node->first_child;
     while (child) {
-        print_parse_tree(child, depth + 1);
+        _print_parse_tree(child, depth + 1);
         child = child->next_sibling;
     }
     
     return 1;
 }
 
-static params_t __params = {
+static params_t _params = {
     .syntax = 0, .save_asm = 0
 };
 
-static object_t __files[MAX_FILES];
-static int __current_file = 0;
+static object_t _files[MAX_FILES];
+static int _current_file = 0;
 
 
-int __add_object(char* path, int is_main) {
-    __files[__current_file].main = is_main;
-    __files[__current_file].path = path;
-    __current_file++;
+int _add_object(char* path, int is_main) {
+    _files[_current_file].main = is_main;
+    _files[_current_file].path = path;
+    _current_file++;
     return 1;
 }
 
-int __compile(object_t* obj) {
+int _compile(object_t* obj) {
     int fd = open(obj->path, O_RDONLY);
     if (fd < 0) return -1;
     
@@ -49,7 +49,7 @@ int __compile(object_t* obj) {
     }
 
     tree_t* parse_tree = create_syntax_tree(tokens);
-    if (__params.syntax) print_parse_tree(parse_tree, 0);
+    if (_params.syntax) _print_parse_tree(parse_tree, 0);
     int semantic_res = check_semantic(parse_tree);
     if (semantic_res) {
         char save_path[128] = { 0 };
@@ -69,17 +69,17 @@ int __compile(object_t* obj) {
 }
 
 int build(char* path, int is_main) {
-    return __add_object(path, is_main);
+    return _add_object(path, is_main);
 }
 
 int build_all(char* output) {
-    if (__current_file == 0) return 0;
+    if (_current_file == 0) return 0;
 
     /*
     Production of .asm files with temporary saving in files directory.
     */
-    for (int i = __current_file - 1; i >= 0; i--) {
-        int res = __compile(&__files[i]);
+    for (int i = _current_file - 1; i >= 0; i--) {
+        int res = _compile(&_files[i]);
         if (!res) return res;
     }
 
@@ -89,9 +89,9 @@ int build_all(char* output) {
     char link_command[256] = { 0 };
     sprintf(link_command, "%s -m %s %s ", DEFAULT_LINKER, DEFAULT_LINKER_ARCH, LINKER_FLAGS);
 
-    for (int i = __current_file - 1; i >= 0; i--) {
+    for (int i = _current_file - 1; i >= 0; i--) {
         char object_path[128] = { 0 };
-        sprintf(object_path, " %s.asm.o", __files[i].path);
+        sprintf(object_path, " %s.asm.o", _files[i].path);
         str_strcat(link_command, object_path);
     }
 
@@ -102,9 +102,9 @@ int build_all(char* output) {
     /*
     Cleanup
     */
-    for (int i = __current_file - 1; i >= 0; i--) {
+    for (int i = _current_file - 1; i >= 0; i--) {
         char delete_command[128] = { 0 };
-        if (!__params.save_asm) sprintf(delete_command, "rm %s.asm %s.asm.o", __files[i].path, __files[i].path);
+        if (!_params.save_asm) sprintf(delete_command, "rm %s.asm %s.asm.o", _files[i].path, _files[i].path);
         system(delete_command);
     }
 
@@ -112,6 +112,6 @@ int build_all(char* output) {
 }
 
 int set_params(params_t* params) {
-    str_memcpy(&__params, params, sizeof(params_t));
+    str_memcpy(&_params, params, sizeof(params_t));
     return 1;
 }

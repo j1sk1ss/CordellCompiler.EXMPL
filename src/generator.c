@@ -490,7 +490,7 @@ static int _generate_expression(tree_t* node, FILE* output) {
     return 1;
 }
 
-static int __get_variables_size(tree_t* head) {
+static int _get_variables_size(tree_t* head) {
     int size = 0;
     if (!head) return 0;
     for (tree_t* expression = head; expression; expression = expression->next_sibling) {
@@ -505,7 +505,7 @@ static int __get_variables_size(tree_t* head) {
         if (
             expression->token->t_type == WHILE_TOKEN || 
             expression->token->t_type == IF_TOKEN
-        ) size += __get_variables_size(expression->first_child->next_sibling->first_child);
+        ) size += _get_variables_size(expression->first_child->next_sibling->first_child);
         else size += expression->variable_size;
     }
     
@@ -531,7 +531,7 @@ static int _generate_function(tree_t* node, FILE* output) {
     We should go into function body and find all local variables.
     Also we remember input variables.
     */
-    int local_vars_size = __get_variables_size(params_node->first_child) + __get_variables_size(body_node->first_child);
+    int local_vars_size = _get_variables_size(params_node->first_child) + _get_variables_size(body_node->first_child);
     iprintf(output, "sub esp, %d\n", local_vars_size);
 
     /*
@@ -777,7 +777,7 @@ int generate_asm(tree_t* root, FILE* output) {
         */
         iprintf(output, "push ebp\n");
         iprintf(output, "mov ebp, esp\n");
-        iprintf(output, "sub esp, %d\n", __get_variables_size(main_body->first_child));
+        iprintf(output, "sub esp, %d\n", _get_variables_size(main_body->first_child));
         _generate_text_section(main_body, output);
     }
 
