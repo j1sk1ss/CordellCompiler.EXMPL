@@ -1,9 +1,11 @@
 from "string.cpl" import prints gets;
 
 start
-    arr filled 10 char = 0 0 0 0 0 0 0 0 0 0;
-    str local = "Input data ";
-    prints local;
-    gets filled 10;
-    prints filled;
+    str helloStr = "Goodbye world!";
+    arr filled 14 char = H e l l o 32 w o r l d ! 0;
+    arr matrix 10 int = filled helloStr 0;
+
+    ptr stringH = matrix[0];
+
+    prints stringH;
 exit 1;

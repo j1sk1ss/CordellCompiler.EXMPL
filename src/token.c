@@ -19,7 +19,7 @@
     static int _add_token(token_t** head, token_t** tail, token_type_t type, const unsigned char* buffer, size_t len, int line) {
         token_t* new_token = create_token(type, buffer, len, line);
         if (!new_token) return 0;
-
+        
         if (!*head) *head = new_token;
         else (*tail)->next = new_token;
         *tail = new_token; 
@@ -96,7 +96,7 @@ token_t* tokenize(int fd) {
                         else if (ct == CHAR_DELIMITER)   new_type = DELIMITER_TOKEN;
                         else if (ct == CHAR_OPEN_INDEX)  new_type = OPEN_INDEX_TOKEN;
                         else if (ct == CHAR_CLOSE_INDEX) new_type = CLOSE_INDEX_TOKEN;
-                        else                             new_type = UNKNOWN_SYMBOL_TOKEN;
+                        else new_type = UNKNOWN_STRING_TOKEN;
                     }
                 //}
                 

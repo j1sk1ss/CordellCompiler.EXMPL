@@ -235,39 +235,64 @@ static int _generate_expression(tree_t* node, FILE* output) {
         _generate_expression(node->first_child, output);
     }
     else if (node->token->t_type == ARRAY_TYPE_TOKEN) {
-        tree_t* size   = node->first_child;
-        tree_t* t_type = size->next_sibling;
-        tree_t* name   = t_type->next_sibling;
-    
-        int el_size = 1;
-        if (!str_strcmp((char*)t_type->token->value, SHORT_VARIABLE)) el_size = 2;
-        else if (!str_strcmp((char*)t_type->token->value, INT_VARIABLE)) el_size = 4;
-        _add_array_info((char*)name->token->value, el_size, str_atoi((char*)size->token->value));
+        if (node->first_child && !node->token->ro && !node->token->glob) {
+            tree_t* size   = node->first_child;
+            tree_t* t_type = size->next_sibling;
+            tree_t* name   = t_type->next_sibling;
+        
+            int el_size = 1;
+            if (!str_strcmp((char*)t_type->token->value, SHORT_VARIABLE)) el_size = 2;
+            else if (!str_strcmp((char*)t_type->token->value, INT_VARIABLE)) el_size = 4;
+            _add_array_info((char*)name->token->value, el_size, str_atoi((char*)size->token->value));
 
-        tree_t* vals = name->next_sibling;
-        if (vals && vals->token->t_type != DELIMITER_TOKEN) {
-            int base_off = node->variable_offset;
-            for (tree_t* v = vals; v && v->token->t_type != DELIMITER_TOKEN; v = v->next_sibling) {
-                int value = str_atoi((char*)v->token->value);
-                iprintf(output, "mov eax, %d\n", value);
-                iprintf(output, "mov [ebp - %d], eax\n", base_off);
-                base_off -= el_size;
+            fprintf(output, "\n ; --------------- Array setup %s --------------- \n", name->token->value);
+
+            tree_t* vals = name->next_sibling;
+            if (vals && vals->token->t_type != DELIMITER_TOKEN) {
+                int base_off = node->variable_offset;
+                for (tree_t* v = vals; v && v->token->t_type != DELIMITER_TOKEN; v = v->next_sibling) {
+                    if (v->token->t_type == UNKNOWN_NUMERIC_TOKEN) {
+                        int value = str_atoi((char*)v->token->value);
+                        iprintf(output, "mov eax, %d\n", value);
+                    }
+                    else if (v->token->t_type == UNKNOWN_STRING_TOKEN) {
+                        int value = 0;
+                        char* h = (char*)v->token->value;
+                        while (*h) {
+                            value += *h;
+                            h++;
+                        }
+
+                        iprintf(output, "mov eax, %d ; %s\n", value, v->token->value);    
+                    }
+                    else {
+                        iprintf(output, "%s eax, %s ; uint32 %s \n", !_find_array_info((char*)v->token->value) ? "mov" : "lea", GET_ASMVAR(v), v->token->value); 
+                    }
+
+                    iprintf(output, "mov [ebp - %d], eax\n", base_off);
+                    base_off -= el_size;
+                }
             }
+
+            fprintf(output, " ; --------------- \n");
         }
     }
     else if (node->token->t_type == STR_TYPE_TOKEN) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
+            fprintf(output, "\n ; --------------- String setup %s --------------- \n", name_node->token->value);
             tree_t* val_node = name_node->next_sibling;
             char* val_head = (char*)val_node->token->value;
             _add_array_info((char*)name_node->token->value, 1, name_node->variable_size);
 
             int base_off = node->variable_offset;
             while (*val_head) {
-                iprintf(output, "mov eax, %d\n", *val_head);
+                iprintf(output, "mov eax, %d ; %c\n", *val_head, *val_head);
                 iprintf(output, "mov [ebp - %d], eax\n", base_off--);
                 val_head++;
             }
+
+            fprintf(output, " ; --------------- \n");
         }
     }
     else if (node->token->t_type == ARR_VARIABLE_TOKEN || node->token->t_type == STR_VARIABLE_TOKEN) {
@@ -276,8 +301,7 @@ static int _generate_expression(tree_t* node, FILE* output) {
             array_info_t* arr_info = _find_array_info((char*)node->token->value);
             _generate_expression(node->first_child, output);
             if (arr_info->el_size > 1) iprintf(output, "imul eax, %d\n", arr_info->el_size);
-            if (node->token->ro || node->token->glob) iprintf(output, "mov ebx, %s\n", GET_ASMVAR(node));
-            else iprintf(output, "lea ebx, %s\n", GET_ASMVAR(node));
+            iprintf(output, "%s ebx, %s\n", (node->token->ro || node->token->glob) ? "mov" : "lea",  GET_ASMVAR(node));
             iprintf(output, "add eax, ebx\n");
 
             if (arr_info->el_size == 1) iprintf(output, "movzx eax, byte [eax]\n");
@@ -421,13 +445,11 @@ static int _generate_expression(tree_t* node, FILE* output) {
         fprintf(output, "\n ; --------------- Call function %s --------------- \n", func_name_node->token->value);
 
         for (int i = arg_count - 1; i >= 0; --i) {
-            int is_arr = 0;
             tree_t* arg = args[i];
             switch (get_variable_type(arg->token->t_type)) {
                 case 1: 
                 case 32: 
-                    if (_find_array_info((char*)arg->token->value)) is_arr = 1;
-                    iprintf(output, "%s eax, %s ; uint32 %s \n", !is_arr ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
+                    iprintf(output, "%s eax, %s ; uint32 %s \n", !_find_array_info((char*)arg->token->value) ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
                     break;
                 case 16: iprintf(output, "mov ax, %s ; uint16 %s \n", GET_ASMVAR(arg), arg->token->value); break;
                 case 8:  iprintf(output, "mov al, %s ; uint8 %s \n", GET_ASMVAR(arg), arg->token->value); break;
@@ -626,15 +648,13 @@ static int _generate_syscall(tree_t* node, FILE* output) {
 
     fprintf(output, "\n ; --------------- system call --------------- \n");
 
-    int is_arr = 0;
     int argument_index = 0;
     tree_t* args = node->first_child;
     while (args) {
         switch (get_variable_type(args->token->t_type)) {
             case 1: 
             case 32:
-                if (_find_array_info((char*)node->first_child->token->value)) is_arr = 1;
-                iprintf(output, "%s %s, %s\n", !is_arr ? "mov" : "lea", registers_32[argument_index++], GET_ASMVAR(args)); 
+                iprintf(output, "%s %s, %s\n", !_find_array_info((char*)node->first_child->token->value) ? "mov" : "lea", registers_32[argument_index++], GET_ASMVAR(args)); 
                 break;
             case 16: iprintf(output, "mov %s, %s\n", registers_16[argument_index++], GET_ASMVAR(args)); break;
             case 8:  iprintf(output, "mov %s, %s\n", registers_8[argument_index++], GET_ASMVAR(args)); break;
@@ -673,8 +693,7 @@ static int _generate_assignment(tree_t* node, FILE* output) {
         */
         _generate_expression(left->first_child, output);
         if (elem_size > 1) iprintf(output, "imul eax, %d\n", elem_size);
-        if (left->token->ro || left->token->glob) iprintf(output, "mov ebx, %s\n", GET_ASMVAR(left));
-        else iprintf(output, "lea ebx, %s\n", GET_ASMVAR(left));
+        iprintf(output, "%s ebx, %s\n", (left->token->ro || left->token->glob) ? "mov" : "lea", GET_ASMVAR(left));
 
         iprintf(output, "add eax, ebx\n");
         iprintf(output, "push eax\n");

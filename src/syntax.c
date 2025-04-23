@@ -392,8 +392,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
 
     int arr_size = str_atoi((char*)size_token->value);
     token_t* val_token = assign_token->next;
-    for (int i = 0; i < arr_size && val_token; i++) {
-        if (val_token->t_type != UNKNOWN_NUMERIC_TOKEN && val_token->t_type != UNKNOWN_STRING_TOKEN) break;
+    for (int i = 0; i < arr_size && val_token && val_token->t_type != DELIMITER_TOKEN; i++) {
         tree_t* val_node = _create_tree_node(val_token);
         if (!val_node) {
             unload_syntax_tree(arr_node);
@@ -402,6 +401,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
             return NULL;
         }
 
+        __fill_variable(val_node);
         _add_child_node(arr_node, val_node);
         val_token = val_token->next;
     }
