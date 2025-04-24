@@ -6,6 +6,8 @@
 #include "generator.h"
 #include "semantic.h"
 #include "syntax.h"
+#include "arrmem.h"
+#include "varmem.h"
 #include "token.h"
 #include "logg.h"
 

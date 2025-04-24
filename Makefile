@@ -46,7 +46,7 @@ ifeq ($(SPECIAL_LOGS), 1)
 endif
 
 OUTPUT = builds/ccompiler
-SOURCES = main.c src/*.c std/*.c
+SOURCES = main.c src/*.c src/syntax/*.c std/*.c
 
 all: force_build $(OUTPUT)
 

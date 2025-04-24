@@ -5,7 +5,7 @@ start
     arr filled 14 char = H e l l o 32 w o r l d ! 0;
     arr matrix 10 int = filled helloStr 0;
 
-    ptr stringH = matrix[0];
+    ptr stringH = matrix[1];
 
     prints stringH;
 exit 1;

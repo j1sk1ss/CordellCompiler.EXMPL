@@ -1,20 +1,20 @@
 #ifndef PARSER_H_
 #define PARSER_H_
 
+#include "arrmem.h"
+#include "varmem.h"
 #include "token.h"
 #include "dict.h"
-#include "str.h"
 #include "vars.h"
+#include "str.h"
 
 #define ALIGN_TO(x, a) (((x) + (a) - 1) & ~((a) - 1))
-#define MAX_VARIABLES   256
 
 typedef struct tree {
     token_t* token;
     struct tree* parent;
     struct tree* first_child;
     struct tree* next_sibling;
-    int function;
     int variable_offset;
     int variable_size;
 } tree_t;
