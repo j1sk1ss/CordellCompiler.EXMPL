@@ -23,6 +23,50 @@ static int _find_muldiv(tree_t* root) {
             default: break;
         }
 
+        /*
+        Constant folding
+        */
+        switch (t->token->t_type) {
+            case PLUS_TOKEN:
+            case MINUS_TOKEN:
+            case MULTIPLY_TOKEN:
+            case DIVIDE_TOKEN:
+            case BITAND_TOKEN:
+            case BITOR_TOKEN:
+            case BITMOVE_LEFT_TOKEN:
+            case BITMOVE_RIGHT_TOKEN:
+                _find_muldiv(t);
+                tree_t* left = t->first_child;
+                tree_t* right = left->next_sibling;
+                if (left->token->t_type != UNKNOWN_NUMERIC_TOKEN || right->token->t_type != UNKNOWN_NUMERIC_TOKEN) break;
+
+                int l_val = str_atoi((char*)left->token->value);
+                int r_val = str_atoi((char*)right->token->value);
+                int result = 0;
+                switch (t->token->t_type) {
+                    case PLUS_TOKEN: result = l_val + r_val; break;
+                    case MINUS_TOKEN: result = l_val - r_val; break;
+                    case MULTIPLY_TOKEN: result = l_val * r_val; break;
+                    case DIVIDE_TOKEN: 
+                        if (r_val == 0) break;
+                        result = l_val / r_val; 
+                        break;
+                    case BITAND_TOKEN: result = l_val & r_val; break;
+                    case BITOR_TOKEN: result = l_val | r_val; break;
+                    case BITMOVE_LEFT_TOKEN: result = l_val << r_val; break;
+                    case BITMOVE_RIGHT_TOKEN: result = l_val >> r_val; break;
+                    default: break;
+                }
+
+                snprintf((char*)t->token->value, TOKEN_MAX_SIZE, "%d", result);
+                t->token->t_type = UNKNOWN_NUMERIC_TOKEN;
+                unload_syntax_tree(t->first_child->next_sibling);
+                unload_syntax_tree(t->first_child);
+                t->first_child = NULL;
+            break;
+            default: break;
+        }
+        
         if (t->token->t_type == MULTIPLY_TOKEN || t->token->t_type == DIVIDE_TOKEN) {
             tree_t* left = t->first_child;
             tree_t* right = left->next_sibling;

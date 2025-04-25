@@ -5,6 +5,7 @@
 #include "str.h"
 #include "token.h"
 #include "syntax.h"
+#include "varmem.h"
 
 #include <stdio.h>
 

@@ -16,7 +16,7 @@ typedef struct variable_info {
 int get_vars_offset();
 int set_vars_offset(int off);
 
-int get_var_info(char* variable, char* func, variable_info_t* info);
+int get_var_info(const char* variable, const char* func, variable_info_t* info);
 int add_variable_info(char* name, int size, char* func);
 
 int unload_varmap();
