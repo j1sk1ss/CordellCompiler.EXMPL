@@ -52,6 +52,7 @@ int _compile(object_t* obj) {
     int semantic_res = check_semantic(parse_tree);
     if (semantic_res) {
         string_optimization(parse_tree);
+        muldiv_optimization(parse_tree);
 
         char save_path[128] = { 0 };
         sprintf(save_path, "%s.asm", obj->path);

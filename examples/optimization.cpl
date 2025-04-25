@@ -4,6 +4,7 @@ start
     prints "Hello!";
     prints "Hello!";
     prints "Already!";
-    str stackStr = "I`m stack!!!";
-    prints stackStr;
+
+    int a = 10;
+    int c = a * 1024;
 exit 1;

@@ -10,5 +10,6 @@
 
 
 int string_optimization(tree_t* root);
+int muldiv_optimization(tree_t* root);
 
 #endif
