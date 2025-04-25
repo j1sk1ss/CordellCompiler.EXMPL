@@ -11,16 +11,23 @@
 #define GET_ASMVAR(node) \
     (!((node)->token->ro || (node)->token->glob) ? \
         format_from_stack((node)->variable_offset) : \
-        format_from_data((node)->token->value))      
+        format_from_data((node)->token->value, (node)->token->t_type))      
 
 static inline char* format_from_stack(int offset) {
-    static char buf[64] = { 0 };
-    snprintf(buf, sizeof(buf), "[ebp - %d]", offset);
-    return buf;
+    static char stack_buff[64] = { 0 };
+    snprintf(stack_buff, sizeof(stack_buff), "[ebp - %d]", offset);
+    return stack_buff;
 }
 
-static inline char* format_from_data(unsigned char* name) {
-    return (char*)name;
+static inline char* format_from_data(unsigned char* name, token_type_t type) {
+    if (type != UNKNOWN_NUMERIC_TOKEN) {
+        static char data_buff[64] = { 0 };
+        snprintf(data_buff, sizeof(data_buff), "__%s__", name);
+        return data_buff;
+    }
+    else {
+        return (char*)name;
+    }
 }
 
 

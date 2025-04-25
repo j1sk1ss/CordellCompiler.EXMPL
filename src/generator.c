@@ -16,11 +16,11 @@
 
 static int _generate_global(token_type_t t_type, tree_t* entry, FILE* output) {
     switch (t_type) {
-        case STR_TYPE_TOKEN:   iprintf(output, "%s db '%s', 0\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
-        case PTR_TYPE_TOKEN:   iprintf(output, "%s dd %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
-        case INT_TYPE_TOKEN:   iprintf(output, "%s dd %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
-        case SHORT_TYPE_TOKEN: iprintf(output, "%s dw %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
-        case CHAR_TYPE_TOKEN:  iprintf(output, "%s db %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
+        case STR_TYPE_TOKEN:   iprintf(output, "__%s__ db '%s', 0\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
+        case PTR_TYPE_TOKEN:   iprintf(output, "__%s__ dd %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
+        case INT_TYPE_TOKEN:   iprintf(output, "__%s__ dd %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
+        case SHORT_TYPE_TOKEN: iprintf(output, "__%s__ dw %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
+        case CHAR_TYPE_TOKEN:  iprintf(output, "__%s__ db %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
         case ARRAY_TYPE_TOKEN:
             tree_t* size   = entry->first_child;
             tree_t* t_type = size->next_sibling;
@@ -42,7 +42,7 @@ static int _generate_global(token_type_t t_type, tree_t* entry, FILE* output) {
                 el_size = 8;
             }
         
-            if (!name->next_sibling) iprintf(output, "%s times %s %s 0\n", name->token->value, size->token->value, directive);
+            if (!name->next_sibling) iprintf(output, "__%s__ times %s %s 0\n", name->token->value, size->token->value, directive);
             else {
                 iprintf(output, "%s %s ", name->token->value, directive);
                 for (tree_t* elem = name->next_sibling; elem; elem = elem->next_sibling) {
@@ -396,7 +396,7 @@ static int _generate_expression(tree_t* node, FILE* output) {
             iprintf(output, "push eax\n");
         }
     
-        iprintf(output, "call %s\n", func_name_node->token->value);
+        iprintf(output, "call __%s__\n", func_name_node->token->value);
         if (arg_count > 0) iprintf(output, "add esp, %d\n", arg_count * 4);
         fprintf(output, " ; --------------- \n");
     }
@@ -464,8 +464,8 @@ static int _generate_function(tree_t* node, FILE* output) {
     tree_t* return_node = body_node->next_sibling;
 
     fprintf(output, "\n ; --------------- Function %s --------------- \n", name_node->token->value);
-    iprintf(output, "jmp _end_%s\n", name_node->token->value);
-    iprintf(output, "%s:\n", name_node->token->value);
+    iprintf(output, "jmp __end_%s__\n", name_node->token->value);
+    iprintf(output, "__%s__:\n", name_node->token->value);
 
     _current_depth += 1;
     iprintf(output, "push ebp\n");
@@ -521,7 +521,7 @@ static int _generate_function(tree_t* node, FILE* output) {
 
     _current_depth -= 1;
     fprintf(output, " ; --------------- \n");
-    iprintf(output, "_end_%s:\n", name_node->token->value);
+    iprintf(output, "__end_%s__:\n", name_node->token->value);
     return 1;
 }
 
@@ -532,23 +532,23 @@ static int _generate_while(tree_t* node, FILE* output) {
     tree_t* body = condition->next_sibling->first_child;
 
     fprintf(output, "\n ; --------------- while cycle [%i] --------------- \n", current_label);
-    iprintf(output, "while_%d:\n", current_label);
+    iprintf(output, "__while_%d__:\n", current_label);
     _current_depth += 1;
 
     _generate_expression(condition, output);
     iprintf(output, "cmp eax, 0\n");
-    iprintf(output, "je end_while_%d\n", current_label);
+    iprintf(output, "je __end_while_%d__\n", current_label);
 
     while (body) {
         _generate_expression(body, output);
         body = body->next_sibling;
     }
 
-    iprintf(output, "jmp while_%d\n", current_label);
+    iprintf(output, "jmp __while_%d__\n", current_label);
     
     _current_depth -= 1;
     fprintf(output, " ; --------------- \n");
-    iprintf(output, "end_while_%d:\n", current_label);
+    iprintf(output, "__end_while_%d__:\n", current_label);
     return 1;
 }
 
@@ -562,7 +562,7 @@ static int _generate_if(tree_t* node, FILE* output) {
     fprintf(output, "\n ; --------------- if statement [%i] --------------- \n", current_label);
     _generate_expression(condition, output);
     iprintf(output, "cmp eax, 0\n");
-    iprintf(output, "je end_if_%d\n", current_label);
+    iprintf(output, "je __end_if_%d__\n", current_label);
     _current_depth += 1;
 
     tree_t* body_exp = body->first_child;
@@ -572,7 +572,7 @@ static int _generate_if(tree_t* node, FILE* output) {
     }
 
     fprintf(output, " ; --------------- \n");
-    iprintf(output, "end_if_%d:\n", current_label);
+    iprintf(output, "__end_if_%d__:\n", current_label);
     if (else_body) {
         tree_t* else_body_exp = else_body->first_child;
         while (else_body_exp) {
@@ -699,11 +699,11 @@ int generate_asm(tree_t* root, FILE* output) {
             if (child->token) switch (child->token->t_type) {
                 case IMPORT_SELECT_TOKEN: 
                     for (tree_t* func = child->first_child->first_child; func; func = func->next_sibling)
-                        fprintf(output, "    extern %s\n", func->token->value);
+                        fprintf(output, "    extern __%s__\n", func->token->value);
                     break;
 
                 case FUNC_TOKEN: 
-                    fprintf(output, "    global %s\n", child->first_child->token->value);
+                    fprintf(output, "    global __%s__\n", child->first_child->token->value);
                     break;
 
                 default: break;

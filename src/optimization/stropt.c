@@ -19,7 +19,7 @@ static string_info_t* _create_string_info(const char* body) {
     node->next = NULL;
 
     str_strncpy(node->str_body, body, TOKEN_MAX_SIZE);
-    sprintf(node->str_name, "__str_%d__", _str_num++);
+    sprintf(node->str_name, "str_%d", _str_num++);
     return node;
 }
 
