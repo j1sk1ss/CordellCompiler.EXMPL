@@ -54,7 +54,7 @@ char* str_strncpy(char* dst, const char* src, int n) {
 	return dst;
 }
 
-int str_strcmp(char* f, char* s) {
+int str_strcmp(const char* f, const char* s) {
     if (!f || !s) return -1;
     while (*f && *s && *f == *s) {
         ++f;

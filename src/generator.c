@@ -85,11 +85,7 @@ static int _generate_rodata_section(tree_t* node, FILE* output) {
                 case CALL_TOKEN:
                 case SYSCALL_TOKEN:
                 case WHILE_TOKEN: _generate_rodata_section(child, output); break;
-                case STRING_VALUE_TOKEN: 
-                    iprintf(output, "string_%d db '%s', 0\n", num, child->token->value);
-                    sprintf((char*)child->token->value, "string_%d", num++);
-                    child->token->ro = 1;
-                    break;
+                case FUNC_TOKEN: _generate_rodata_section(child->first_child->next_sibling->next_sibling, output); break;
                 default: break;
             }
         }
@@ -112,9 +108,9 @@ static int _generate_data_section(tree_t* node, FILE* output) {
         else if (!child->token->ro) {
             switch (child->token->t_type) {
                 case IF_TOKEN:
-                case FUNC_TOKEN:
                 case SYSCALL_TOKEN:
                 case WHILE_TOKEN: _generate_data_section(child, output); break;
+                case FUNC_TOKEN: _generate_data_section(child->first_child->next_sibling->next_sibling, output); break;
                 default: break;
             }
         }
@@ -126,15 +122,15 @@ static int _generate_data_section(tree_t* node, FILE* output) {
 static int _generate_expression(tree_t* node, FILE* output) {
     if (!node) return 0;
     if (node->token->t_type == IF_TOKEN)            _generate_if(node, output);
-    else if (node->token->t_type == FUNC_TOKEN)     _generate_function(node, output);
     else if (node->token->t_type == WHILE_TOKEN)    _generate_while(node, output);
+    else if (node->token->t_type == FUNC_TOKEN)     _generate_function(node, output);
     else if (node->token->t_type == SYSCALL_TOKEN)  _generate_syscall(node, output);
     else if (node->token->t_type == ASIGN_TOKEN)    _generate_assignment(node, output);
     else if (node->token->t_type == UNKNOWN_NUMERIC_TOKEN) {
         /*
         If it unknown num, we store it in eax register for other operations.
         */
-       iprintf(output, "mov eax, %s\n", node->token->value);
+        iprintf(output, "mov eax, %s\n", node->token->value);
     }
     else if (node->token->t_type == INT_TYPE_TOKEN) {
         /*
@@ -184,41 +180,39 @@ static int _generate_expression(tree_t* node, FILE* output) {
             tree_t* t_type = size->next_sibling;
             tree_t* name   = t_type->next_sibling;
         
-            int el_size = 1;
-            if (!str_strcmp((char*)t_type->token->value, SHORT_VARIABLE)) el_size = 2;
-            else if (!str_strcmp((char*)t_type->token->value, INT_VARIABLE)) el_size = 4;
-
-            fprintf(output, "\n ; --------------- Array setup %s --------------- \n", name->token->value);
-
-            tree_t* vals = name->next_sibling;
-            if (vals && vals->token->t_type != DELIMITER_TOKEN) {
-                int base_off = node->variable_offset;
-                for (tree_t* v = vals; v && v->token->t_type != DELIMITER_TOKEN; v = v->next_sibling) {
-                    if (v->token->t_type == UNKNOWN_NUMERIC_TOKEN) {
-                        int value = str_atoi((char*)v->token->value);
-                        iprintf(output, "mov eax, %d\n", value);
-                    }
-                    else if (v->token->t_type == UNKNOWN_STRING_TOKEN) {
-                        int value = 0;
-                        char* h = (char*)v->token->value;
-                        while (*h) {
-                            value += *h;
-                            h++;
+            array_info_t arr_info = { .el_size = 1 };
+            if (get_array_info((char*)name->token->value, &arr_info)) {
+                fprintf(output, "\n ; --------------- Array setup %s --------------- \n", name->token->value);
+    
+                tree_t* vals = name->next_sibling;
+                if (vals && vals->token->t_type != DELIMITER_TOKEN) {
+                    int base_off = node->variable_offset;
+                    for (tree_t* v = vals; v && v->token->t_type != DELIMITER_TOKEN; v = v->next_sibling) {
+                        if (v->token->t_type == UNKNOWN_NUMERIC_TOKEN) {
+                            int value = str_atoi((char*)v->token->value);
+                            iprintf(output, "mov eax, %d\n", value);
                         }
-
-                        iprintf(output, "mov eax, %d ; %s\n", value, v->token->value);    
+                        else if (v->token->t_type == UNKNOWN_STRING_TOKEN) {
+                            int value = 0;
+                            char* h = (char*)v->token->value;
+                            while (*h) {
+                                value += *h;
+                                h++;
+                            }
+    
+                            iprintf(output, "mov eax, %d ; %s\n", value, v->token->value);    
+                        }
+                        else {
+                            iprintf(output, "%s eax, %s ; uint32 %s \n", !get_array_info((char*)v->token->value, NULL) ? "mov" : "lea", GET_ASMVAR(v), v->token->value); 
+                        }
+    
+                        iprintf(output, "mov [ebp - %d], eax\n", base_off);
+                        base_off -= arr_info.el_size;
                     }
-                    else {
-                        array_info_t arr_info = { .el_size = 1 };
-                        iprintf(output, "%s eax, %s ; uint32 %s \n", !get_array_info((char*)v->token->value, &arr_info) ? "mov" : "lea", GET_ASMVAR(v), v->token->value); 
-                    }
-
-                    iprintf(output, "mov [ebp - %d], eax\n", base_off);
-                    base_off -= el_size;
                 }
+    
+                fprintf(output, " ; --------------- \n");
             }
-
-            fprintf(output, " ; --------------- \n");
         }
     }
     else if (node->token->t_type == STR_TYPE_TOKEN) {
@@ -392,8 +386,7 @@ static int _generate_expression(tree_t* node, FILE* output) {
             switch (get_variable_type(arg->token->t_type)) {
                 case 1: 
                 case 32:
-                    array_info_t arr_info = { .el_size = 1 };
-                    iprintf(output, "%s eax, %s ; uint32 %s \n", !get_array_info((char*)arg->token->value, &arr_info) ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
+                    iprintf(output, "%s eax, %s ; uint32 %s \n", !get_array_info((char*)arg->token->value, NULL) ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
                     break;
                 case 16: iprintf(output, "mov ax, %s ; uint16 %s \n", GET_ASMVAR(arg), arg->token->value); break;
                 case 8:  iprintf(output, "mov al, %s ; uint8 %s \n", GET_ASMVAR(arg), arg->token->value); break;
@@ -444,6 +437,12 @@ static int _get_variables_size(tree_t* head) {
         if (expression->token->t_type == ARRAY_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->next_sibling->next_sibling->token->value, &arr_info)) {
+                size += arr_info.size * arr_info.el_size;
+            }
+        }
+        else if (expression->token->t_type == STR_TYPE_TOKEN) {
+            array_info_t arr_info = { .el_size = 1 };
+            if (get_array_info((char*)expression->first_child->token->value, &arr_info)) {
                 size += arr_info.size * arr_info.el_size;
             }
         }
@@ -600,8 +599,7 @@ static int _generate_syscall(tree_t* node, FILE* output) {
         switch (get_variable_type(args->token->t_type)) {
             case 1: 
             case 32:
-                array_info_t arr_info = { .el_size = 1 };
-                iprintf(output, "%s %s, %s\n", !get_array_info((char*)node->first_child->token->value, &arr_info) ? "mov" : "lea", registers_32[argument_index++], GET_ASMVAR(args)); 
+                iprintf(output, "%s %s, %s\n", !get_array_info((char*)node->first_child->token->value, NULL) ? "mov" : "lea", registers_32[argument_index++], GET_ASMVAR(args)); 
                 break;
             case 16: iprintf(output, "mov %s, %s\n", registers_16[argument_index++], GET_ASMVAR(args)); break;
             case 8:  iprintf(output, "mov %s, %s\n", registers_8[argument_index++], GET_ASMVAR(args)); break;
@@ -672,8 +670,8 @@ static int _generate_text_section(tree_t* node, FILE* output) {
 
 int generate_asm(tree_t* root, FILE* output) {
     tree_t* program_body = root->first_child;
-    tree_t* prestart = program_body;
-    tree_t* main_body = prestart->next_sibling;
+    tree_t* prestart     = program_body;
+    tree_t* main_body    = prestart->next_sibling;
 
     /*
     Generate data section. Here we store static arrays,

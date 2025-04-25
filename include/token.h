@@ -94,11 +94,11 @@ typedef enum {
 } char_type_t;
 
 typedef struct token {
-    // Token compiler infarmation
+    // Token compiler information
+    int ro; // ReadOnly flag
+    int glob; // Global flag
     token_type_t t_type;
     unsigned char value[TOKEN_MAX_SIZE];
-    int ro;
-    int glob;
 
     // Arch information
     struct token* next;

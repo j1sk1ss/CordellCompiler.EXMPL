@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 
+#include "optimization.h"
 #include "generator.h"
 #include "semantic.h"
 #include "syntax.h"

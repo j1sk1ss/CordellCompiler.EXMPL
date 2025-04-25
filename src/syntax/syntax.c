@@ -46,12 +46,9 @@ static int _fill_variable(tree_t* val_node) {
     return 1;
 }
 
-static tree_t* _create_tree_node(token_t* token) {
+tree_t* create_tree_node(token_t* token) {
     tree_t* node = mm_malloc(sizeof(tree_t));
-    if (!node) {
-        print_error("Can't create tree node!");
-        return NULL;
-    }
+    if (!node) return NULL;
 
     node->token           = token;
     node->parent          = NULL;
@@ -62,7 +59,7 @@ static tree_t* _create_tree_node(token_t* token) {
     return node;
 }
 
-static int _add_child_node(tree_t* parent, tree_t* child) {
+int add_child_node(tree_t* parent, tree_t* child) {
     if (!parent || !child) return 0;
     child->parent = parent;
     if (!parent->first_child) parent->first_child = child;
@@ -85,13 +82,13 @@ For parsing we have registered parsers for every token.
 */
 static tree_t* _parse_scope(token_t** curr, token_type_t exit_token) {
     if (!curr || !*curr) return NULL;
-    tree_t* scope_node = _create_tree_node(NULL);
+    tree_t* scope_node = create_tree_node(NULL);
     if (!scope_node) return NULL;
     
     while ((*curr) && (*curr)->t_type != exit_token) {
         tree_t* node = _get_parser((*curr)->t_type)(curr);
         if (!node) *curr = (*curr)->next;
-        else _add_child_node(scope_node, node);
+        else add_child_node(scope_node, node);
     }
     
     return scope_node;
@@ -105,11 +102,11 @@ And then adding to source_node func1 and func2.
 */
 static tree_t* _parse_import(token_t** curr) {
     if (!curr || !*curr || (*curr)->t_type != IMPORT_SELECT_TOKEN) return NULL;
-    tree_t* import_node = _create_tree_node(*curr);
+    tree_t* import_node = create_tree_node(*curr);
     if (!import_node) return NULL;
     
     *curr = (*curr)->next;
-    tree_t* source_node = _create_tree_node(*curr);
+    tree_t* source_node = create_tree_node(*curr);
     if (!source_node) {
         unload_syntax_tree(import_node);
         return NULL;
@@ -117,18 +114,18 @@ static tree_t* _parse_import(token_t** curr) {
 
     *curr = (*curr)->next->next;
     while (*curr && (*curr)->t_type != DELIMITER_TOKEN) {
-        tree_t* function_name = _create_tree_node(*curr);
+        tree_t* function_name = create_tree_node(*curr);
         if (!function_name) {
             unload_syntax_tree(import_node);
             unload_syntax_tree(source_node);
             return NULL;
         }
 
-        _add_child_node(source_node, function_name);
+        add_child_node(source_node, function_name);
         *curr = (*curr)->next;
     }
 
-    _add_child_node(import_node, source_node);
+    add_child_node(import_node, source_node);
     return import_node;
 }
 
@@ -139,18 +136,18 @@ And then adding to scope arg1 and arg2.
 */
 static tree_t* _parse_function_call(token_t** curr) {
     if (!curr || !*curr || (*curr)->t_type != CALL_TOKEN) return NULL;
-    tree_t* call_node = _create_tree_node(*curr);
+    tree_t* call_node = create_tree_node(*curr);
     if (!call_node) return NULL;
     
     *curr = (*curr)->next;
-    tree_t* args_node = _create_tree_node(NULL);
+    tree_t* args_node = create_tree_node(NULL);
     if (!args_node) {
         unload_syntax_tree(call_node);
         return NULL;
     }
 
     while (*curr && (*curr)->t_type != DELIMITER_TOKEN) {
-        tree_t* arg_name_node = _create_tree_node((*curr));
+        tree_t* arg_name_node = create_tree_node((*curr));
         if (!arg_name_node) {
             unload_syntax_tree(call_node);
             unload_syntax_tree(args_node);
@@ -158,17 +155,17 @@ static tree_t* _parse_function_call(token_t** curr) {
         }
         
         _fill_variable(arg_name_node);
-        _add_child_node(args_node, arg_name_node);
+        add_child_node(args_node, arg_name_node);
         *curr = (*curr)->next;
     }
 
-    _add_child_node(call_node, args_node);
+    add_child_node(call_node, args_node);
     return call_node;
 }
 
 static tree_t* _parse_return_declaration(token_t** curr) {
     if (!curr || !*curr || (*curr)->t_type != RETURN_TOKEN) return NULL;
-    tree_t* return_node = _create_tree_node(*curr);
+    tree_t* return_node = create_tree_node(*curr);
     if (!return_node) return NULL;
     
     *curr = (*curr)->next;
@@ -178,7 +175,7 @@ static tree_t* _parse_return_declaration(token_t** curr) {
         return NULL;
     }
 
-    _add_child_node(return_node, exp_node);
+    add_child_node(return_node, exp_node);
     return return_node;
 }
 
@@ -189,21 +186,21 @@ static tree_t* _parse_function_declaration(token_t** curr) {
     char* temp_fname = _current_function_name;
     set_vars_offset(0);
 
-    tree_t* func_node = _create_tree_node(*curr);
+    tree_t* func_node = create_tree_node(*curr);
     if (!func_node) return NULL;
     
     *curr = (*curr)->next;
-    tree_t* name_node = _create_tree_node(*curr);
+    tree_t* name_node = create_tree_node(*curr);
     if (!name_node) {
         unload_syntax_tree(func_node);
         return NULL;
     }
 
     _current_function_name = (char*)name_node->token->value;
-    _add_child_node(func_node, name_node);
+    add_child_node(func_node, name_node);
 
     *curr = (*curr)->next;
-    tree_t* args_node = _create_tree_node(NULL);
+    tree_t* args_node = create_tree_node(NULL);
     if (!args_node) {
         unload_syntax_tree(func_node);
         unload_syntax_tree(name_node);
@@ -219,11 +216,11 @@ static tree_t* _parse_function_declaration(token_t** curr) {
             return NULL;
         }
 
-        _add_child_node(args_node, param_node);
+        add_child_node(args_node, param_node);
         *curr = (*curr)->next;
     }
 
-    _add_child_node(func_node, args_node);
+    add_child_node(func_node, args_node);
 
     tree_t* body_node = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
     if (!body_node) {
@@ -233,7 +230,7 @@ static tree_t* _parse_function_declaration(token_t** curr) {
         return NULL;
     }
 
-    _add_child_node(func_node, body_node);
+    add_child_node(func_node, body_node);
     _current_function_name = temp_fname;
     set_vars_offset(temp_off);
 
@@ -251,10 +248,10 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     token_t* value_token = assign_token->next;
     if (!value_token) return NULL;
 
-    tree_t* decl_node = _create_tree_node(type_token);
+    tree_t* decl_node = create_tree_node(type_token);
     if (!decl_node) return NULL;
     
-    tree_t* name_node = _create_tree_node(name_token);
+    tree_t* name_node = create_tree_node(name_token);
     if (!name_node) {
         unload_syntax_tree(decl_node);
         return NULL;
@@ -270,7 +267,7 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
         _fill_variable(name_node);
     }
 
-    _add_child_node(decl_node, name_node);
+    add_child_node(decl_node, name_node);
     if (!assign_token || assign_token->t_type != ASIGN_TOKEN) return decl_node;
 
     tree_t* value_node = _parse_expression(&value_token);
@@ -288,7 +285,7 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
         _fill_variable(name_node);
     }
 
-    _add_child_node(decl_node, value_node);
+    add_child_node(decl_node, value_node);
     return decl_node;
 }
 
@@ -306,11 +303,11 @@ static tree_t* _parse_array_declaration(token_t** curr) {
         return NULL;
     }
     
-    tree_t* arr_node  = _create_tree_node(arr_token);
+    tree_t* arr_node  = create_tree_node(arr_token);
     if (!arr_node) return NULL;
     
     int array_size = str_atoi((char*)size_token->value);
-    tree_t* size_node = _create_tree_node(size_token);
+    tree_t* size_node = create_tree_node(size_token);
     if (!size_node) {
         unload_syntax_tree(arr_node);
         return NULL;
@@ -320,14 +317,14 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     if (!str_strcmp((char*)elem_size_token->value, SHORT_VARIABLE)) el_size = 2;
     else if (!str_strcmp((char*)elem_size_token->value, INT_VARIABLE)) el_size = 4;
     
-    tree_t* elem_size_node = _create_tree_node(elem_size_token);
+    tree_t* elem_size_node = create_tree_node(elem_size_token);
     if (!elem_size_node) {
         unload_syntax_tree(arr_node);
         unload_syntax_tree(size_node);
         return NULL;
     }
 
-    tree_t* name_node = _create_tree_node(name_token);
+    tree_t* name_node = create_tree_node(name_token);
     if (!name_node) {
         unload_syntax_tree(arr_node);
         unload_syntax_tree(size_node);
@@ -335,9 +332,9 @@ static tree_t* _parse_array_declaration(token_t** curr) {
         return NULL;
     }
     
-    _add_child_node(arr_node, size_node);
-    _add_child_node(arr_node, elem_size_node);
-    _add_child_node(arr_node, name_node);
+    add_child_node(arr_node, size_node);
+    add_child_node(arr_node, elem_size_node);
+    add_child_node(arr_node, name_node);
 
     add_array_info((char*)name_token->value, el_size, array_size);
     if (!arr_token->ro && !arr_token->glob) {
@@ -348,7 +345,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     int arr_size = str_atoi((char*)size_token->value);
     token_t* val_token = assign_token->next;
     for (int i = 0; i < arr_size && val_token && val_token->t_type != DELIMITER_TOKEN; i++) {
-        tree_t* val_node = _create_tree_node(val_token);
+        tree_t* val_node = create_tree_node(val_token);
         if (!val_node) {
             unload_syntax_tree(arr_node);
             unload_syntax_tree(size_node);
@@ -357,7 +354,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
         }
 
         _fill_variable(val_node);
-        _add_child_node(arr_node, val_node);
+        add_child_node(arr_node, val_node);
         val_token = val_token->next;
     }
     
@@ -374,7 +371,7 @@ static tree_t* _parse_expression(token_t** curr) {
     else if ((*curr)->t_type == CALL_TOKEN)     return _parse_function_call(curr);
     else if ((*curr)->t_type == SYSCALL_TOKEN)  return _parse_syscall(curr);
     
-    tree_t* left_node = _create_tree_node(left);
+    tree_t* left_node = create_tree_node(left);
     if (!left_node) return NULL;
     _fill_variable(left_node);
     
@@ -385,7 +382,7 @@ static tree_t* _parse_expression(token_t** curr) {
     }
 
     tree_t* right = NULL;
-    tree_t* assign_node = _create_tree_node(assign_token);
+    tree_t* assign_node = create_tree_node(assign_token);
     if (!assign_node) {
         unload_syntax_tree(left_node);
         return NULL;
@@ -402,14 +399,14 @@ static tree_t* _parse_expression(token_t** curr) {
         return NULL;
     }
 
-    _add_child_node(assign_node, left_node);
-    _add_child_node(assign_node, right);
+    add_child_node(assign_node, left_node);
+    add_child_node(assign_node, right);
     return assign_node;
 }
 
 static tree_t* _parse_array_expression(token_t** curr) {
     if (!curr || !*curr) return NULL;
-    tree_t* arr_name_node = _create_tree_node(*curr);
+    tree_t* arr_name_node = create_tree_node(*curr);
     if (!arr_name_node) return NULL;
     _fill_variable(arr_name_node);
     
@@ -423,7 +420,7 @@ static tree_t* _parse_array_expression(token_t** curr) {
         }
 
         while (*curr && (*curr)->t_type != CLOSE_INDEX_TOKEN) (*curr) = (*curr)->next;
-        _add_child_node(arr_name_node, offset_exp);
+        add_child_node(arr_name_node, offset_exp);
 
         *curr = (*curr)->next;
         token_t* assign_token = *curr;
@@ -431,7 +428,7 @@ static tree_t* _parse_array_expression(token_t** curr) {
             return arr_name_node;
         }
 
-        tree_t* assign_node = _create_tree_node(assign_token);
+        tree_t* assign_node = create_tree_node(assign_token);
         if (!assign_node) {
             unload_syntax_tree(arr_name_node);
             unload_syntax_tree(offset_exp);
@@ -447,8 +444,8 @@ static tree_t* _parse_array_expression(token_t** curr) {
             return NULL;
         }
 
-        _add_child_node(assign_node, arr_name_node);
-        _add_child_node(assign_node, right);
+        add_child_node(assign_node, arr_name_node);
+        add_child_node(assign_node, right);
         return assign_node;
     }
 
@@ -457,7 +454,7 @@ static tree_t* _parse_array_expression(token_t** curr) {
 
 static tree_t* _parse_condition_scope(token_t** curr) {
     if (!curr || !*curr) return NULL;
-    tree_t* body_node = _create_tree_node(*curr);
+    tree_t* body_node = create_tree_node(*curr);
     if (!body_node) return NULL;
     
     *curr = (*curr)->next;
@@ -467,7 +464,7 @@ static tree_t* _parse_condition_scope(token_t** curr) {
         return NULL;
     }
 
-    _add_child_node(body_node, cond);
+    add_child_node(body_node, cond);
 
     *curr = (*curr)->next;
     if (*curr && (*curr)->t_type == OPEN_BLOCK_TOKEN) {
@@ -479,7 +476,7 @@ static tree_t* _parse_condition_scope(token_t** curr) {
             return NULL;
         }
 
-        _add_child_node(body_node, if_body);
+        add_child_node(body_node, if_body);
         if (*curr && (*curr)->t_type == CLOSE_BLOCK_TOKEN) *curr = (*curr)->next;
     }
 
@@ -491,7 +488,7 @@ static tree_t* _parse_condition_scope(token_t** curr) {
             unload_syntax_tree(cond);
         }
 
-        _add_child_node(body_node, else_body);
+        add_child_node(body_node, else_body);
         if (*curr && (*curr)->t_type == CLOSE_BLOCK_TOKEN) *curr = (*curr)->next;
     }
     
@@ -500,19 +497,19 @@ static tree_t* _parse_condition_scope(token_t** curr) {
 
 static tree_t* _parse_syscall(token_t** curr) {
     if (!curr || !*curr || (*curr)->t_type != SYSCALL_TOKEN) return NULL;
-    tree_t* syscall_node = _create_tree_node(*curr);
+    tree_t* syscall_node = create_tree_node(*curr);
     if (!syscall_node) return NULL;
 
     *curr = (*curr)->next;
     for (int i = 0; *curr && (*curr)->t_type != DELIMITER_TOKEN; i++) {
-        tree_t* arg_node = _create_tree_node(*curr);
+        tree_t* arg_node = create_tree_node(*curr);
         if (!arg_node) {
             unload_syntax_tree(syscall_node);
             return NULL;
         }
 
         _fill_variable(arg_node);
-        _add_child_node(syscall_node, arg_node);
+        add_child_node(syscall_node, arg_node);
         *curr = (*curr)->next;
     }
 
@@ -521,7 +518,7 @@ static tree_t* _parse_syscall(token_t** curr) {
 
 tree_t* create_syntax_tree(token_t* head) {
     token_t* curr_head = head;
-    tree_t* root = _create_tree_node(NULL);
+    tree_t* root = create_tree_node(NULL);
     if (!root) return NULL;
 
     tree_t* prestart = _parse_scope(&curr_head, START_TOKEN);
@@ -534,7 +531,7 @@ tree_t* create_syntax_tree(token_t* head) {
     tree_t* body = _parse_scope(&curr_head, EXIT_TOKEN);
     if (!body) print_warn("No body in file!");
     else {
-        tree_t* exit_node = _create_tree_node(create_token(EXIT_TOKEN, NULL, 0, curr_head->line_number));
+        tree_t* exit_node = create_tree_node(create_token(EXIT_TOKEN, NULL, 0, curr_head->line_number));
         if (!exit_node) {
             print_error("Exit parse error!");
             unload_syntax_tree(root);
@@ -552,12 +549,12 @@ tree_t* create_syntax_tree(token_t* head) {
             return NULL;
         }
 
-        _add_child_node(exit_node, exit_exp);
-        _add_child_node(body, exit_node);
+        add_child_node(exit_node, exit_exp);
+        add_child_node(body, exit_node);
     }
 
-    _add_child_node(root, prestart);
-    _add_child_node(root, body);
+    add_child_node(root, prestart);
+    add_child_node(root, body);
     return root;
 }
 

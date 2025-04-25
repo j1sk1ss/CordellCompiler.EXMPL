@@ -18,7 +18,7 @@ int get_array_info(const char* name, array_info_t* info) {
     array_info_t* h = _arrs_h;
     while (h) {
         if (!str_strcmp(h->name, (char*)name)) {
-            str_memcpy(info, h, sizeof(array_info_t));
+            if (info) str_memcpy(info, h, sizeof(array_info_t));
             return 1;
         }
 

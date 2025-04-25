@@ -49,12 +49,14 @@ int _compile(object_t* obj) {
     }
 
     tree_t* parse_tree = create_syntax_tree(tokens);
-    if (_params.syntax) _print_parse_tree(parse_tree, 0);
     int semantic_res = check_semantic(parse_tree);
     if (semantic_res) {
+        string_optimization(parse_tree);
+
         char save_path[128] = { 0 };
         sprintf(save_path, "%s.asm", obj->path);
         FILE* output = fopen(save_path, "w");
+        if (_params.syntax) _print_parse_tree(parse_tree, 0);
         generate_asm(parse_tree, output);
         fclose(output);
 
