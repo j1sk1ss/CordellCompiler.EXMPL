@@ -1,4 +1,4 @@
-from "string.cpl" import prints gets;
+from "string.cpl" import prints gets strlen;
 
 :
 Brainfuck interpriter on CPL
@@ -14,19 +14,14 @@ start
     prints "Brainfuck interpriter! Input code ";
 
     glob arr code 10000 char =;
-    gets code 10000;
-
-    char brk = 0;
-    int codelength = 0;
-    while code[codelength] != brk; {
-        codelength = codelength + 1;
-    }
-
+    int codelength = gets code 10000;
+    
     glob arr bracketmap 10000 int =;
     glob arr stack 10000 int =;
     int stackptr = 0;
     int pos = 0;
 
+    char brk            = 0;  : 0 :
     char plus           = 43; : + :
     char minus          = 45; : - :
     char dot            = 46; : . :

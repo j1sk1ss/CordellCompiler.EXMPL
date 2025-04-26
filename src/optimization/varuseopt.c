@@ -24,6 +24,8 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             case MINUS_TOKEN:
             case BITOR_TOKEN:
             case WHILE_TOKEN:
+            case LOWER_TOKEN:
+            case LARGER_TOKEN:
             case DIVIDE_TOKEN:
             case BITAND_TOKEN:
             case RETURN_TOKEN:

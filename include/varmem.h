@@ -17,7 +17,7 @@ int get_vars_offset();
 int set_vars_offset(int off);
 
 int get_var_info(const char* variable, const char* func, variable_info_t* info);
-int add_variable_info(char* name, int size, char* func);
+int add_variable_info(const char* name, int size, const char* func);
 
 int unload_varmap();
 

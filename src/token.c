@@ -43,8 +43,9 @@ token_t* create_token(token_type_t type, const unsigned char* value, size_t len,
     
     token->next = NULL;
     token->line_number = line;
-
+    
     token->ro = 0;
+    token->ptr = 0;
     if (type == UNKNOWN_NUMERIC_TOKEN) token->glob = 1;
     else token->glob = 0;
     return token;

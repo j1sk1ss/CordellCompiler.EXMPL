@@ -53,6 +53,7 @@ static int _find_muldiv(tree_t* root, int* fold) {
 
             snprintf((char*)t->token->value, TOKEN_MAX_SIZE, "%d", result);
             t->token->t_type = UNKNOWN_NUMERIC_TOKEN;
+            t->token->glob = 1;
             unload_syntax_tree(t->first_child->next_sibling);
             unload_syntax_tree(t->first_child);
             t->first_child = NULL;

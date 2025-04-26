@@ -206,7 +206,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
     
                 tree_t* vals = name->next_sibling;
                 if (vals && vals->token->t_type != DELIMITER_TOKEN) {
-                    int base_off = node->variable_offset;
+                    int base_off = name->variable_offset;
                     for (tree_t* v = vals; v && v->token->t_type != DELIMITER_TOKEN; v = v->next_sibling) {
                         if (v->token->t_type == UNKNOWN_NUMERIC_TOKEN) {
                             int value = str_atoi((char*)v->token->value);
@@ -223,7 +223,8 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                             iprintf(output, "mov eax, %d ; %s\n", value, v->token->value);    
                         }
                         else {
-                            iprintf(output, "%s eax, %s ; uint32 %s \n", !get_array_info((char*)v->token->value, func, NULL) ? "mov" : "lea", GET_ASMVAR(v), v->token->value); 
+                            int is_ptr = get_array_info((char*)v->token->value, func, NULL) && !(v->token->ro || v->token->glob);
+                            iprintf(output, "%s eax, %s ; uint32 %s \n", !is_ptr ? "mov" : "lea", GET_ASMVAR(v), v->token->value); 
                         }
     
                         iprintf(output, "mov [ebp - %d], eax\n", base_off);
@@ -391,7 +392,8 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             switch (get_variable_type(arg->token)) {
                 case 1: 
                 case 32:
-                    iprintf(output, "%s eax, %s ; uint32 %s \n", !get_array_info((char*)arg->token->value, func, NULL) ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
+                    int is_ptr = get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob);
+                    iprintf(output, "%s eax, %s ; uint32 %s \n", !is_ptr ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
                     break;
                 case 16: iprintf(output, "mov ax, %s ; uint16 %s \n", GET_ASMVAR(arg), arg->token->value); break;
                 case 8:  iprintf(output, "mov al, %s ; uint8 %s \n", GET_ASMVAR(arg), arg->token->value); break;
@@ -442,17 +444,16 @@ static int _get_variables_size(tree_t* head, const char* func) {
         if (expression->token->t_type == ARRAY_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->next_sibling->next_sibling->token->value, func, &arr_info)) {
-                size += arr_info.size * arr_info.el_size;
+                size += arr_info.size * ALIGN_TO(arr_info.el_size, 4);
             }
         }
         else if (expression->token->t_type == STR_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->token->value, func, &arr_info)) {
-                size += arr_info.size * arr_info.el_size;
+                size += arr_info.size * ALIGN_TO(arr_info.el_size, 4);
             }
         }
-        
-        if (
+        else if (
             expression->token->t_type == WHILE_TOKEN || 
             expression->token->t_type == IF_TOKEN
         ) size += _get_variables_size(expression->first_child->next_sibling->first_child, func);
@@ -601,7 +602,8 @@ static int _generate_syscall(tree_t* node, FILE* output, const char* func) {
         switch (get_variable_type(args->token)) {
             case 1: 
             case 32:
-                iprintf(output, "%s %s, %s\n", !get_array_info((char*)node->first_child->token->value, func, NULL) ? "mov" : "lea", registers_32[argument_index++], GET_ASMVAR(args)); 
+                int is_ptr = get_array_info((char*)node->first_child->token->value, func, NULL) && !(node->first_child->token->ro || node->first_child->token->glob);
+                iprintf(output, "%s %s, %s\n", !is_ptr ? "mov" : "lea", registers_32[argument_index++], GET_ASMVAR(args)); 
                 break;
             case 16: iprintf(output, "mov %s, %s\n", registers_16[argument_index++], GET_ASMVAR(args)); break;
             case 8:  iprintf(output, "mov %s, %s\n", registers_8[argument_index++], GET_ASMVAR(args)); break;

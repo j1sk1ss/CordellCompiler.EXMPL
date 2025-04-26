@@ -70,6 +70,7 @@ static int _change_decl(tree_t* root, char* varname, int value, int local, int o
         if (!str_strncmp(varname, (char*)t->token->value, TOKEN_MAX_SIZE)) {
             snprintf((char*)t->token->value, TOKEN_MAX_SIZE, "%d", value);
             t->token->t_type = UNKNOWN_NUMERIC_TOKEN;
+            t->token->glob = 1;
         }   
     }
 
@@ -100,7 +101,6 @@ static int _find_decl(tree_t* root, tree_t* entry, int* change) {
             if (!is_changed) {
                 tree_t* val_node = name_node->next_sibling;
                 if (val_node->token->t_type != UNKNOWN_NUMERIC_TOKEN) continue;
-
                 int value = str_atoi((char*)val_node->token->value);
                 if (t->token->ro || t->token->glob) _change_decl(entry, (char*)name_node->token->value, value, 0, 0);
                 else _change_decl(root, (char*)name_node->token->value, value, 1, 0);

@@ -366,7 +366,8 @@ static tree_t* _parse_array_declaration(token_t** curr) {
 
     add_array_info((char*)name_token->value, _current_function_name, el_size, array_size);
     if (!arr_token->ro && !arr_token->glob) {
-        arr_node->variable_size = ALIGN_TO(array_size * el_size, 4);
+        arr_node->variable_size = ALIGN_TO(array_size * ALIGN_TO(el_size, 4), 4);
+        name_node->variable_size = arr_node->variable_size;
         arr_node->variable_offset = add_variable_info((char*)name_token->value, arr_node->variable_size, _current_function_name);
     }
 

@@ -27,7 +27,7 @@ int get_var_info(const char* variable, const char* func, variable_info_t* info) 
     return 0;
 }
 
-static variable_info_t* _create_variable_info(char* name, int size, char* func) {
+static variable_info_t* _create_variable_info(const char* name, int size, const char* func) {
     variable_info_t* var = (variable_info_t*)mm_malloc(sizeof(variable_info_t));
     if (!var) return NULL;
 
@@ -43,7 +43,7 @@ static variable_info_t* _create_variable_info(char* name, int size, char* func) 
     return var;
 }
 
-int add_variable_info(char* name, int size, char* func) {
+int add_variable_info(const char* name, int size, const char* func) {
     variable_info_t* new_node = _create_variable_info(name, size, func);
     if (!new_node) return 0;
     
@@ -73,5 +73,7 @@ int unload_varmap() {
         _vars_h = n;
     }
 
+    _current_offset_var = 0;
+    _vars_h = NULL;
     return 1;
 }

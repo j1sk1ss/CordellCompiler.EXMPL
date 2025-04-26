@@ -60,6 +60,7 @@ int _compile(object_t* obj) {
         } while (is_fold_vars);
         
         varuse_optimization(parse_tree);
+        offset_optimization(parse_tree);
 
         char save_path[128] = { 0 };
         sprintf(save_path, "%s.asm", obj->path);
