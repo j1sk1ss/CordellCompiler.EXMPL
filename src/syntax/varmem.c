@@ -16,7 +16,7 @@ int set_vars_offset(int off) {
 static variable_info_t* _find_variable(const char* name, const char* func) {
     variable_info_t* h = _vars_h;
     while (h) {
-        if ((!func || !str_strcmp(func, h->func)) && !str_strcmp(name, h->name)) return h;
+        if (((!func && h->func[0] == '\0') || !str_strcmp(func, h->func)) && !str_strcmp(name, h->name)) return h;
         h = h->next;
     }
 
@@ -35,8 +35,10 @@ static variable_info_t* _create_variable_info(char* name, int size, char* func) 
     variable_info_t* var = (variable_info_t*)mm_malloc(sizeof(variable_info_t));
     if (!var) return NULL;
 
-    if (name) str_strncpy(var->name, name, TOKEN_MAX_SIZE);
     if (func) str_strncpy(var->func, func, TOKEN_MAX_SIZE);
+    else var->func[0] = '\0';
+
+    str_strncpy(var->name, name, TOKEN_MAX_SIZE);
     var->offset = _current_offset_var + size;
     var->size = size;
     var->next = NULL;

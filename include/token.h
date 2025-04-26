@@ -26,7 +26,6 @@ typedef enum {
     CLOSE_BLOCK_TOKEN,
 
     // Types
-    PTR_TYPE_TOKEN,
     INT_TYPE_TOKEN,
     SHORT_TYPE_TOKEN,
     CHAR_TYPE_TOKEN,
@@ -67,6 +66,7 @@ typedef enum {
     BITOR_TOKEN,
     
     // Vars
+    PTR_TYPE_TOKEN,
     RO_TYPE_TOKEN,
     GLOB_TYPE_TOKEN,
     PTR_VARIABLE_TOKEN,
@@ -95,8 +95,9 @@ typedef enum {
 
 typedef struct token {
     // Token compiler information
-    int ro; // ReadOnly flag
+    int ro;   // ReadOnly flag
     int glob; // Global flag
+    int ptr;  // Is pointer flag
     token_type_t t_type;
     unsigned char value[TOKEN_MAX_SIZE];
 

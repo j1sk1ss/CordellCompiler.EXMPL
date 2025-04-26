@@ -25,7 +25,6 @@ int get_variable_size(token_type_t token) {
     switch (token) {
         case UNKNOWN_NUMERIC_TOKEN:
         case STRING_VALUE_TOKEN:
-        case PTR_VARIABLE_TOKEN:
         case INT_VARIABLE_TOKEN:
         case ARR_VARIABLE_TOKEN:
         case STR_VARIABLE_TOKEN: return 32;
@@ -38,7 +37,6 @@ int get_variable_size(token_type_t token) {
 int is_variable(token_type_t token) {
     switch (token) {
         case ARRAY_TYPE_TOKEN:
-        case PTR_TYPE_TOKEN:
         case INT_TYPE_TOKEN:
         case SHORT_TYPE_TOKEN:
         case CHAR_TYPE_TOKEN:

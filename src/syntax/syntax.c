@@ -16,14 +16,12 @@ static tree_t* _parse_array_expression(token_t**);
 
 static tree_t* (*_get_parser(token_type_t t_type))(token_t**) {
     switch (t_type) {
-        case PTR_TYPE_TOKEN:
         case INT_TYPE_TOKEN:
         case SHORT_TYPE_TOKEN:
         case CHAR_TYPE_TOKEN:
         case STR_TYPE_TOKEN:        return _parse_variable_declaration;
         case WHILE_TOKEN:
         case IF_TOKEN:              return _parse_condition_scope;
-        case PTR_VARIABLE_TOKEN:
         case INT_VARIABLE_TOKEN:
         case STR_VARIABLE_TOKEN:
         case ARR_VARIABLE_TOKEN:
@@ -301,7 +299,7 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
         int str_size = str_strlen((char*)value_node->token->value);
         decl_node->variable_offset = add_variable_info((char*)name_node->token->value, str_size, _current_function_name);
         decl_node->variable_size = ALIGN_TO(str_size, 4);
-        add_array_info((char*)name_node->token->value, 1, decl_node->variable_size);
+        add_array_info((char*)name_node->token->value, _current_function_name, 1, decl_node->variable_size);
         _fill_variable(name_node);
     }
 
@@ -356,7 +354,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     add_child_node(arr_node, elem_size_node);
     add_child_node(arr_node, name_node);
 
-    add_array_info((char*)name_token->value, el_size, array_size);
+    add_array_info((char*)name_token->value, _current_function_name, el_size, array_size);
     if (!arr_token->ro && !arr_token->glob) {
         arr_node->variable_size = ALIGN_TO(array_size * el_size, 4);
         arr_node->variable_offset = add_variable_info((char*)name_token->value, arr_node->variable_size, _current_function_name);
@@ -385,11 +383,9 @@ static tree_t* _parse_array_declaration(token_t** curr) {
 static tree_t* _parse_expression(token_t** curr) {
     if (!curr || !*curr) return NULL;
     token_t* left = *curr;
-    if ((*curr)->t_type == ARR_VARIABLE_TOKEN || 
-    (*curr)->t_type == STR_VARIABLE_TOKEN || 
-    (*curr)->t_type == PTR_VARIABLE_TOKEN)      return _parse_array_expression(curr);
-    else if ((*curr)->t_type == CALL_TOKEN)     return _parse_function_call(curr);
-    else if ((*curr)->t_type == SYSCALL_TOKEN)  return _parse_syscall(curr);
+    if ((*curr)->t_type == ARR_VARIABLE_TOKEN || (*curr)->t_type == STR_VARIABLE_TOKEN || (*curr)->ptr) return _parse_array_expression(curr);
+    else if ((*curr)->t_type == CALL_TOKEN) return _parse_function_call(curr);
+    else if ((*curr)->t_type == SYSCALL_TOKEN) return _parse_syscall(curr);
     
     tree_t* left_node = create_tree_node(left);
     if (!left_node) return NULL;
