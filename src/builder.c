@@ -5,8 +5,8 @@ static int _print_parse_tree(tree_t* node, int depth) {
     if (!node) return 0;
     for (int i = 0; i < depth; i++) printf("  ");
     if (node->token) printf(
-        "[%s] (t=%d, size=%i, off=%i, ro=%i glob=%i)\n", 
-        (char*)node->token->value, node->token->t_type, node->variable_size, node->variable_offset, node->token->ro, node->token->glob
+        "[%s] (t=%d, size=%i, is_ptr=%i, off=%i, ro=%i glob=%i)\n", 
+        (char*)node->token->value, node->token->t_type, node->variable_size, node->token->ptr, node->variable_offset, node->token->ro, node->token->glob
     );
     else printf("scope\n");
     

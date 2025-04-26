@@ -1,4 +1,4 @@
-function strlen str string; {
+function strlen ptr char string; {
     char brk = 0;
     int index = 0;
     while string[index] != brk; {
@@ -8,16 +8,16 @@ function strlen str string; {
     return index;
 }
 
-function prints ptr string; {
+function prints ptr char string; {
     int strSize = strlen string;
     return syscall 4 1 string strSize;
 }
 
-function gets ptr buffer; int size; {
+function gets ptr char buffer; int size; {
     return syscall 3 0 buffer size;
 }
 
-function atoi ptr buffer; int bsize; {
+function atoi ptr char buffer; int bsize; {
     int num = 0;
     bsize = bsize - 1;
 
@@ -30,7 +30,7 @@ function atoi ptr buffer; int bsize; {
     return num;
 }
 
-function itoa ptr buffer; int dsize; int num; {
+function itoa ptr char buffer; int dsize; int num; {
     int index = dsize - 1;
     int tmp = 0;
 

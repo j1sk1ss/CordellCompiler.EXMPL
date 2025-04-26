@@ -93,6 +93,7 @@ int variable_markup(token_t* head) {
                     variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
                     str_strncpy((char*)variables[var_count].name, (char*)curr->value, TOKEN_MAX_SIZE);
                     variables[var_count].type = CALL_TOKEN;
+                    variables[var_count].ptr = 0;
                     var_count++;
                     
                     curr = curr->next;
@@ -128,17 +129,16 @@ int variable_markup(token_t* head) {
                         case CHAR_TYPE_TOKEN:   variables[var_count].type = CHAR_VARIABLE_TOKEN; break;
                         case STR_TYPE_TOKEN:    variables[var_count].type = STR_VARIABLE_TOKEN; break;
                         case ARRAY_TYPE_TOKEN:  variables[var_count].type = ARR_VARIABLE_TOKEN; break;
-                        case PTR_TYPE_TOKEN:    variables[var_count].type = PTR_VARIABLE_TOKEN; break;
                         case FUNC_TOKEN:        variables[var_count].type = CALL_TOKEN; break;
                         default: break;
                     }
 
-                    curr->ro = is_ro;
+                    curr->ro   = is_ro;
                     curr->glob = is_glob;
-                    curr->ptr = is_ptr;
-                    variables[var_count].ro = is_ro;
+                    curr->ptr  = is_ptr;
+                    variables[var_count].ro   = is_ro;
                     variables[var_count].glob = is_glob;
-                    variables[var_count].ptr = is_ptr;
+                    variables[var_count].ptr  = is_ptr;
                     var_count++;
                 }
 
@@ -157,6 +157,7 @@ int variable_markup(token_t* head) {
         if (curr->t_type == UNKNOWN_STRING_TOKEN) {
             for (size_t i = 0; i < var_count; i++) {
                 if (str_strncmp((char*)curr->value, (char*)variables[i].name, TOKEN_MAX_SIZE) == 0) {
+                    // print_debug("%s is_ptr %i", curr->value, variables[i].ptr);
                     curr->t_type = variables[i].type;
                     curr->glob = variables[i].glob;
                     curr->ro   = variables[i].ro;

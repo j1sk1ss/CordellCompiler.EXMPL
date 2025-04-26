@@ -58,7 +58,6 @@ int check_semantic(tree_t* node) {
                 break;
             }
 
-            case PTR_TYPE_TOKEN:
             case INT_TYPE_TOKEN:
             case STR_TYPE_TOKEN:
             case SHORT_TYPE_TOKEN:
@@ -92,8 +91,8 @@ int check_semantic(tree_t* node) {
                 }
 
                 if (result) {
-                    int left_size = get_variable_size(left->token->t_type);
-                    int right_size = get_variable_size(right->token->t_type);
+                    int left_size = get_variable_size(left->token);
+                    int right_size = get_variable_size(right->token);
                     if (left_size != right_size) {
                         print_warn(
                             "Danger shadow type cast at line %i. Different size [%i] (%s) and [%i] (%s). Did you expect this?", 

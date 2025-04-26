@@ -226,15 +226,18 @@ static tree_t* _parse_function_declaration(token_t** curr) {
     }
 
     while (!*curr || (*curr)->t_type != OPEN_BLOCK_TOKEN) {
-        tree_t* param_node = _parse_variable_declaration(curr);
-        if (!param_node) {
-            unload_syntax_tree(func_node);
-            unload_syntax_tree(name_node);
-            unload_syntax_tree(args_node);
-            return NULL;
+        if (is_variable((*curr)->t_type)) {
+            tree_t* param_node = _parse_variable_declaration(curr);
+            if (!param_node) {
+                unload_syntax_tree(func_node);
+                unload_syntax_tree(name_node);
+                unload_syntax_tree(args_node);
+                return NULL;
+            }
+
+            add_child_node(args_node, param_node);
         }
 
-        add_child_node(args_node, param_node);
         *curr = (*curr)->next;
     }
 
@@ -279,9 +282,16 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
         (*curr) = (*curr)->next;
     }
     
-    if (get_variable_type(name_token->t_type) != 1 && !decl_node->token->ro && !decl_node->token->glob) {
-        decl_node->variable_offset = add_variable_info((char*)name_node->token->value, 4, _current_function_name);
-        decl_node->variable_size = 4;
+    if ((name_token->ptr || get_variable_type(name_token) != 1) && !decl_node->token->ro && !decl_node->token->glob) {
+        int var_size = 4;
+        if (name_token->ptr) {
+            if (!str_strcmp((char*)type_token->value, CHAR_VARIABLE)) var_size = 1;
+            else if (!str_strcmp((char*)type_token->value, SHORT_VARIABLE)) var_size = 2;
+            else if (!str_strcmp((char*)type_token->value, INT_VARIABLE)) var_size = 4;
+        }
+
+        decl_node->variable_offset = add_variable_info((char*)name_node->token->value, var_size, _current_function_name);
+        decl_node->variable_size = var_size;
         _fill_variable(name_node);
     }
 

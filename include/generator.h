@@ -15,7 +15,7 @@
 
 static inline char* format_from_stack(int offset) {
     static char stack_buff[64] = { 0 };
-    snprintf(stack_buff, sizeof(stack_buff), "[ebp - %d]", offset);
+    snprintf(stack_buff, sizeof(stack_buff), "[ebp - %d]", ALIGN_TO(offset, 4));
     return stack_buff;
 }
 

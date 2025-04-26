@@ -13,22 +13,18 @@ int set_vars_offset(int off) {
     return 1;
 }
 
-static variable_info_t* _find_variable(const char* name, const char* func) {
+int get_var_info(const char* variable, const char* func, variable_info_t* info) {
     variable_info_t* h = _vars_h;
     while (h) {
-        if (((!func && h->func[0] == '\0') || !str_strcmp(func, h->func)) && !str_strcmp(name, h->name)) return h;
+        if (((!func && h->func[0] == '\0') || !str_strcmp(func, h->func)) && !str_strcmp(variable, h->name)) {
+            if (info) str_memcpy(info, h, sizeof(variable_info_t));
+            return 1;
+        }
+
         h = h->next;
     }
-
-    return NULL;
-}
-
-int get_var_info(const char* variable, const char* func, variable_info_t* info) {
-    variable_info_t* data = _find_variable(variable, func);
-    if (!data) return 0;
-
-    str_memcpy(info, data, sizeof(variable_info_t));
-    return 1;
+    
+    return 0;
 }
 
 static variable_info_t* _create_variable_info(char* name, int size, char* func) {

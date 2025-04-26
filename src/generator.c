@@ -131,6 +131,27 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         */
         iprintf(output, "mov eax, %s\n", node->token->value);
     }
+    else if (node->token->ptr && is_variable(node->token->t_type)) {
+        tree_t* name_node = node->first_child;
+        if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
+            _generate_expression(name_node->next_sibling, output, func);
+            iprintf(output, "mov %s, eax ; ptr %s = eax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
+        }
+    }
+    else if (node->token->ptr && !is_variable(node->token->t_type) && get_variable_type(node->token)) {
+        if (!node->first_child) iprintf(output, "mov eax, %s\n", GET_ASMVAR(node));
+        else {
+            variable_info_t info;
+            if (get_var_info((char*)node->token->value, func, &info)) {
+                _generate_expression(node->first_child, output, func);
+                iprintf(output, "add eax, %s\n", GET_ASMVAR(node));
+
+                if (info.size == 1) iprintf(output, "movzx eax, byte [eax]\n");
+                else if (info.size == 2) iprintf(output, "movzx eax, word [eax]\n");
+                else iprintf(output, "mov eax, [eax]\n");
+            }
+        }
+    }
     else if (node->token->t_type == INT_TYPE_TOKEN) {
         /*
         Init and saving variable in stack.
@@ -243,27 +264,6 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             if (arr_info.el_size == 1) iprintf(output, "movzx eax, byte [eax]\n");
             else if (arr_info.el_size == 2) iprintf(output, "movzx eax, word [eax]\n");
             else iprintf(output, "mov eax, [eax]\n");
-        }
-    }
-    else if (node->token->ptr && !is_variable(node->token->t_type)) {
-        tree_t* name_node = node->first_child;
-        if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
-            _generate_expression(name_node->next_sibling, output, func);
-            iprintf(output, "mov %s, eax ; ptr %s = eax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
-        }
-    }
-    else if (node->token->ptr && is_variable(node->token->t_type)) {
-        if (!node->first_child) iprintf(output, "mov eax, %s\n", GET_ASMVAR(node));
-        else {
-            variable_info_t info;
-            if (!get_var_info((char*)node->token->value, func, &info)) {
-                _generate_expression(node->first_child, output, func);
-                iprintf(output, "add eax, %s\n", GET_ASMVAR(node));
-
-                if (info.size == 1) iprintf(output, "movzx eax, byte [eax]\n");
-                else if (info.size == 2) iprintf(output, "movzx eax, word [eax]\n");
-                else iprintf(output, "mov eax, [eax]\n");
-            }
         }
     }
     else if (node->token->t_type == BITMOVE_LEFT_TOKEN) {
@@ -388,7 +388,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
 
         for (int i = arg_count - 1; i >= 0; --i) {
             tree_t* arg = args[i];
-            switch (get_variable_type(arg->token->t_type)) {
+            switch (get_variable_type(arg->token)) {
                 case 1: 
                 case 32:
                     iprintf(output, "%s eax, %s ; uint32 %s \n", !get_array_info((char*)arg->token->value, func, NULL) ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
@@ -451,7 +451,7 @@ static int _get_variables_size(tree_t* head, const char* func) {
                 size += arr_info.size * arr_info.el_size;
             }
         }
-
+        
         if (
             expression->token->t_type == WHILE_TOKEN || 
             expression->token->t_type == IF_TOKEN
@@ -481,17 +481,18 @@ static int _generate_function(tree_t* node, FILE* output, const char* func) {
     We should go into function body and find all local variables.
     Also we remember input variables.
     */
-    int local_vars_size = _get_variables_size(params_node->first_child, func) + _get_variables_size(body_node->first_child, func);
-    iprintf(output, "sub esp, %d\n", local_vars_size);
+    int local_vars_size = _get_variables_size(params_node->first_child, (char*)name_node->token->value) + _get_variables_size(body_node->first_child, (char*)name_node->token->value);
+    iprintf(output, "sub esp, %d\n", ALIGN_TO(local_vars_size, 4));
 
     /*
     Loading input args to stack.
     */
     int param_offset = 8;
     for (tree_t* param = params_node->first_child; param; param = param->next_sibling) {
-        int param_size = param->variable_size;
+        int param_size = ALIGN_TO(param->variable_size, 4);
         char* param_name = (char*)param->first_child->token->value;
-        switch (get_variable_type(param->first_child->token->t_type)) {
+        switch (get_variable_type(param->first_child->token)) {
+            case 1:
             case 32:
                 iprintf(output, "mov eax, [ebp + %d] ; int %s \n", param_offset, param_name);
                 iprintf(output, "mov [ebp - %d], eax\n", param_offset - param_size);
@@ -505,14 +506,6 @@ static int _generate_function(tree_t* node, FILE* output, const char* func) {
             case 8:
                 iprintf(output, "mov al, [ebp + %d] ; char %s \n", param_offset, param_name);
                 iprintf(output, "mov [ebp - %d], al\n", param_offset - param_size);
-                break;
-
-            case 1:
-                if (param->first_child->token->glob || param->first_child->token->ro) iprintf(output, "mov [ebp - %d], %s\n", param_offset - param_size, param_name);
-                else {
-                    iprintf(output, "lea eax, [ebp + %d] ; arr/str %s \n", param_offset, param_name);
-                    iprintf(output, "mov [ebp - %d], eax\n", param_offset - param_size);
-                }
                 break;
             default: break;
         }
@@ -605,7 +598,7 @@ static int _generate_syscall(tree_t* node, FILE* output, const char* func) {
     int argument_index = 0;
     tree_t* args = node->first_child;
     while (args) {
-        switch (get_variable_type(args->token->t_type)) {
+        switch (get_variable_type(args->token)) {
             case 1: 
             case 32:
                 iprintf(output, "%s %s, %s\n", !get_array_info((char*)node->first_child->token->value, func, NULL) ? "mov" : "lea", registers_32[argument_index++], GET_ASMVAR(args)); 
@@ -634,7 +627,7 @@ static int _generate_assignment(tree_t* node, FILE* output, const char* func) {
     We store right result to EAX, and move it to stack with offset of left.
     Pointer assignment.
     */
-    if ((get_variable_size(left->token->t_type) == 32) && left->first_child) {
+    if ((get_variable_size(left->token) == 32) && left->first_child) {
         /*
         If left is array or string (array too) with elem size info.
         */
@@ -731,7 +724,7 @@ int generate_asm(tree_t* root, FILE* output) {
         */
         iprintf(output, "push ebp\n");
         iprintf(output, "mov ebp, esp\n");
-        iprintf(output, "sub esp, %d\n", _get_variables_size(main_body->first_child, NULL));
+        iprintf(output, "sub esp, %d\n", ALIGN_TO(_get_variables_size(main_body->first_child, NULL), 4));
         _generate_text_section(main_body, output);
     }
 

@@ -40,7 +40,6 @@ static int _change_decl(tree_t* root, char* varname, int value, int local, int o
         }
 
         switch (t->token->t_type) {
-            case PTR_TYPE_TOKEN:
             case INT_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN: 
             case SHORT_TYPE_TOKEN: _change_decl(t, varname, value, local, 1); continue;
