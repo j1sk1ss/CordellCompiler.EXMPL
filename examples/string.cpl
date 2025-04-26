@@ -1,4 +1,4 @@
-function strlen ptr string; {
+function strlen str string; {
     char brk = 0;
     int index = 0;
     while string[index] != brk; {

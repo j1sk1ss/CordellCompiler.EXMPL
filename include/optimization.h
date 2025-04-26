@@ -11,6 +11,7 @@
 
 
 int string_optimization(tree_t* root);
+int assign_optimization(tree_t* root);
 int varuse_optimization(tree_t* root);
 int muldiv_optimization(tree_t* root);
 

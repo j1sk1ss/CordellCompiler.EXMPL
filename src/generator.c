@@ -503,7 +503,11 @@ static int _generate_function(tree_t* node, FILE* output) {
                 break;
 
             case 1:
-                iprintf(output, "mov [ebp - %d], %s\n", param_offset - param_size, param_name);
+                if (param->first_child->token->glob || param->first_child->token->ro) iprintf(output, "mov [ebp - %d], %s\n", param_offset - param_size, param_name);
+                else {
+                    iprintf(output, "lea eax, [ebp + %d] ; arr/str %s \n", param_offset, param_name);
+                    iprintf(output, "mov [ebp - %d], eax\n", param_offset - param_size);
+                }
                 break;
             default: break;
         }

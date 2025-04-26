@@ -52,8 +52,14 @@ int _compile(object_t* obj) {
     int semantic_res = check_semantic(parse_tree);
     if (semantic_res) {
         string_optimization(parse_tree);
+
+        int is_fold_vars = 0;
+        do {
+            assign_optimization(parse_tree);
+            is_fold_vars = muldiv_optimization(parse_tree);
+        } while (is_fold_vars);
+        
         varuse_optimization(parse_tree);
-        muldiv_optimization(parse_tree);
 
         char save_path[128] = { 0 };
         sprintf(save_path, "%s.asm", obj->path);
