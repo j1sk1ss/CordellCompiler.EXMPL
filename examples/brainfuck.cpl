@@ -104,7 +104,7 @@ start
             if cmd == dot; {
                 arr fbuf 2 char = 10 0;
                 fbuf[0] = tape[pointer];
-                prints fbuf 1;
+                prints fbuf;
                 pc = pc + 1;
                 processed = 1;
             }

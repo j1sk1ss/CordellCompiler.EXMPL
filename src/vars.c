@@ -37,6 +37,7 @@ int get_variable_size(token_type_t token) {
 
 int is_variable(token_type_t token) {
     switch (token) {
+        case ARRAY_TYPE_TOKEN:
         case PTR_TYPE_TOKEN:
         case INT_TYPE_TOKEN:
         case SHORT_TYPE_TOKEN:
@@ -48,6 +49,8 @@ int is_variable(token_type_t token) {
 
 int is_operand(token_type_t token) {
     switch (token) {
+        case NCOMPARE_TOKEN:
+        case COMPARE_TOKEN:
         case PLUS_TOKEN:
         case MINUS_TOKEN:
         case MULTIPLY_TOKEN:

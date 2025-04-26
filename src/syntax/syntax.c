@@ -72,6 +72,26 @@ int add_child_node(tree_t* parent, tree_t* child) {
     return 1;
 }
 
+int remove_child_node(tree_t* parent, tree_t* child) {
+    if (!parent || !child) return 0;
+
+    tree_t* prev = NULL;
+    tree_t* current = parent->first_child;
+
+    while (current) {
+        if (current == child) {
+            if (prev) prev->next_sibling = current->next_sibling;
+            else parent->first_child = current->next_sibling;
+            break;
+        }
+
+        prev = current;
+        current = current->next_sibling;
+    }
+
+    return 1;
+}
+
 static tree_t* _parser_dummy(token_t** curr) {
     return NULL;
 }

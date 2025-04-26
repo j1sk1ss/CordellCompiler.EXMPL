@@ -8,4 +8,4 @@ start
     int a = 10;
     int c = a * 1024;
     int d = 100 / 10 + 1;
-exit 1;
+exit d;

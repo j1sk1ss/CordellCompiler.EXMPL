@@ -45,5 +45,6 @@ int unload_syntax_tree(tree_t* node);
 
 tree_t* create_tree_node(token_t* token);
 int add_child_node(tree_t* parent, tree_t* child);
+int remove_child_node(tree_t* parent, tree_t* child);
 
 #endif
