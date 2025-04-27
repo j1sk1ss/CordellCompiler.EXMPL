@@ -251,6 +251,7 @@ static tree_t* _parse_function_declaration(token_t** curr) {
         return NULL;
     }
 
+    (*curr) = (*curr)->next;
     add_child_node(func_node, body_node);
     _current_function_name = temp_fname;
     set_vars_offset(temp_off);
