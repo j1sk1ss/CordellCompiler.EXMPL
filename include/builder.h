@@ -20,6 +20,10 @@
 #define LINKER_FLAGS            "-z relro -z now"
 
 typedef struct {
+    tree_t* ast;
+    array_info_t* ast_arrinfo;
+    variable_info_t* ast_varinfo;
+
     char* path;
     int main;
 } object_t;
@@ -30,8 +34,8 @@ typedef struct {
 } params_t;
 
 
-int build(char* path, int is_main);
-int build_all(char* output);
+int builder_add_file(char* input);
+int builder_compile(char* output);
 int set_params(params_t* params);
 
 #endif

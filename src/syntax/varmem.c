@@ -13,6 +13,15 @@ int set_vars_offset(int off) {
     return 1;
 }
 
+variable_info_t* get_varmap_head() {
+    return _vars_h;
+}
+
+int set_varmap_head(variable_info_t* h) {
+    _vars_h = h;
+    return 1;
+}
+
 int get_var_info(const char* variable, const char* func, variable_info_t* info) {
     variable_info_t* h = _vars_h;
     while (h) {
@@ -57,23 +66,17 @@ int add_variable_info(const char* name, int size, const char* func) {
         h = h->next;
     }
 
-    if (h) {
-        h->next = new_node;
-        if (h->next) return new_node->offset;
-        else return -1;
-    }
-
-    return 0;
+    h->next = new_node;
+    return new_node->offset;
 }
 
-int unload_varmap() {
-    while (_vars_h) {
-        variable_info_t* n = _vars_h->next;
-        mm_free(_vars_h);
-        _vars_h = n;
+int unload_varmap(variable_info_t* h) {
+    while (h) {
+        variable_info_t* n = h->next;
+        mm_free(h);
+        h = n;
     }
 
     _current_offset_var = 0;
-    _vars_h = NULL;
     return 1;
 }

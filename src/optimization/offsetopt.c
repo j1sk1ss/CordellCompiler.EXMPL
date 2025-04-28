@@ -39,7 +39,6 @@ static int _recalc_offs(tree_t* root, const char* func) {
 
 
 int offset_optimization(tree_t* root) {
-    unload_varmap();
     _recalc_offs(root, NULL);
     return 1;
 }

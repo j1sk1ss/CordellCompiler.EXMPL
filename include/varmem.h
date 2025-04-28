@@ -15,10 +15,12 @@ typedef struct variable_info {
 
 int get_vars_offset();
 int set_vars_offset(int off);
+variable_info_t* get_varmap_head();
+int set_varmap_head(variable_info_t* h);
 
 int get_var_info(const char* variable, const char* func, variable_info_t* info);
 int add_variable_info(const char* name, int size, const char* func);
 
-int unload_varmap();
+int unload_varmap(variable_info_t* h);
 
 #endif

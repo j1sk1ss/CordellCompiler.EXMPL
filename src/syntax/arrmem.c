@@ -3,6 +3,17 @@
 
 static array_info_t* _arrs_h = NULL;
 
+
+array_info_t* get_arrmap_head() {
+    return _arrs_h;
+}
+
+int set_arrmap_head(array_info_t* h) {
+    _arrs_h = h;
+    return 1;
+}
+
+
 static array_info_t* _create_info_array_entry(const char* name, const char* func, int el_size, int size) {
     array_info_t* entry = (array_info_t*)mm_malloc(sizeof(array_info_t));
     if (!entry) return NULL;
@@ -54,8 +65,7 @@ int add_array_info(const char* name, const char* func, int el_size, int size) {
     return 0;
 }
 
-int unload_arrmap() {
-    array_info_t* h = _arrs_h;
+int unload_arrmap(array_info_t* h) {
     while (h) {
         array_info_t* n = h->next;
         mm_free(h);
