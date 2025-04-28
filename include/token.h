@@ -46,6 +46,8 @@ typedef enum {
     FUNC_TOKEN,
     
     // Condition scope
+    SWITCH_TOKEN,
+    CASE_TOKEN,
     WHILE_TOKEN,
     IF_TOKEN,
     ELSE_TOKEN,

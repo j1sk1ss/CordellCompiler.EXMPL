@@ -40,6 +40,8 @@ static markup_token_t _markups[] = {
     { .value = ARR_VARIABLE,           .type = ARRAY_TYPE_TOKEN    },
 
     // Scope
+    { .value = SWITCH_COMMAND,         .type = SWITCH_TOKEN        },
+    { .value = CASE_COMMAND,           .type = CASE_TOKEN          },
     { .value = WHILE_COMAND,           .type = WHILE_TOKEN         },
     { .value = IF_COMMAND,             .type = IF_TOKEN            },
     { .value = ELSE_COMMAND,           .type = ELSE_TOKEN          },
@@ -157,11 +159,10 @@ int variable_markup(token_t* head) {
         if (curr->t_type == UNKNOWN_STRING_TOKEN) {
             for (size_t i = 0; i < var_count; i++) {
                 if (str_strncmp((char*)curr->value, (char*)variables[i].name, TOKEN_MAX_SIZE) == 0) {
-                    // print_debug("%s is_ptr %i", curr->value, variables[i].ptr);
                     curr->t_type = variables[i].type;
-                    curr->glob = variables[i].glob;
-                    curr->ro   = variables[i].ro;
-                    curr->ptr  = variables[i].ptr;
+                    curr->glob   = variables[i].glob;
+                    curr->ro     = variables[i].ro;
+                    curr->ptr    = variables[i].ptr;
                     break;
                 }
             }

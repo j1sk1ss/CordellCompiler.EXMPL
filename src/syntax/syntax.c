@@ -9,6 +9,7 @@ static tree_t* _parse_array_declaration(token_t**);
 static tree_t* _parse_function_call(token_t**);
 static tree_t* _parse_function_declaration(token_t**);
 static tree_t* _parse_return_declaration(token_t**);
+static tree_t* _parse_switch_expression(token_t**);
 static tree_t* _parse_condition_scope(token_t**);
 static tree_t* _parse_syscall(token_t**);
 static tree_t* _parse_expression(token_t**);
@@ -20,6 +21,7 @@ static tree_t* (*_get_parser(token_type_t t_type))(token_t**) {
         case SHORT_TYPE_TOKEN:
         case CHAR_TYPE_TOKEN:
         case STR_TYPE_TOKEN:        return _parse_variable_declaration;
+        case SWITCH_TOKEN:          return _parse_switch_expression;
         case WHILE_TOKEN:
         case IF_TOKEN:              return _parse_condition_scope;
         case INT_VARIABLE_TOKEN:
@@ -480,6 +482,55 @@ static tree_t* _parse_array_expression(token_t** curr) {
     return arr_name_node;
 }
 
+static tree_t* _parse_switch_expression(token_t** curr) {
+    if (!curr || !*curr) return NULL;
+    tree_t* body_node = create_tree_node(*curr);
+    if (!body_node) return NULL;
+
+    *curr = (*curr)->next;
+    tree_t* stmt = _parse_expression(curr);
+    if (!stmt) {
+        unload_syntax_tree(body_node);
+        return NULL;
+    }
+
+    add_child_node(body_node, stmt);
+    tree_t* cases_scope =  create_tree_node(NULL);
+    if (!cases_scope) {
+        unload_syntax_tree(body_node);
+        return NULL;
+    }
+
+    *curr = (*curr)->next;
+    if (*curr && (*curr)->t_type == OPEN_BLOCK_TOKEN) {
+        *curr = (*curr)->next;
+        while ((*curr)->t_type == CASE_TOKEN) {
+            *curr = (*curr)->next;
+            tree_t* case_val = _parse_expression(curr);
+            if (!case_val) {
+                unload_syntax_tree(body_node);
+                return NULL;
+            }
+
+            *curr = (*curr)->next;
+            tree_t* case_scope = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
+            if (!case_scope) {
+                unload_syntax_tree(case_val);
+                unload_syntax_tree(body_node);
+                return NULL;
+            }
+
+            add_child_node(case_val, case_scope);
+            add_child_node(cases_scope, case_val);
+            *curr = (*curr)->next;
+        }
+    }
+
+    *curr = (*curr)->next;
+    add_child_node(body_node, cases_scope);
+    return body_node;
+}
+
 static tree_t* _parse_condition_scope(token_t** curr) {
     if (!curr || !*curr) return NULL;
     tree_t* body_node = create_tree_node(*curr);
@@ -497,26 +548,24 @@ static tree_t* _parse_condition_scope(token_t** curr) {
     *curr = (*curr)->next;
     if (*curr && (*curr)->t_type == OPEN_BLOCK_TOKEN) {
         *curr = (*curr)->next;
-        tree_t* if_body = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
-        if (!if_body) {
+        tree_t* true_branch = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
+        if (!true_branch) {
             unload_syntax_tree(body_node);
-            unload_syntax_tree(cond);
             return NULL;
         }
 
-        add_child_node(body_node, if_body);
+        add_child_node(body_node, true_branch);
         if (*curr && (*curr)->t_type == CLOSE_BLOCK_TOKEN) *curr = (*curr)->next;
     }
 
     if (*curr && (*curr)->t_type == ELSE_TOKEN) {
         *curr = (*curr)->next->next;
-        tree_t* else_body = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
-        if (!else_body) {
+        tree_t* false_branch = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
+        if (!false_branch) {
             unload_syntax_tree(body_node);
-            unload_syntax_tree(cond);
         }
 
-        add_child_node(body_node, else_body);
+        add_child_node(body_node, false_branch);
         if (*curr && (*curr)->t_type == CLOSE_BLOCK_TOKEN) *curr = (*curr)->next;
     }
     
