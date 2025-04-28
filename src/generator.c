@@ -565,7 +565,8 @@ static int _generate_if(tree_t* node, FILE* output, const char* func) {
     fprintf(output, "\n ; --------------- if statement [%i] --------------- \n", current_label);
     _generate_expression(condition, output, func);
     iprintf(output, "cmp eax, 0\n");
-    iprintf(output, "je __end_if_%d__\n", current_label);
+    if (else_body) iprintf(output, "je __else_%d__\n", current_label);
+    else iprintf(output, "je __end_if_%d__\n", current_label);
     _current_depth += 1;
 
     tree_t* body_exp = body->first_child;
@@ -574,15 +575,19 @@ static int _generate_if(tree_t* node, FILE* output, const char* func) {
         body_exp = body_exp->next_sibling;
     }
 
-    fprintf(output, " ; --------------- \n");
-    iprintf(output, "__end_if_%d__:\n", current_label);
+    iprintf(output, "jmp __end_if_%d__\n", current_label);
+
     if (else_body) {
+        iprintf(output, "__else_%d__:\n", current_label);
         tree_t* else_body_exp = else_body->first_child;
         while (else_body_exp) {
             _generate_expression(else_body_exp, output, func);
             else_body_exp = else_body_exp->next_sibling;
         }
     }
+
+    fprintf(output, " ; --------------- \n");
+    iprintf(output, "__end_if_%d__:\n", current_label);
     
     _current_depth -= 1;
     return 1;

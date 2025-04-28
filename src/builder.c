@@ -91,7 +91,6 @@ static int _compile_object(object_t* obj) {
     char compile_command[128] = { 0 };
     sprintf(compile_command, "%s -f%s %s -o %s.o", DEFAULT_ASM_COMPILER, DEFAULT_ARCH, save_path, save_path);
     system(compile_command);
-    
 
     unload_syntax_tree(obj->ast);
     unload_arrmap(obj->ast_arrinfo);
