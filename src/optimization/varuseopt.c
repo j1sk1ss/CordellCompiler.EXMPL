@@ -11,12 +11,13 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             _find_usage(t, varname, status, local, 0);
             continue;
         }
-
+        
         switch (t->token->t_type) {
             case INT_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN: 
             case SHORT_TYPE_TOKEN: _find_usage(t, varname, status, local, 1); continue;
             case IF_TOKEN:
+            case CASE_TOKEN:
             case EXIT_TOKEN:
             case CALL_TOKEN:
             case PLUS_TOKEN:
@@ -25,6 +26,7 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             case BITOR_TOKEN:
             case WHILE_TOKEN:
             case LOWER_TOKEN:
+            case SWITCH_TOKEN:
             case LARGER_TOKEN:
             case DIVIDE_TOKEN:
             case BITAND_TOKEN:
@@ -34,14 +36,13 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             case NCOMPARE_TOKEN:
             case MULTIPLY_TOKEN:
             case ARR_VARIABLE_TOKEN:
-            case STR_VARIABLE_TOKEN:
             case BITMOVE_LEFT_TOKEN:
             case BITMOVE_RIGHT_TOKEN:
             case ARRAY_TYPE_TOKEN: _find_usage(t, varname, status, local, 0); continue;
             case FUNC_TOKEN: if (!local) _find_usage(t->first_child->next_sibling->next_sibling, varname, status, local, 0); continue;
             default: break;
         }
-
+        
         if (!str_strncmp(varname, (char*)t->token->value, TOKEN_MAX_SIZE)) {
             *status = 1;
             return 1;
@@ -61,8 +62,8 @@ static int _find_decl(tree_t* root, tree_t* entry, int* delete) {
 
         switch (t->token->t_type) {
             case IF_TOKEN:
-            case WHILE_TOKEN: _find_decl(t->first_child->next_sibling, entry, delete); continue;
-            case FUNC_TOKEN: _find_decl(t->first_child->next_sibling->next_sibling, entry, delete); continue;
+            case WHILE_TOKEN:  _find_decl(t->first_child->next_sibling, entry, delete); continue;
+            case FUNC_TOKEN:   _find_decl(t->first_child->next_sibling->next_sibling, entry, delete); continue;
             default: break;
         }
 

@@ -6,6 +6,7 @@
     static int _label_counter = 0;
     static int _current_depth = 1;
     static int _generate_function(tree_t*, FILE*, const char*);
+    static int _generate_switch(tree_t*, FILE*, const char*);
     static int _generate_if(tree_t*, FILE*, const char*);
     static int _generate_while(tree_t*, FILE*, const char*);
     static int _generate_syscall(tree_t*, FILE*, const char*);
@@ -83,8 +84,10 @@ static int _generate_rodata_section(tree_t* node, FILE* output) {
                 case IF_TOKEN:
                 case CALL_TOKEN:
                 case SYSCALL_TOKEN:
-                case WHILE_TOKEN: _generate_rodata_section(child, output); break;
-                case FUNC_TOKEN: _generate_rodata_section(child->first_child->next_sibling->next_sibling, output); break;
+                case WHILE_TOKEN:  _generate_rodata_section(child, output); break;
+                case SWITCH_TOKEN: _generate_rodata_section(child->first_child->next_sibling, output); break;
+                case CASE_TOKEN:   _generate_rodata_section(child->first_child->first_child, output); break;
+                case FUNC_TOKEN:   _generate_rodata_section(child->first_child->next_sibling->next_sibling, output); break;
                 default: break;
             }
         }
@@ -109,6 +112,8 @@ static int _generate_data_section(tree_t* node, FILE* output) {
                 case IF_TOKEN:
                 case SYSCALL_TOKEN:
                 case WHILE_TOKEN: _generate_data_section(child, output); break;
+                case SWITCH_TOKEN: _generate_data_section(child->first_child->next_sibling, output); break;
+                case CASE_TOKEN: _generate_data_section(child->first_child->first_child, output); break;
                 case FUNC_TOKEN: _generate_data_section(child->first_child->next_sibling->next_sibling, output); break;
                 default: break;
             }
@@ -121,6 +126,7 @@ static int _generate_data_section(tree_t* node, FILE* output) {
 static int _generate_expression(tree_t* node, FILE* output, const char* func) {
     if (!node) return 0;
     if (node->token->t_type == IF_TOKEN)            _generate_if(node, output, func);
+    else if (node->token->t_type == SWITCH_TOKEN)   _generate_switch(node, output, func);
     else if (node->token->t_type == WHILE_TOKEN)    _generate_while(node, output, func);
     else if (node->token->t_type == FUNC_TOKEN)     _generate_function(node, output, func);
     else if (node->token->t_type == SYSCALL_TOKEN)  _generate_syscall(node, output, func);
@@ -529,7 +535,6 @@ static int _generate_function(tree_t* node, FILE* output, const char* func) {
 }
 
 static int _generate_while(tree_t* node, FILE* output, const char* func) {
-    if (!node) return 0;
     int current_label = _label_counter++;
     tree_t* condition = node->first_child;
     tree_t* body = condition->next_sibling->first_child;
@@ -555,8 +560,70 @@ static int _generate_while(tree_t* node, FILE* output, const char* func) {
     return 1;
 }
 
+static int _cmp(const void* a, const void* b) {
+    return (*(int*)a - *(int*)b);
+}
+
+static int _generate_case_binary_jump(FILE* output, int* values, int left, int right, int label_id) {
+    if (left > right) {
+        iprintf(output, "jmp __end_switch_%d__\n", label_id);
+        return 0;
+    }
+
+    int mid = (left + right) / 2;
+    int val = values[mid];
+
+    iprintf(output, "cmp eax, %d\n", val);
+    iprintf(output, "jl __case_l_%d_%d__\n", val, label_id);
+    iprintf(output, "jg __case_r_%d_%d__\n", val, label_id);
+    iprintf(output, "jmp __case_%d_%d__\n", val, label_id);
+
+    iprintf(output, "__case_l_%d_%d__:\n", val, label_id);
+    _generate_case_binary_jump(output, values, left, mid - 1, label_id);
+
+    iprintf(output, "__case_r_%d_%d__:\n", val, label_id);
+    _generate_case_binary_jump(output, values, mid + 1, right, label_id);
+    return 1;
+}
+
+static int _generate_switch(tree_t* node, FILE* output, const char* func) {
+    int current_label = _label_counter++;
+    tree_t* stmt = node->first_child;
+    tree_t* cases = stmt->next_sibling;
+
+    int cases_count = 0;
+    int values[128] = { -1 };
+
+    fprintf(output, "\n ; --------------- switch [%i] --------------- \n", current_label);
+    _current_depth += 1;
+
+    iprintf(output, "jmp __end_cases_%d__\n", current_label);
+    for (tree_t* curr_case = cases->first_child; curr_case; curr_case = curr_case->next_sibling) {
+        int case_value = str_atoi((char*)curr_case->token->value);
+        iprintf(output, "__case_%d_%d__:\n", case_value, current_label);
+        values[cases_count++] = case_value;
+        
+        _current_depth += 1;
+        for (tree_t* part = curr_case->first_child->first_child; part; part = part->next_sibling) {
+            _generate_expression(part, output, func);
+        }
+
+        _current_depth -= 1;
+        iprintf(output, "jmp __end_switch_%d__\n", current_label);
+    }
+
+    qsort(values, cases_count, sizeof(int), _cmp);
+    iprintf(output, "__end_cases_%d__:\n", current_label);
+    _generate_expression(stmt, output, func);
+    _generate_case_binary_jump(output, values, 0, cases_count - 1, current_label);
+
+    _current_depth -= 1;
+    iprintf(output, "__end_switch_%d__:\n", current_label);
+    fprintf(output, " ; --------------- \n");
+    return 1;
+}
+
 static int _generate_if(tree_t* node, FILE* output, const char* func) {
-    if (!node) return 0;
     int current_label = _label_counter++;
     tree_t* condition = node->first_child;
     tree_t* body = condition->next_sibling;
@@ -594,7 +661,6 @@ static int _generate_if(tree_t* node, FILE* output, const char* func) {
 }
 
 static int _generate_syscall(tree_t* node, FILE* output, const char* func) {
-    if (!node) return 0;
     char* registers_32[] =  { "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp"  };
     char* registers_16[] =  { "ax", "bx", "cx", "dx", "si", "di", "bp"         };
     char* registers_8[] =   { "al", "bl", "cl", "dl", "sl", "dil", "bpl"       };
@@ -624,7 +690,6 @@ static int _generate_syscall(tree_t* node, FILE* output, const char* func) {
 }
 
 static int _generate_assignment(tree_t* node, FILE* output, const char* func) {
-    if (!node) return 0;
     tree_t* left  = node->first_child;
     tree_t* right = left->next_sibling;
     

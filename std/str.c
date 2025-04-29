@@ -1,7 +1,7 @@
 #include "../include/str.h"
 
 
-void* str_memcpy(void* destination, void* source, size_t num) {
+void* str_memcpy(void* destination, const void* source, size_t num) {
     unsigned int num_dwords = num / 4;
     unsigned int num_bytes  = num % 4;
     unsigned int* dest32 = (unsigned int*)destination;
@@ -29,7 +29,7 @@ void* str_memset(void* pointer, unsigned char value, size_t num) {
     return pointer;
 }
 
-int str_memcmp(void* firstPointer, void* secondPointer, size_t num) {
+int str_memcmp(const void* firstPointer, const void* secondPointer, size_t num) {
     const unsigned char* u8Ptr1 = (const unsigned char *)firstPointer;
     const unsigned char* u8Ptr2 = (const unsigned char *)secondPointer;
     for (unsigned short i = 0; i < num; i++)
@@ -73,7 +73,7 @@ int str_strncmp(const char* str1, const char* str2, size_t n) {
     return 0;
 }
 
-int str_atoi(char *str) {
+int str_atoi(const char *str) {
     int neg = 1;
     long long num = 0;
     size_t i = 0;

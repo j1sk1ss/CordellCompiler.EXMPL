@@ -1,6 +1,7 @@
 #ifndef TRANSLATOR_H_
 #define TRANSLATOR_H_
 
+#include <stdlib.h> // TODO implement sort.
 #include "vars.h"
 #include "arrmem.h"
 #include "syntax.h"

@@ -520,6 +520,10 @@ static tree_t* _parse_switch_expression(token_t** curr) {
                 return NULL;
             }
 
+            case_val->token->t_type = CASE_TOKEN;
+            case_val->token->glob = 0;
+            case_val->token->ro = 0;
+
             add_child_node(case_val, case_scope);
             add_child_node(cases_scope, case_val);
             *curr = (*curr)->next;

@@ -1,13 +1,34 @@
+from "string.cpl" import prints;
+
 start
-    switch 1 == 1; {
+    int option = 10;
+    switch option; {
         case 1; {
-            int a = 1;
+            prints "1!";
         }
         case 2; {
-            int b = 2;
+            prints "2!";
         }
-        case -1; {
-            int c = 3;
+        case 99; {
+            prints "99!";
+        }
+        case 123; {
+            prints "123!";
+        }
+        case 234; {
+            prints "234!";
+        }
+        case 345; {
+            prints "345!";
+        }
+        case 567; {
+            prints "567!";
+        }
+        case 10; {
+            prints "10!";
+        }
+        case 11; {
+            prints "11!";
         }
     }
 exit 1;

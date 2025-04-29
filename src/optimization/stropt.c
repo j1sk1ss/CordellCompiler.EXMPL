@@ -77,17 +77,18 @@ static int _find_string(tree_t* root) {
         switch (t->token->t_type) {
             case CALL_TOKEN:
             case SYSCALL_TOKEN:
-            case RETURN_TOKEN: _find_string(t); continue;
+            case RETURN_TOKEN:  _find_string(t); continue;
             case IF_TOKEN:
-            case WHILE_TOKEN: _find_string(t->first_child->next_sibling); continue;
-            case FUNC_TOKEN: _find_string(t->first_child->next_sibling->next_sibling); continue;
+            case CASE_TOKEN:    _find_string(t->first_child); continue;
+            case SWITCH_TOKEN:  _find_string(t->first_child->next_sibling); continue;
+            case WHILE_TOKEN:   _find_string(t->first_child->next_sibling); continue;
+            case FUNC_TOKEN:    _find_string(t->first_child->next_sibling->next_sibling); continue;
             default: break;
         }
         
         if (t->token->t_type == STRING_VALUE_TOKEN) {
             string_info_t info;
             if (_get_string((char*)t->token->value, &info)) {
-                t->token->t_type = STR_VARIABLE_TOKEN;
                 sprintf((char*)t->token->value, "%s", info.str_name);
             }
             else {
@@ -96,6 +97,7 @@ static int _find_string(tree_t* root) {
                 sprintf((char*)t->token->value, "%s", info.str_name);
             }
             
+            t->token->t_type = STR_VARIABLE_TOKEN;
             t->token->ro = 1;
         }
     }
