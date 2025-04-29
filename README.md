@@ -18,7 +18,6 @@ Every program begins with the `start` keyword and ends with the `exit [return_co
 
 The following types are supported:
 
-- `ptr` — Pointer (32-bit).
 - `int` — Integer (typically 32-bit).
 - `short` — Short integer (16-bit).
 - `char` — 8-bit integer.
