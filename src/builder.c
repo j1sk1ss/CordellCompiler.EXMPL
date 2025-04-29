@@ -58,6 +58,7 @@ static int _generate_raw_ast(object_t* obj) {
 
     obj->ast_varinfo = get_varmap_head();
     set_varmap_head(NULL);
+    close(fd);
     return 1;
 }
 
@@ -85,11 +86,14 @@ static int _compile_object(object_t* obj) {
     sprintf(save_path, "%s.asm", obj->path);
     FILE* output = fopen(save_path, "w");
     if (_params.syntax) _print_parse_tree(obj->ast, 0);
+
+    set_varmap_head(obj->ast_varinfo);
+    set_arrmap_head(obj->ast_arrinfo);
     generate_asm(obj->ast, output);
     fclose(output);
 
     char compile_command[128] = { 0 };
-    sprintf(compile_command, "%s -f%s %s -o %s.o", DEFAULT_ASM_COMPILER, DEFAULT_ARCH, save_path, save_path);
+    sprintf(compile_command, "%s -f%s %s -g -o %s.o", DEFAULT_ASM_COMPILER, DEFAULT_ARCH, save_path, save_path);
     system(compile_command);
 
     unload_syntax_tree(obj->ast);

@@ -207,13 +207,14 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             tree_t* size   = node->first_child;
             tree_t* t_type = size->next_sibling;
             tree_t* name   = t_type->next_sibling;
-        
+            
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)name->token->value, func, &arr_info)) {
-                fprintf(output, "\n ; --------------- Array setup %s --------------- \n", name->token->value);
-    
+                
                 tree_t* vals = name->next_sibling;
                 if (vals && vals->token->t_type != DELIMITER_TOKEN) {
+                    fprintf(output, "\n ; --------------- Array setup %s --------------- \n", name->token->value);
+
                     int base_off = name->variable_offset;
                     for (tree_t* v = vals; v && v->token->t_type != DELIMITER_TOKEN; v = v->next_sibling) {
                         if (v->token->t_type == UNKNOWN_NUMERIC_TOKEN) {
@@ -238,9 +239,9 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                         iprintf(output, "mov [ebp - %d], eax\n", base_off);
                         base_off -= arr_info.el_size;
                     }
+
+                    fprintf(output, " ; --------------- \n");
                 }
-    
-                fprintf(output, " ; --------------- \n");
             }
         }
     }
@@ -448,7 +449,6 @@ static int _get_variables_size(tree_t* head, const char* func) {
     for (tree_t* expression = head; expression; expression = expression->next_sibling) {
         if (!expression->token) continue;
         if (expression->token->ro || expression->token->glob) continue;
-
         if (expression->token->t_type == ARRAY_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->next_sibling->next_sibling->token->value, func, &arr_info)) {
@@ -462,9 +462,11 @@ static int _get_variables_size(tree_t* head, const char* func) {
             }
         }
         else if (
+            expression->token->t_type == SWITCH_TOKEN ||
             expression->token->t_type == WHILE_TOKEN || 
             expression->token->t_type == IF_TOKEN
         ) size += _get_variables_size(expression->first_child->next_sibling->first_child, func);
+        else if (expression->token->t_type == CASE_TOKEN) size += _get_variables_size(expression->first_child->first_child, func);
         else size += expression->variable_size;
     }
     

@@ -17,8 +17,6 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             case CHAR_TYPE_TOKEN: 
             case SHORT_TYPE_TOKEN: _find_usage(t, varname, status, local, 1); continue;
             case IF_TOKEN:
-            case DEFAULT_TOKEN:
-            case CASE_TOKEN:
             case EXIT_TOKEN:
             case CALL_TOKEN:
             case PLUS_TOKEN:
@@ -32,18 +30,21 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             case DIVIDE_TOKEN:
             case BITAND_TOKEN:
             case RETURN_TOKEN:
+            case DEFAULT_TOKEN:
             case SYSCALL_TOKEN:
             case COMPARE_TOKEN:
             case NCOMPARE_TOKEN:
             case MULTIPLY_TOKEN:
             case ARR_VARIABLE_TOKEN:
             case BITMOVE_LEFT_TOKEN:
-            case BITMOVE_RIGHT_TOKEN:
-            case ARRAY_TYPE_TOKEN: _find_usage(t, varname, status, local, 0); continue;
+            case BITMOVE_RIGHT_TOKEN: _find_usage(t, varname, status, local, 0); continue;
+            case CASE_TOKEN:
+            case STR_TYPE_TOKEN:
+            case ARRAY_TYPE_TOKEN: _find_usage(t, varname, status, local, 0); break;
             case FUNC_TOKEN: if (!local) _find_usage(t->first_child->next_sibling->next_sibling, varname, status, local, 0); continue;
             default: break;
         }
-        
+
         if (!str_strncmp(varname, (char*)t->token->value, TOKEN_MAX_SIZE)) {
             *status = 1;
             return 1;

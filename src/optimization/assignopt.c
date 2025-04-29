@@ -10,6 +10,9 @@ static int _find_assign(tree_t* root, char* varname, int* status, int local) {
         }
 
         switch (t->token->t_type) {
+            case CASE_TOKEN:
+            case SWITCH_TOKEN:
+            case DEFAULT_TOKEN: _find_assign(t, varname, status, local); continue;
             case IF_TOKEN:
             case WHILE_TOKEN: _find_assign(t->first_child->next_sibling, varname, status, local); continue;
             case FUNC_TOKEN: if (!local) _find_assign(t->first_child->next_sibling->next_sibling, varname, status, local); continue;
@@ -38,8 +41,9 @@ static int _change_decl(tree_t* root, char* varname, int value, int local, int o
             _change_decl(t, varname, value, local, 0);
             continue;
         }
-
+        
         switch (t->token->t_type) {
+            case CASE_TOKEN: _change_decl(t, varname, value, local, 0); break;
             case INT_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN: 
             case SHORT_TYPE_TOKEN: _change_decl(t, varname, value, local, 1); continue;
@@ -54,7 +58,9 @@ static int _change_decl(tree_t* root, char* varname, int value, int local, int o
             case DIVIDE_TOKEN:
             case BITAND_TOKEN:
             case RETURN_TOKEN:
+            case SWITCH_TOKEN:
             case SYSCALL_TOKEN:
+            case DEFAULT_TOKEN:
             case COMPARE_TOKEN:
             case NCOMPARE_TOKEN:
             case MULTIPLY_TOKEN:
@@ -69,8 +75,8 @@ static int _change_decl(tree_t* root, char* varname, int value, int local, int o
 
         if (!str_strncmp(varname, (char*)t->token->value, TOKEN_MAX_SIZE)) {
             snprintf((char*)t->token->value, TOKEN_MAX_SIZE, "%d", value);
-            t->token->t_type = UNKNOWN_NUMERIC_TOKEN;
-            t->token->glob = 1;
+            t->token->t_type = t->token->t_type != CASE_TOKEN ? UNKNOWN_NUMERIC_TOKEN : CASE_TOKEN;
+            t->token->glob = t->token->t_type != CASE_TOKEN ? 1 : 0;
         }   
     }
 
@@ -87,6 +93,7 @@ static int _find_decl(tree_t* root, tree_t* entry, int* change) {
 
         switch (t->token->t_type) {
             case IF_TOKEN:
+            case SWITCH_TOKEN:
             case WHILE_TOKEN: _find_decl(t->first_child->next_sibling, entry, change); continue;
             case FUNC_TOKEN: _find_decl(t->first_child->next_sibling->next_sibling, entry, change); continue;
             default: break;

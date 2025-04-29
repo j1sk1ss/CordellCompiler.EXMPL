@@ -6,7 +6,7 @@
 #include "str.h"
 
 #define ALIGNMENT           8
-#define ALLOC_BUFFER_SIZE   170000
+#define ALLOC_BUFFER_SIZE   250000
 #define MM_BLOCK_MAGIC      0xC07DEL
 
 

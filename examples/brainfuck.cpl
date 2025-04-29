@@ -62,10 +62,7 @@ start
     int pc = 0;
 
     while pc < codelength; {
-        char cmd = code[pc];
-        int processed = 0;
-        
-        switch cmd; {
+        switch code[pc]; {
             case rightMove; {
                 pointer = pointer + 1;
                 pc = pc + 1;
@@ -90,7 +87,7 @@ start
             }
             case comma; {
                 arr sbuf 2 char = 10 0;
-                gets sbuf 1;
+                gets sbuf 2;
                 tape[pointer] = sbuf[0];
                 pc = pc + 1;
             }
