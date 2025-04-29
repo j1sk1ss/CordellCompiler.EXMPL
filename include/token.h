@@ -48,6 +48,7 @@ typedef enum {
     // Condition scope
     SWITCH_TOKEN,
     CASE_TOKEN,
+    DEFAULT_TOKEN,
     WHILE_TOKEN,
     IF_TOKEN,
     ELSE_TOKEN,

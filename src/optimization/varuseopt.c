@@ -17,6 +17,7 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             case CHAR_TYPE_TOKEN: 
             case SHORT_TYPE_TOKEN: _find_usage(t, varname, status, local, 1); continue;
             case IF_TOKEN:
+            case DEFAULT_TOKEN:
             case CASE_TOKEN:
             case EXIT_TOKEN:
             case CALL_TOKEN:

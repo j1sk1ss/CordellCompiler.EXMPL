@@ -86,6 +86,7 @@ static int _generate_rodata_section(tree_t* node, FILE* output) {
                 case SYSCALL_TOKEN:
                 case WHILE_TOKEN:  _generate_rodata_section(child, output); break;
                 case SWITCH_TOKEN: _generate_rodata_section(child->first_child->next_sibling, output); break;
+                case DEFAULT_TOKEN:
                 case CASE_TOKEN:   _generate_rodata_section(child->first_child->first_child, output); break;
                 case FUNC_TOKEN:   _generate_rodata_section(child->first_child->next_sibling->next_sibling, output); break;
                 default: break;
@@ -113,6 +114,7 @@ static int _generate_data_section(tree_t* node, FILE* output) {
                 case SYSCALL_TOKEN:
                 case WHILE_TOKEN: _generate_data_section(child, output); break;
                 case SWITCH_TOKEN: _generate_data_section(child->first_child->next_sibling, output); break;
+                case DEFAULT_TOKEN:
                 case CASE_TOKEN: _generate_data_section(child->first_child->first_child, output); break;
                 case FUNC_TOKEN: _generate_data_section(child->first_child->next_sibling->next_sibling, output); break;
                 default: break;
@@ -564,9 +566,10 @@ static int _cmp(const void* a, const void* b) {
     return (*(int*)a - *(int*)b);
 }
 
-static int _generate_case_binary_jump(FILE* output, int* values, int left, int right, int label_id) {
+static int _generate_case_binary_jump(FILE* output, int* values, int left, int right, int label_id, int default_scope) {
     if (left > right) {
-        iprintf(output, "jmp __end_switch_%d__\n", label_id);
+        if (default_scope) iprintf(output, "jmp __default_%d__\n", label_id);
+        else iprintf(output, "jmp __end_switch_%d__\n", label_id);
         return 0;
     }
 
@@ -579,10 +582,10 @@ static int _generate_case_binary_jump(FILE* output, int* values, int left, int r
     iprintf(output, "jmp __case_%d_%d__\n", val, label_id);
 
     iprintf(output, "__case_l_%d_%d__:\n", val, label_id);
-    _generate_case_binary_jump(output, values, left, mid - 1, label_id);
+    _generate_case_binary_jump(output, values, left, mid - 1, label_id, default_scope);
 
     iprintf(output, "__case_r_%d_%d__:\n", val, label_id);
-    _generate_case_binary_jump(output, values, mid + 1, right, label_id);
+    _generate_case_binary_jump(output, values, mid + 1, right, label_id, default_scope);
     return 1;
 }
 
@@ -597,12 +600,19 @@ static int _generate_switch(tree_t* node, FILE* output, const char* func) {
     fprintf(output, "\n ; --------------- switch [%i] --------------- \n", current_label);
     _current_depth += 1;
 
+    int have_default = 0;
     iprintf(output, "jmp __end_cases_%d__\n", current_label);
     for (tree_t* curr_case = cases->first_child; curr_case; curr_case = curr_case->next_sibling) {
-        int case_value = str_atoi((char*)curr_case->token->value);
-        iprintf(output, "__case_%d_%d__:\n", case_value, current_label);
-        values[cases_count++] = case_value;
-        
+        if (curr_case->token->t_type == DEFAULT_TOKEN) {
+            have_default = 1;
+            iprintf(output, "__default_%d__:\n", current_label);
+        } 
+        else {
+            int case_value = str_atoi((char*)curr_case->token->value);
+            iprintf(output, "__case_%d_%d__:\n", case_value, current_label);
+            values[cases_count++] = case_value;   
+        }
+
         _current_depth += 1;
         for (tree_t* part = curr_case->first_child->first_child; part; part = part->next_sibling) {
             _generate_expression(part, output, func);
@@ -615,7 +625,7 @@ static int _generate_switch(tree_t* node, FILE* output, const char* func) {
     qsort(values, cases_count, sizeof(int), _cmp);
     iprintf(output, "__end_cases_%d__:\n", current_label);
     _generate_expression(stmt, output, func);
-    _generate_case_binary_jump(output, values, 0, cases_count - 1, current_label);
+    _generate_case_binary_jump(output, values, 0, cases_count - 1, current_label, have_default);
 
     _current_depth -= 1;
     iprintf(output, "__end_switch_%d__:\n", current_label);

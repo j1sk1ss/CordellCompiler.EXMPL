@@ -27,6 +27,7 @@
 // Commands
 #define SWITCH_COMMAND  "switch"
 #define CASE_COMMAND    "case"
+#define DEFAULT_COMMAND "default"
 #define WHILE_COMAND    "while"
 #define IF_COMMAND      "if"
 #define ELSE_COMMAND    "else"

@@ -504,9 +504,18 @@ static tree_t* _parse_switch_expression(token_t** curr) {
     *curr = (*curr)->next;
     if (*curr && (*curr)->t_type == OPEN_BLOCK_TOKEN) {
         *curr = (*curr)->next;
-        while ((*curr)->t_type == CASE_TOKEN) {
-            *curr = (*curr)->next;
-            tree_t* case_val = _parse_expression(curr);
+        while ((*curr)->t_type == CASE_TOKEN || (*curr)->t_type == DEFAULT_TOKEN) {
+            tree_t* case_val = NULL;
+            if ((*curr)->t_type == CASE_TOKEN) {
+                *curr = (*curr)->next;
+                case_val = _parse_expression(curr);
+                case_val->token->t_type = CASE_TOKEN;
+            }
+            else {
+                *curr = (*curr)->next;
+                case_val = create_tree_node(create_token(DEFAULT_TOKEN, NULL, 0, 0));
+            }
+            
             if (!case_val) {
                 unload_syntax_tree(body_node);
                 return NULL;
@@ -520,9 +529,8 @@ static tree_t* _parse_switch_expression(token_t** curr) {
                 return NULL;
             }
 
-            case_val->token->t_type = CASE_TOKEN;
             case_val->token->glob = 0;
-            case_val->token->ro = 0;
+            case_val->token->ro   = 0;
 
             add_child_node(case_val, case_scope);
             add_child_node(cases_scope, case_val);

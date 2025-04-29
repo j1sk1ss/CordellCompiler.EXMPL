@@ -42,6 +42,7 @@ static markup_token_t _markups[] = {
     // Scope
     { .value = SWITCH_COMMAND,         .type = SWITCH_TOKEN        },
     { .value = CASE_COMMAND,           .type = CASE_TOKEN          },
+    { .value = DEFAULT_COMMAND,        .type = DEFAULT_TOKEN       },
     { .value = WHILE_COMAND,           .type = WHILE_TOKEN         },
     { .value = IF_COMMAND,             .type = IF_TOKEN            },
     { .value = ELSE_COMMAND,           .type = ELSE_TOKEN          },

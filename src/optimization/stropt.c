@@ -79,6 +79,7 @@ static int _find_string(tree_t* root) {
             case SYSCALL_TOKEN:
             case RETURN_TOKEN:  _find_string(t); continue;
             case IF_TOKEN:
+            case DEFAULT_TOKEN:
             case CASE_TOKEN:    _find_string(t->first_child); continue;
             case SWITCH_TOKEN:  _find_string(t->first_child->next_sibling); continue;
             case WHILE_TOKEN:   _find_string(t->first_child->next_sibling); continue;
