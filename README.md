@@ -28,10 +28,17 @@ The following types are supported:
 ### Declaring Variables
 
             int a = 5;
+            ro int aReadOnly = 5; : Const and global :
+            glob int aGlobal = 5; : Global :
+            
             short b = 1234;
             char c = 48;
+            
             str name = "Hello, World!";
-            ptr namePtr = name;
+            ptr char strPtr = name; : Pointer to name string :
+            : Pointers can be used as arrays :
+            strPtr[0] = 'B';
+            
             arr farr 100 char =; // Will allocate array with size 100 and elem size 1 byte
             arr sarr 5 4 = 1 2 3 4 5; // Will allocate array for provided elements
 
@@ -56,19 +63,33 @@ Basic arithmetic and logical operations are supported:
 
 ## Loops and Conditions
 
+### Switch expression
+
+            switch (a) {
+                 case 1; {
+                 }
+                 case 111; {
+                 }
+                 case 1111; {
+                 }
+                 : ... :
+            }
+
+**Note:** Switch statement based on binary search algorithm, thats why, prefer switch in situations with many cases. In other hand, with three or less options, use if for avoiding overhead.
+
 ### If Condition
 
             if a > b; {
-                ... // if code
+                : ... if code :
             }
             else {
-                ... // else code
+                : ... else code :
             }
 
 ### While Loop
 
             while x < 10; {
-                ... // loop body 
+                : ... loop body : 
             }
 
 ---
