@@ -6,19 +6,21 @@
     static char_type_t _get_char_type(unsigned char ch) {
         if (isalpha(ch)) return CHAR_ALPHA;
         else if (str_isdigit(ch) || ch == '-') return CHAR_DIGIT;
-        else if (ch == '"') return CHAR_QUOTE;
+        else if (ch == '"')  return CHAR_QUOTE;
+        else if (ch == '\'') return CHAR_SING_QUOTE;
         else if (ch == '\n') return CHAR_NEWLINE;
-        else if (ch == ' ') return CHAR_SPACE;
-        else if (ch == ';') return CHAR_DELIMITER;
-        else if (ch == ':') return CHAR_COMMENT;
-        else if (ch == '[') return CHAR_OPEN_INDEX;
-        else if (ch == ']') return CHAR_CLOSE_INDEX;
+        else if (ch == ' ')  return CHAR_SPACE;
+        else if (ch == ';')  return CHAR_DELIMITER;
+        else if (ch == ':')  return CHAR_COMMENT;
+        else if (ch == '[')  return CHAR_OPEN_INDEX;
+        else if (ch == ']')  return CHAR_CLOSE_INDEX;
         return CHAR_OTHER;
     }
 
     static int _add_token(token_t** head, token_t** tail, token_type_t type, const unsigned char* buffer, size_t len, int line) {
         token_t* new_token = create_token(type, buffer, len, line);
         if (!new_token) return 0;
+        
         if (!*head) *head = new_token;
         else (*tail)->next = new_token;
         *tail = new_token; 
@@ -30,13 +32,23 @@
 
 token_t* create_token(token_type_t type, const unsigned char* value, size_t len, int line) {
     if (len > TOKEN_MAX_SIZE) return NULL;
+
     token_t* token = mm_malloc(sizeof(token_t));
     if (!token) return NULL;
+
     token->t_type = type;
-    if (value) str_strncpy((char*)token->value, (char*)value, len);
-    token->next        = NULL;
-    token->value[len]  = '\0';
+    if (value) {
+        str_strncpy((char*)token->value, (char*)value, len);
+        token->value[len] = '\0';
+    }
+    
+    token->next = NULL;
     token->line_number = line;
+    
+    token->ro = 0;
+    token->ptr = 0;
+    if (type == UNKNOWN_NUMERIC_TOKEN) token->glob = 1;
+    else token->glob = 0;
     return token;
 }
 
@@ -58,21 +70,26 @@ token_t* tokenize(int fd) {
 
         int comment_open = 0;
         int quotes_open  = 0;
+        int sing_quotes_open = 0;
         
         for (ssize_t i = 0; i < bytes_read; ++i) {
             unsigned char ch = buffer[i];
             char_type_t ct = _get_char_type(ch);
-            if (ct == CHAR_QUOTE) {
+            if (ct == CHAR_SING_QUOTE) {
+                sing_quotes_open = !sing_quotes_open;
+                continue;
+            }
+            else if (ct == CHAR_QUOTE) {
                 quotes_open = !quotes_open;
                 continue;
             }
-            else if (ct == CHAR_COMMENT) {
+            else if (ct == CHAR_COMMENT && !quotes_open && !sing_quotes_open) {
                 comment_open = !comment_open;
                 continue;
             }
 
             if (comment_open && !quotes_open) continue;
-            if ((ct != CHAR_SPACE && ct != CHAR_NEWLINE) || quotes_open) {
+            if ((ct != CHAR_SPACE && ct != CHAR_NEWLINE) || quotes_open || sing_quotes_open) {
                 token_type_t new_type = UNKNOWN_STRING_TOKEN;
 
                 /*
@@ -80,13 +97,14 @@ token_t* tokenize(int fd) {
                 */
                 //if (current_type != UNKNOWN_STRING_TOKEN) {
                     if (quotes_open) new_type = STRING_VALUE_TOKEN;
+                    else if (sing_quotes_open) new_type = CHAR_VALUE_TOKEN;
                     else {
                         if (ct == CHAR_ALPHA)            new_type = UNKNOWN_STRING_TOKEN;
                         else if (ct == CHAR_DIGIT)       new_type = UNKNOWN_NUMERIC_TOKEN;
                         else if (ct == CHAR_DELIMITER)   new_type = DELIMITER_TOKEN;
                         else if (ct == CHAR_OPEN_INDEX)  new_type = OPEN_INDEX_TOKEN;
                         else if (ct == CHAR_CLOSE_INDEX) new_type = CLOSE_INDEX_TOKEN;
-                        else                             new_type = UNKNOWN_SYMBOL_TOKEN;
+                        else new_type = UNKNOWN_STRING_TOKEN;
                     }
                 //}
                 

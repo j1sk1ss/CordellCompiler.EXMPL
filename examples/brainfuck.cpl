@@ -1,8 +1,8 @@
-from "string.cpl" import prints gets;
+from "string.cpl" import prints gets strlen;
 
 :
 Brainfuck interpriter on CPL
-For work test, input "++++++++[>++++++++<-]>+." sequence. Interpriter should return 'A' character.
+For work test, input ++++++++[>++++++++<-]>+. sequence. Interpriter should return 'A' character.
 Also hello world program
 ++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.
 
@@ -11,23 +11,17 @@ Or tick-tac-toe
 :
 
 start
-    str welcomeMsg = "Brainfuck interpriter! Input code ";
-    prints welcomeMsg 34;
+    prints "Brainfuck interpriter! Input code ";
 
-    arr code 10000 char =;
-    gets code 10000;
-
-    char brk = 0;
-    int codelength = 0;
-    while code[codelength] != brk; {
-        codelength = codelength + 1;
-    }
-
-    arr bracketmap 10000 int =;
-    arr stack 10000 asd =;
+    glob arr code 10000 char =;
+    int codelength = gets code 10000;
+    
+    glob arr bracketmap 10000 int =;
+    glob arr stack 10000 int =;
     int stackptr = 0;
     int pos = 0;
 
+    char brk            = 0;  : 0 :
     char plus           = 43; : + :
     char minus          = 45; : - :
     char dot            = 46; : . :
@@ -68,86 +62,55 @@ start
     int pc = 0;
 
     while pc < codelength; {
-        char cmd = code[pc];
-        int processed = 0;
-        
-        if cmd == rightMove; {
-            pointer = pointer + 1;
-            pc = pc + 1;
-            processed = 1;
-        }
-
-        if processed == 0; {
-            if cmd == leftMove; {
+        switch code[pc]; {
+            case rightMove; {
+                pointer = pointer + 1;
+                pc = pc + 1;
+            }
+            case leftMove; {
                 pointer = pointer - 1;
                 pc = pc + 1;
-                processed = 1;
             }
-        }
-
-        if processed == 0; {
-            if cmd == plus; {
+            case plus; {
                 tape[pointer] = tape[pointer] + 1;
                 pc = pc + 1;
-                processed = 1;
             }
-        }
-        
-        if processed == 0; {
-            if cmd == minus; {
+            case minus; {
                 tape[pointer] = tape[pointer] - 1;
                 pc = pc + 1;
-                processed = 1;
             }
-        }
-        
-        if processed == 0; {
-            if cmd == dot; {
-                str fbuf = " ";
+            case dot; {
+                arr fbuf 2 char = 10 0;
                 fbuf[0] = tape[pointer];
-                prints fbuf 1;
+                prints fbuf;
                 pc = pc + 1;
-                processed = 1;
             }
-        }
-        
-        if processed == 0; {
-            if cmd == comma; {
-                str sbuf = " ";
-                gets sbuf 1;
+            case comma; {
+                arr sbuf 2 char = 10 0;
+                gets sbuf 2;
                 tape[pointer] = sbuf[0];
                 pc = pc + 1;
-                processed = 1;
             }
-        }
-        
-        if processed == 0; {
-            if cmd == openBracket; {
+            case openBracket; {
                 if tape[pointer] == brk; {
                     pc = bracketmap[pc * 4] + 1;
                 }
-                if tape[pointer] != brk; {
+                else {
                     pc = pc + 1;
                 }
-                processed = 1;
             }
-        }
-        
-        if processed == 0; {
-            if cmd == closedBracket; {
+            case closedBracket; {
                 if tape[pointer] != brk; {
                     pc = bracketmap[pc * 4] + 1;
                 }
-                if tape[pointer] == brk; {
+                else {
                     pc = pc + 1;
                 }
-                processed = 1;
             }
-        }
-        
-        if processed == 0; {
-            pc = pc + 1;
+            default {
+                pc = pc + 1;
+            }
         }
     }
 
-exit 0;
+exit 1;

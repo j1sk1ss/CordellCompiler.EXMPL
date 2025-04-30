@@ -14,7 +14,7 @@ int mm_init() {
     return 1;
 }
 
-static int __coalesce_memory() {
+static int _coalesce_memory() {
     int merged = 0;
     mm_block_t* current = _mm_head;
     
@@ -35,9 +35,9 @@ static int __coalesce_memory() {
     return 1;
 }
 
-static void* __malloc_s(size_t size, int prepare_mem) {
+static void* _malloc_s(size_t size, int prepare_mem) {
     if (size == 0) return NULL;
-    if (prepare_mem) __coalesce_memory();
+    if (prepare_mem) _coalesce_memory();
 
     size = (size + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1);
     mm_block_t* current = _mm_head;
@@ -64,11 +64,11 @@ static void* __malloc_s(size_t size, int prepare_mem) {
     }
 
     print_mm("Allocation error! I can't allocate [%i]!", size);
-    return prepare_mem ? NULL : __malloc_s(size, 1);
+    return prepare_mem ? NULL : _malloc_s(size, 1);
 }
 
 void* mm_malloc(size_t size) {
-    void* ptr = __malloc_s(size, 0);
+    void* ptr = _malloc_s(size, 0);
     if (!ptr) print_mm("Allocation error! I can't allocate [%i]!", size);
     return ptr;
 }
@@ -76,9 +76,9 @@ void* mm_malloc(size_t size) {
 void* mm_realloc(void* ptr, size_t elem) {
     void* new_data = NULL;
     if (elem) {
-        if(!ptr) return mm_malloc(elem);
+        if (!ptr) return mm_malloc(elem);
         new_data = mm_malloc(elem);
-        if(new_data) {
+        if (new_data) {
             str_memcpy(new_data, ptr, elem);
             mm_free(ptr);
         }

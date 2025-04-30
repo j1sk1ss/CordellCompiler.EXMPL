@@ -1,0 +1,7 @@
+from "string.cpl" import prints;
+start
+    str string = "Hello there!";
+    string[0] = 'W';
+    string[3] = 'K';
+    prints string;
+exit a;

@@ -1,85 +1,119 @@
 #include "../include/builder.h"
 
 
-#ifdef PRINT_PARSE
-void print_parse_tree(tree_t* node, int depth) {
-    if (!node) return;
+static int _print_parse_tree(tree_t* node, int depth) {
+    if (!node) return 0;
     for (int i = 0; i < depth; i++) printf("  ");
-    if (node->token) printf("[%s] (t=%d, size=%i, off=%i, f=%i)\n", (char*)node->token->value, node->token->t_type, node->variable_size, node->variable_offset, node->function);
+    if (node->token) printf(
+        "[%s] (t=%d, size=%i, is_ptr=%i, off=%i, ro=%i glob=%i)\n", 
+        (char*)node->token->value, node->token->t_type, node->variable_size, node->token->ptr, node->variable_offset, node->token->ro, node->token->glob
+    );
     else printf("scope\n");
     
     tree_t* child = node->first_child;
     while (child) {
-        print_parse_tree(child, depth + 1);
+        _print_parse_tree(child, depth + 1);
         child = child->next_sibling;
     }
-}
-#else
-void print_parse_tree(tree_t* node, int depth) {}
-#endif
-
-
-static params_t __params = {
-    .syntax = 0, .save_asm = 0
-};
-
-static object_t __files[MAX_FILES];
-static int __current_file = 0;
-
-
-int __add_object(char* path, int is_main) {
-    __files[__current_file].main = is_main;
-    __files[__current_file].path = path;
-    __current_file++;
+    
     return 1;
 }
 
-int __compile(object_t* obj) {
+
+static params_t _params = { .syntax = 0, .save_asm = 0 };
+static object_t _files[MAX_FILES];
+static int _current_file = 0;
+
+
+static int _generate_raw_ast(object_t* obj) {
     int fd = open(obj->path, O_RDONLY);
     if (fd < 0) return -1;
-    
+
     token_t* tokens = tokenize(fd);
-    if (!tokens) return -2;
+    if (!tokens) {
+        close(fd);
+        return -2;
+    }
 
     int markup_res = command_markup(tokens);
     markup_res = variable_markup(tokens);
     if (!markup_res) {
         unload_tokens(tokens);
+        close(fd);
         return -3;
     }
 
     tree_t* parse_tree = create_syntax_tree(tokens);
-    if (__params.syntax) print_parse_tree(parse_tree, 0);
-    int semantic_res = check_semantic(parse_tree);
-    if (semantic_res) {
-        char save_path[128] = { 0 };
-        sprintf(save_path, "%s.asm", obj->path);
-        FILE* output = fopen(save_path, "w");
-        generate_asm(parse_tree, output);
-        fclose(output);
-
-        char compile_command[128] = { 0 };
-        sprintf(compile_command, "%s -f%s %s -o %s.o", DEFAULT_ASM_COMPILER, DEFAULT_ARCH, save_path, save_path);
-        system(compile_command);
+    if (!check_semantic(parse_tree)) {
+        unload_syntax_tree(parse_tree);
+        unload_tokens(tokens);
+        close(fd);
+        return -4;
     }
 
-    unload_syntax_tree(parse_tree);
-    unload_tokens(tokens);
+    obj->ast = parse_tree;
+
+    obj->ast_arrinfo = get_arrmap_head();
+    set_arrmap_head(NULL);
+
+    obj->ast_varinfo = get_varmap_head();
+    set_varmap_head(NULL);
+    close(fd);
     return 1;
 }
 
-int build(char* path, int is_main) {
-    return __add_object(path, is_main);
+static int _add_object(char* path) {
+    _files[_current_file].path = path;
+    _generate_raw_ast(&_files[_current_file]);
+    _current_file++;
+    return 1;
 }
 
-int build_all(char* output) {
-    if (__current_file == 0) return 0;
+static int _compile_object(object_t* obj) {
+    string_optimization(obj->ast);
+
+    int is_fold_vars = 0;
+    do {
+        assign_optimization(obj->ast);
+        is_fold_vars = muldiv_optimization(obj->ast);
+    } while (is_fold_vars);
+    
+    unload_varmap(obj->ast_varinfo);
+    varuse_optimization(obj->ast);
+    offset_optimization(obj->ast);
+
+    char save_path[128] = { 0 };
+    sprintf(save_path, "%s.asm", obj->path);
+    FILE* output = fopen(save_path, "w");
+    if (_params.syntax) _print_parse_tree(obj->ast, 0);
+
+    set_varmap_head(obj->ast_varinfo);
+    set_arrmap_head(obj->ast_arrinfo);
+    generate_asm(obj->ast, output);
+    fclose(output);
+
+    char compile_command[128] = { 0 };
+    sprintf(compile_command, "%s -f%s %s -g -o %s.o", DEFAULT_ASM_COMPILER, DEFAULT_ARCH, save_path, save_path);
+    system(compile_command);
+
+    unload_syntax_tree(obj->ast);
+    unload_arrmap(obj->ast_arrinfo);
+    unload_varmap(obj->ast_varinfo);
+    return 1;
+}
+
+int builder_add_file(char* input) {
+    return _add_object(input);
+}
+
+int builder_compile(char* output) {
+    if (_current_file == 0) return 0;
 
     /*
     Production of .asm files with temporary saving in files directory.
     */
-    for (int i = __current_file - 1; i >= 0; i--) {
-        int res = __compile(&__files[i]);
+    for (int i = _current_file - 1; i >= 0; i--) {
+        int res = _compile_object(&_files[i]);
         if (!res) return res;
     }
 
@@ -87,11 +121,11 @@ int build_all(char* output) {
     Linking output files
     */
     char link_command[256] = { 0 };
-    sprintf(link_command, "%s -m %s ", DEFAULT_LINKER, DEFAULT_LINKER_ARCH);
+    sprintf(link_command, "%s -m %s %s ", DEFAULT_LINKER, DEFAULT_LINKER_ARCH, LINKER_FLAGS);
 
-    for (int i = __current_file - 1; i >= 0; i--) {
+    for (int i = _current_file - 1; i >= 0; i--) {
         char object_path[128] = { 0 };
-        sprintf(object_path, " %s.asm.o", __files[i].path);
+        sprintf(object_path, " %s.asm.o", _files[i].path);
         str_strcat(link_command, object_path);
     }
 
@@ -102,9 +136,9 @@ int build_all(char* output) {
     /*
     Cleanup
     */
-    for (int i = __current_file - 1; i >= 0; i--) {
+    for (int i = _current_file - 1; i >= 0; i--) {
         char delete_command[128] = { 0 };
-        if (!__params.save_asm) sprintf(delete_command, "rm %s.asm %s.asm.o", __files[i].path, __files[i].path);
+        if (!_params.save_asm) sprintf(delete_command, "rm %s.asm %s.asm.o", _files[i].path, _files[i].path);
         system(delete_command);
     }
 
@@ -112,6 +146,6 @@ int build_all(char* output) {
 }
 
 int set_params(params_t* params) {
-    str_memcpy(&__params, params, sizeof(params_t));
+    str_memcpy(&_params, params, sizeof(params_t));
     return 1;
 }

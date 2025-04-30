@@ -1,0 +1,11 @@
+from "string.cpl" import prints gets;
+
+start
+    prints "Hello!";
+    prints "Hello!";
+    prints "Already!";
+
+    int a = 10;
+    int c = a * 1024;
+    int d = 100 - 10 + c;
+exit d;
