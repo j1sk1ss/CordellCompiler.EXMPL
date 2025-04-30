@@ -18,7 +18,7 @@
 static int _generate_global(token_type_t t_type, tree_t* entry, FILE* output) {
     switch (t_type) {
         case STR_TYPE_TOKEN:   iprintf(output, "__%s__ db '%s', 0\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
-        case INT_TYPE_TOKEN:   iprintf(output, "__%s__ dd %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
+        case INT_TYPE_TOKEN:   iprintf(output, "__%s__ dq %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
         case SHORT_TYPE_TOKEN: iprintf(output, "__%s__ dw %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
         case CHAR_TYPE_TOKEN:  iprintf(output, "__%s__ db %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
         case ARRAY_TYPE_TOKEN:
@@ -34,10 +34,6 @@ static int _generate_global(token_type_t t_type, tree_t* entry, FILE* output) {
                 el_size = 2;
             }
             else if (!str_strcmp((char*)t_type->token->value, INT_VARIABLE)) {
-                directive = "dd";
-                el_size = 4;
-            }
-            else {
                 directive = "dq";
                 el_size = 8;
             }
@@ -137,29 +133,30 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         /*
         If it unknown num, we store it in rax register for other operations.
         */
-        iprintf(output, "mov eax, %s\n", node->token->value);
+        iprintf(output, "mov rax, %s\n", node->token->value);
     }
     else if (node->token->t_type == CHAR_VALUE_TOKEN) {
-        iprintf(output, "mov eax, %i\n", *node->token->value);
+        iprintf(output, "mov rax, %i\n", *node->token->value);
     }
     else if (node->token->ptr && is_variable(node->token->t_type)) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
             _generate_expression(name_node->next_sibling, output, func);
-            iprintf(output, "mov %s, eax ; ptr %s = eax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
+            iprintf(output, "mov %s, rax ; ptr %s = rax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
         }
     }
     else if (node->token->ptr && !is_variable(node->token->t_type) && get_variable_type(node->token)) {
-        if (!node->first_child) iprintf(output, "mov eax, %s\n", GET_ASMVAR(node));
+        if (!node->first_child) iprintf(output, "mov rax, %s\n", GET_ASMVAR(node));
         else {
             variable_info_t info;
             if (get_var_info((char*)node->token->value, func, &info)) {
                 _generate_expression(node->first_child, output, func);
-                iprintf(output, "add eax, %s\n", GET_ASMVAR(node));
+                if (info.size > 1) iprintf(output, "imul rax, %d\n", info.size);
+                iprintf(output, "add rax, %s\n", GET_ASMVAR(node));
 
-                if (info.size == 1) iprintf(output, "movzx eax, byte [eax]\n");
-                else if (info.size == 2) iprintf(output, "movzx eax, word [eax]\n");
-                else iprintf(output, "mov eax, [eax]\n");
+                if (info.size == 1) iprintf(output, "movzx rax, byte [rax]\n");
+                else if (info.size == 2) iprintf(output, "movzx rax, word [rax]\n");
+                else iprintf(output, "mov rax, [rax]\n");
             }
         }
     }
@@ -173,21 +170,21 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
             _generate_expression(name_node->next_sibling, output, func);
-            iprintf(output, "mov %s, eax ; int %s = eax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
+            iprintf(output, "mov %s, rax ; int %s = rax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
         }
     }
     else if (node->token->t_type == INT_VARIABLE_TOKEN) {
         /*
         Getting integer from stack, and saving in EAX shared register.
         */
-        iprintf(output, "mov eax, %s ; int %s\n", GET_ASMVAR(node), node->token->value);
+        iprintf(output, "mov rax, %s ; int %s\n", GET_ASMVAR(node), node->token->value);
         _generate_expression(node->first_child, output, func);
     }
     else if (node->token->t_type == SHORT_TYPE_TOKEN) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
             _generate_expression(name_node->next_sibling, output, func);
-            iprintf(output, "mov %s, ax ; short %s = eax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
+            iprintf(output, "mov word %s, ax ; short %s = ax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
         }
     }
     else if (node->token->t_type == SHORT_VARIABLE_TOKEN) {
@@ -198,7 +195,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
             _generate_expression(name_node->next_sibling, output, func);
-            iprintf(output, "mov %s, al ; char %s = eax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
+            iprintf(output, "mov byte %s, al ; char %s = al\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
         }
     }
     else if (node->token->t_type == CHAR_VARIABLE_TOKEN) {
@@ -222,7 +219,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                     for (tree_t* v = vals; v && v->token->t_type != DELIMITER_TOKEN; v = v->next_sibling) {
                         if (v->token->t_type == UNKNOWN_NUMERIC_TOKEN) {
                             int value = str_atoi((char*)v->token->value);
-                            iprintf(output, "mov eax, %d\n", value);
+                            iprintf(output, "mov rax, %d\n", value);
                         }
                         else if (v->token->t_type == UNKNOWN_STRING_TOKEN) {
                             int value = 0;
@@ -232,15 +229,15 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                                 h++;
                             }
     
-                            iprintf(output, "mov eax, %d ; %s\n", value, v->token->value);    
+                            iprintf(output, "mov rax, %d ; %s\n", value, v->token->value);    
                         }
                         else {
                             int is_ptr = get_array_info((char*)v->token->value, func, NULL) && !(v->token->ro || v->token->glob);
-                            iprintf(output, "%s eax, %s ; uint32 %s \n", !is_ptr ? "mov" : "lea", GET_ASMVAR(v), v->token->value); 
+                            iprintf(output, "%s rax, %s ; uint32 %s \n", !is_ptr ? "mov" : "lea", GET_ASMVAR(v), v->token->value); 
                         }
     
-                        iprintf(output, "mov [ebp - %d], eax\n", base_off);
-                        base_off -= arr_info.el_size;
+                        iprintf(output, "mov [rbp - %d], rax\n", base_off);
+                        base_off -= ALIGN_TO(arr_info.el_size, 8);
                     }
 
                     fprintf(output, " ; --------------- \n");
@@ -256,127 +253,129 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             char* val_head = (char*)val_node->token->value;
             int base_off = name_node->variable_offset;
             while (*val_head) {
-                iprintf(output, "mov eax, %d ; %c\n", *val_head, *val_head);
-                iprintf(output, "mov [ebp - %d], eax\n", base_off--);
+                iprintf(output, "mov rax, %d ; %c\n", *val_head, *val_head);
+                iprintf(output, "mov [rbp - %d], rax\n", base_off);
+                
                 val_head++;
+                base_off -= 8;
             }
 
             fprintf(output, " ; --------------- \n");
         }
     }
     else if (node->token->t_type == ARR_VARIABLE_TOKEN || node->token->t_type == STR_VARIABLE_TOKEN) {
-        if (!node->first_child) iprintf(output, "mov eax, %s\n", node->token->value);
+        if (!node->first_child) iprintf(output, "mov rax, %s\n", node->token->value);
         else {
             array_info_t arr_info = { .el_size = 1 };
             get_array_info((char*)node->token->value, func, &arr_info);
             _generate_expression(node->first_child, output, func);
-            if (arr_info.el_size > 1) iprintf(output, "imul eax, %d\n", arr_info.el_size);
-            iprintf(output, "%s ebx, %s\n", (node->token->ro || node->token->glob) ? "mov" : "lea",  GET_ASMVAR(node));
-            iprintf(output, "add eax, ebx\n");
+            if (arr_info.el_size > 1) iprintf(output, "imul rax, %d\n", arr_info.el_size);
+            iprintf(output, "%s rbx, %s\n", (node->token->ro || node->token->glob) ? "mov" : "lea",  GET_ASMVAR(node));
+            iprintf(output, "add rax, rbx\n");
 
-            if (arr_info.el_size == 1) iprintf(output, "movzx eax, byte [eax]\n");
-            else if (arr_info.el_size == 2) iprintf(output, "movzx eax, word [eax]\n");
-            else iprintf(output, "mov eax, [eax]\n");
+            if (arr_info.el_size == 1) iprintf(output, "movzx rax, byte [rax]\n");
+            else if (arr_info.el_size == 2) iprintf(output, "movzx rax, word [rax]\n");
+            else iprintf(output, "mov rax, [rax]\n");
         }
     }
     else if (node->token->t_type == BITMOVE_LEFT_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "mov ecx, eax\n");
-        iprintf(output, "shl ebx, cl\n");
-        iprintf(output, "mov eax, ebx\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "mov rcx, rax\n");
+        iprintf(output, "shl rbx, cl\n");
+        iprintf(output, "mov rax, rbx\n");
     }
     else if (node->token->t_type == BITMOVE_RIGHT_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "mov ecx, eax\n");
-        iprintf(output, "shr ebx, cl\n");
-        iprintf(output, "mov eax, ebx\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "mov rcx, rax\n");
+        iprintf(output, "shr rbx, cl\n");
+        iprintf(output, "mov rax, rbx\n");
     }
     else if (node->token->t_type == BITAND_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "and eax, ebx\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "and rax, rbx\n");
     }
     else if (node->token->t_type == BITOR_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "or eax, ebx\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "or rax, rbx\n");
     }
     else if (node->token->t_type == PLUS_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "add eax, ebx\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "add rax, rbx\n");
     }
     else if (node->token->t_type == MINUS_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "sub ebx, eax\n");
-        iprintf(output, "mov eax, ebx\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "sub rbx, rax\n");
+        iprintf(output, "mov rax, rbx\n");
     }
     else if (node->token->t_type == MULTIPLY_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "imul eax, ebx\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "imul rax, rbx\n");
     }
     else if (node->token->t_type == DIVIDE_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "mov ebx, eax\n");
-        iprintf(output, "pop eax\n");
+        iprintf(output, "mov rbx, rax\n");
+        iprintf(output, "pop rax\n");
         iprintf(output, "cdq\n");
-        iprintf(output, "idiv ebx\n");
+        iprintf(output, "idiv rbx\n");
     }
     else if (node->token->t_type == LARGER_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "cmp ebx, eax\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "cmp rbx, rax\n");
         iprintf(output, "setg al\n");
-        iprintf(output, "movzx eax, al\n");
+        iprintf(output, "movzx rax, al\n");
     }
     else if (node->token->t_type == LOWER_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "cmp ebx, eax\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "cmp rbx, rax\n");
         iprintf(output, "setl al\n");
-        iprintf(output, "movzx eax, al\n");
+        iprintf(output, "movzx rax, al\n");
     }
     else if (node->token->t_type == COMPARE_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "cmp ebx, eax\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "cmp rbx, rax\n");
         iprintf(output, "sete al\n");
-        iprintf(output, "movzx eax, al\n");
+        iprintf(output, "movzx rax, al\n");
     }
     else if (node->token->t_type == NCOMPARE_TOKEN) {
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "push eax\n");
+        iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop ebx\n");
-        iprintf(output, "cmp ebx, eax\n");
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "cmp rbx, rax\n");
         iprintf(output, "setne al\n");
-        iprintf(output, "movzx eax, al\n");
+        iprintf(output, "movzx rax, al\n");
     }
     else if (node->token->t_type == CALL_TOKEN) {
         /*
@@ -400,24 +399,40 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         fprintf(output, "\n ; --------------- Call function %s --------------- \n", func_name_node->token->value);
         const char* args_regs[] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };
 
-        for (int i = arg_count - 1; i >= 0; --i) {
-            tree_t* arg = args[i];
+        int pushed_args = 0;
+        for (pushed_args = 0; pushed_args < MIN(arg_count, 6); pushed_args++) {
+            tree_t* arg = args[pushed_args];
             switch (get_variable_type(arg->token)) {
                 case 1: 
-                case 32:
+                case 64:
                     int is_ptr = get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob);
-                    iprintf(output, "%s eax, %s ; uint32 %s \n", !is_ptr ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
+                    iprintf(output, "%s %s, %s ; uint32 %s \n", !is_ptr ? "mov" : "lea", args_regs[pushed_args], GET_ASMVAR(arg), arg->token->value); 
                     break;
-                case 16: iprintf(output, "mov ax, %s ; uint16 %s \n", GET_ASMVAR(arg), arg->token->value); break;
-                case 8:  iprintf(output, "mov al, %s ; uint8 %s \n", GET_ASMVAR(arg), arg->token->value); break;
+                case 16: iprintf(output, "mov word %s, %s ; uint16 %s \n", GET_ASMVAR(arg), args_regs[pushed_args], arg->token->value); break;
+                case 8:  iprintf(output, "mov byte %s, %s ; uint8 %s \n", GET_ASMVAR(arg), args_regs[pushed_args], arg->token->value); break;
                 default: break;
             }
-            
-            iprintf(output, "push eax\n");
         }
     
+        int stack_args = arg_count - pushed_args;
+        while (pushed_args < arg_count) {
+            tree_t* arg = args[pushed_args++];
+            switch (get_variable_type(arg->token)) {
+                case 1: 
+                case 64:
+                    int is_ptr = get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob);
+                    iprintf(output, "%s rax, %s ; uint32 %s \n", !is_ptr ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
+                    break;
+                case 16: iprintf(output, "mov word rax, %s ; uint16 %s \n", GET_ASMVAR(arg), arg->token->value); break;
+                case 8:  iprintf(output, "mov byte rax, %s ; uint8 %s \n", GET_ASMVAR(arg), arg->token->value); break;
+                default: break;
+            }
+
+            iprintf(output, "push rax\n");
+        }
+
         iprintf(output, "call __%s__\n", func_name_node->token->value);
-        if (arg_count > 0) iprintf(output, "add esp, %d\n", arg_count * 4);
+        if (stack_args > 0) iprintf(output, "add rsp, %d\n", stack_args * 8);
         fprintf(output, " ; --------------- \n");
     }
     else if (node->token->t_type == EXIT_TOKEN) {
@@ -426,11 +441,9 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         */
         fprintf(output, "\n ; --------------- Exit --------------- \n");
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "mov ebx, eax\n");
-        iprintf(output, "mov eax, 1\n");
-        iprintf(output, "mov esp, ebp\n");
-        iprintf(output, "pop ebp\n");
-        iprintf(output, "int 0x80\n");
+        iprintf(output, "mov rdi, rax\n");
+        iprintf(output, "mov rax, 60\n");
+        iprintf(output, "syscall\n");
     }
     else if (node->token->t_type == RETURN_TOKEN) {
         fprintf(output, "\n ; --------------- Return --------------- \n");
@@ -439,8 +452,8 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         Now, result of function stored at EAX register.
         */
         _generate_expression(node->first_child, output, func);
-        iprintf(output, "mov esp, ebp\n");
-        iprintf(output, "pop ebp\n");
+        iprintf(output, "mov rsp, rbp\n");
+        iprintf(output, "pop rbp\n");
         iprintf(output, "ret\n");
     }
 
@@ -456,13 +469,13 @@ static int _get_variables_size(tree_t* head, const char* func) {
         if (expression->token->t_type == ARRAY_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->next_sibling->next_sibling->token->value, func, &arr_info)) {
-                size += arr_info.size * ALIGN_TO(arr_info.el_size, 4);
+                size += arr_info.size * ALIGN_TO(arr_info.el_size, 8);
             }
         }
         else if (expression->token->t_type == STR_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->token->value, func, &arr_info)) {
-                size += arr_info.size * ALIGN_TO(arr_info.el_size, 4);
+                size += arr_info.size * ALIGN_TO(arr_info.el_size, 8);
             }
         }
         else if (
@@ -488,8 +501,8 @@ static int _generate_function(tree_t* node, FILE* output, const char* func) {
     iprintf(output, "__%s__:\n", name_node->token->value);
 
     _current_depth += 1;
-    iprintf(output, "push ebp\n");
-    iprintf(output, "mov ebp, esp\n");
+    iprintf(output, "push rbp\n");
+    iprintf(output, "mov rbp, rsp\n");
 
     /*
     Reserving stack memory for local variables. (Creating stack frame).
@@ -497,33 +510,61 @@ static int _generate_function(tree_t* node, FILE* output, const char* func) {
     Also we remember input variables.
     */
     int local_vars_size = _get_variables_size(params_node->first_child, (char*)name_node->token->value) + _get_variables_size(body_node->first_child, (char*)name_node->token->value);
-    iprintf(output, "sub esp, %d\n", ALIGN_TO(local_vars_size, 4));
+    iprintf(output, "sub rsp, %d\n", ALIGN_TO(local_vars_size, 8));
 
     /*
     Loading input args to stack.
     */
-    int param_offset = 8;
+    int pop_params = 0;
+    int param_offset = 16;
+    int stack_offset = 8;
+    const char* args_regs[] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };
     for (tree_t* param = params_node->first_child; param; param = param->next_sibling) {
-        int param_size = ALIGN_TO(param->variable_size, 4);
+        int param_size = ALIGN_TO(param->variable_size, 8);
         char* param_name = (char*)param->first_child->token->value;
-        switch (get_variable_type(param->first_child->token)) {
-            case 1:
-            case 32:
-                iprintf(output, "mov eax, [ebp + %d] ; int %s \n", param_offset, param_name);
-                iprintf(output, "mov [ebp - %d], eax\n", param_offset - param_size);
-                break;
 
-            case 16:
-                iprintf(output, "mov ax, [ebp + %d] ; short %s \n", param_offset, param_name);
-                iprintf(output, "mov [ebp - %d], ax\n", param_offset - param_size);
-                break;
+        if (pop_params >= 6) {
+            switch (get_variable_type(param->first_child->token)) {
+                case 1:
+                case 64:
+                    iprintf(output, "mov rax, [rbp + %d] ; int %s \n", stack_offset, param_name);
+                    iprintf(output, "mov [rbp - %d], rax\n", param_offset - param_size);
+                    break;
 
-            case 8:
-                iprintf(output, "mov al, [ebp + %d] ; char %s \n", param_offset, param_name);
-                iprintf(output, "mov [ebp - %d], al\n", param_offset - param_size);
-                break;
-            default: break;
+                case 16:
+                    iprintf(output, "mov ax, [rbp + %d] ; short %s \n", stack_offset, param_name);
+                    iprintf(output, "mov word [rbp - %d], ax\n", param_offset - param_size);
+                    break;
+
+                case 8:
+                    iprintf(output, "mov al, [rbp + %d] ; char %s \n", stack_offset, param_name);
+                    iprintf(output, "mov byte [rbp - %d], al\n", param_offset - param_size);
+                    break;
+                default: break;
+            }
+
+            stack_offset += param_size;
         }
+        else {
+            switch (get_variable_type(param->first_child->token)) {
+                case 1:
+                case 64:
+                    iprintf(output, "mov [rbp - %d], %s\n", param_offset - param_size, args_regs[pop_params]);
+                    break;
+
+                case 16:
+                    iprintf(output, "mov word [rbp - %d], %s\n", param_offset - param_size, args_regs[pop_params]);
+                    break;
+
+                case 8:
+                    iprintf(output, "mov byte [rbp - %d], %s\n", param_offset - param_size, args_regs[pop_params]);
+                    break;
+                default: break;
+            }
+        }
+
+        pop_params++;
+        param_offset += param_size;
     }   
 
     /*
@@ -550,7 +591,7 @@ static int _generate_while(tree_t* node, FILE* output, const char* func) {
     _current_depth += 1;
 
     _generate_expression(condition, output, func);
-    iprintf(output, "cmp eax, 0\n");
+    iprintf(output, "cmp rax, 0\n");
     iprintf(output, "je __end_while_%d__\n", current_label);
 
     while (body) {
@@ -580,7 +621,7 @@ static int _generate_case_binary_jump(FILE* output, int* values, int left, int r
     int mid = (left + right) / 2;
     int val = values[mid];
 
-    iprintf(output, "cmp eax, %d\n", val);
+    iprintf(output, "cmp rax, %d\n", val);
     iprintf(output, "jl __case_l_%d_%d__\n", val, label_id);
     iprintf(output, "jg __case_r_%d_%d__\n", val, label_id);
     iprintf(output, "jmp __case_%d_%d__\n", val, label_id);
@@ -645,7 +686,7 @@ static int _generate_if(tree_t* node, FILE* output, const char* func) {
 
     fprintf(output, "\n ; --------------- if statement [%i] --------------- \n", current_label);
     _generate_expression(condition, output, func);
-    iprintf(output, "cmp eax, 0\n");
+    iprintf(output, "cmp rax, 0\n");
     if (else_body) iprintf(output, "je __else_%d__\n", current_label);
     else iprintf(output, "je __end_if_%d__\n", current_label);
     _current_depth += 1;
@@ -667,7 +708,6 @@ static int _generate_if(tree_t* node, FILE* output, const char* func) {
         }
     }
 
-    _current_depth -= 1;
     fprintf(output, " ; --------------- \n");
     iprintf(output, "__end_if_%d__:\n", current_label);
     
@@ -675,10 +715,9 @@ static int _generate_if(tree_t* node, FILE* output, const char* func) {
     return 1;
 }
 
+/* https://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/ */
 static int _generate_syscall(tree_t* node, FILE* output, const char* func) {
-    char* registers_32[] =  { "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp"  };
-    char* registers_16[] =  { "ax", "bx", "cx", "dx", "si", "di", "bp"         };
-    char* registers_8[] =   { "al", "bl", "cl", "dl", "sl", "dil", "bpl"       };
+    char* registers_64[] =  { "rax", "rdi", "rsi", "rdx", "r10", "r8", "r9"  };
 
     fprintf(output, "\n ; --------------- system call --------------- \n");
 
@@ -687,19 +726,19 @@ static int _generate_syscall(tree_t* node, FILE* output, const char* func) {
     while (args) {
         switch (get_variable_type(args->token)) {
             case 1: 
-            case 32:
+            case 64:
                 int is_ptr = get_array_info((char*)node->first_child->token->value, func, NULL) && !(node->first_child->token->ro || node->first_child->token->glob);
-                iprintf(output, "%s %s, %s\n", !is_ptr ? "mov" : "lea", registers_32[argument_index++], GET_ASMVAR(args)); 
+                iprintf(output, "%s %s, %s\n", !is_ptr ? "mov" : "lea", registers_64[arg_index++], GET_ASMVAR(args)); 
                 break;
-            case 16: iprintf(output, "mov %s, %s\n", registers_16[argument_index++], GET_ASMVAR(args)); break;
-            case 8:  iprintf(output, "mov %s, %s\n", registers_8[argument_index++], GET_ASMVAR(args)); break;
+            case 16: iprintf(output, "mov word %s, %s\n", registers_64[arg_index++], GET_ASMVAR(args)); break;
+            case 8:  iprintf(output, "mov byte %s, %s\n", registers_64[arg_index++], GET_ASMVAR(args)); break;
             default: break;
         }
         
         args = args->next_sibling;
     }
 
-    iprintf(output, "int 0x80\n");
+    iprintf(output, "syscall\n");
     fprintf(output, " ; --------------- \n");
 
     return 1;
@@ -727,24 +766,24 @@ static int _generate_assignment(tree_t* node, FILE* output, const char* func) {
         Then multiply it by arr el_size.
         */
         _generate_expression(left->first_child, output, func);
-        if (arr_info.el_size > 1) iprintf(output, "imul eax, %d\n", arr_info.el_size);
-        iprintf(output, "%s ebx, %s\n", (left->token->ro || left->token->glob) ? "mov" : "lea", GET_ASMVAR(left));
+        if (arr_info.el_size > 1) iprintf(output, "imul rax, %d\n", arr_info.el_size);
+        iprintf(output, "%s rbx, %s\n", (left->token->ro || left->token->glob) ? "mov" : "lea", GET_ASMVAR(left));
 
-        iprintf(output, "add eax, ebx\n");
-        iprintf(output, "push eax\n");
+        iprintf(output, "add rax, rbx\n");
+        iprintf(output, "push rax\n");
         
         _generate_expression(right, output, func);
-        iprintf(output, "pop ebx\n");
-        if (arr_info.el_size == 1)      iprintf(output, "mov byte [ebx], al\n");
-        else if (arr_info.el_size == 2) iprintf(output, "mov word [ebx], ax\n");
-        else if (arr_info.el_size == 4) iprintf(output, "mov [ebx], eax\n");
+        iprintf(output, "pop rbx\n");
+        if (arr_info.el_size == 1)      iprintf(output, "mov byte [rbx], al\n");
+        else if (arr_info.el_size == 2) iprintf(output, "mov word [rbx], ax\n");
+        else if (arr_info.el_size == 8) iprintf(output, "mov [rbx], rax\n");
     } 
     else {
         /*
-        Move to eax result of right operation, and store it in stack with offset in the left.
+        Move to rax result of right operation, and store it in stack with offset in the left.
         */
         _generate_expression(right, output, func);
-        iprintf(output, "mov %s, eax\n", GET_ASMVAR(left));
+        iprintf(output, "mov %s, rax\n", GET_ASMVAR(left));
     }
 
     fprintf(output, " ; --------------- \n");
@@ -809,9 +848,9 @@ int generate_asm(tree_t* root, FILE* output) {
         /*
         Before start, find all "global" variables and reserve stack frame.
         */
-        iprintf(output, "push ebp\n");
-        iprintf(output, "mov ebp, esp\n");
-        iprintf(output, "sub esp, %d\n", ALIGN_TO(_get_variables_size(main_body->first_child, NULL), 4));
+        iprintf(output, "push rbp\n");
+        iprintf(output, "mov rbp, rsp\n");
+        iprintf(output, "sub rsp, %d\n", ALIGN_TO(_get_variables_size(main_body->first_child, NULL), 8));
         _generate_text_section(main_body, output);
     }
 

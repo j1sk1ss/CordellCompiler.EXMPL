@@ -10,11 +10,11 @@ function strlen ptr char string; {
 
 function prints ptr char string; {
     int strSize = strlen string;
-    return syscall 4 1 string strSize;
+    return syscall 1 1 string strSize;
 }
 
 function gets ptr char buffer; int size; {
-    return syscall 3 0 buffer size;
+    return syscall 0 0 buffer size;
 }
 
 function atoi ptr char buffer; int bsize; {
