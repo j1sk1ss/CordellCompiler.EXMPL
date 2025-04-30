@@ -18,7 +18,7 @@ Every program begins with the `start` keyword and ends with the `exit [return_co
 
 The following types are supported:
 
-- `int` — Integer (typically 32-bit).
+- `int` — Integer (typically 64-bit).
 - `short` — Short integer (16-bit).
 - `char` — 8-bit integer.
 - `str` — String (array of characters).
@@ -53,6 +53,7 @@ Basic arithmetic and logical operations are supported:
 | `-`       | Subtraction         |
 | `*`       | Multiplication      |
 | `/`       | Division (int)      |
+| `%`       | Module (int)        |
 | `==`      | Equality            |
 | `!=`      | Inequality          |
 | `>` `<`   | Comparison          |
@@ -167,18 +168,14 @@ Comments are written as annotations `:` within functions and code blocks:
                 }
 
                 while num > 0; {
-                    tmp = num / 10;
-                    tmp = tmp * 10;
-                    tmp = num - tmp;
-                    tmp = tmp + 48;
-                    buffer[index] = tmp;
+                    tmp = num % 10;
+                    buffer[index] = tmp + 48;
                     index = index - 1;
                     num = num / 10;
                 }
 
                 if isNegative == 1; {
-                    char minus = 45;
-                    buffer[index - 1] = minus;
+                    buffer[index - 1] = '-';
                 }
 
                 return 1;
@@ -198,7 +195,7 @@ Comments are written as annotations `:` within functions and code blocks:
                     
                     arr buffer 40 char =;
                     itoa buffer 40 c;
-                    printf buffer 40;
+                    prints buffer 40;
 
                     count = count + 1;
                 }
