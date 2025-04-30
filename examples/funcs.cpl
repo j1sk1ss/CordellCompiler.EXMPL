@@ -4,4 +4,7 @@ start
     string[0] = 'W';
     string[3] = 'K';
     prints string;
+
+    arr stringSec 14 char = 10 'H' 'e' 'l' 'l' 'o' 10 't' 'h' 'e' 'r' 'e' '!' 0;
+    prints stringSec;
 exit a;

@@ -310,8 +310,8 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
 
     if (type_token->t_type == STR_TYPE_TOKEN && !decl_node->token->ro && !decl_node->token->glob) {
         int str_size = str_strlen((char*)value_node->token->value);
-        decl_node->variable_offset = add_variable_info((char*)name_node->token->value, str_size, _current_function_name);
         decl_node->variable_size = ALIGN_TO(str_size, 4);
+        decl_node->variable_offset = add_variable_info((char*)name_node->token->value, decl_node->variable_size, _current_function_name);
         add_array_info((char*)name_node->token->value, _current_function_name, 1, decl_node->variable_size);
         _fill_variable(name_node);
     }
@@ -369,7 +369,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
 
     add_array_info((char*)name_token->value, _current_function_name, el_size, array_size);
     if (!arr_token->ro && !arr_token->glob) {
-        arr_node->variable_size = ALIGN_TO(array_size * ALIGN_TO(el_size, 4), 4);
+        arr_node->variable_size = ALIGN_TO(array_size * el_size, 4);
         name_node->variable_size = arr_node->variable_size;
         arr_node->variable_offset = add_variable_info((char*)name_token->value, arr_node->variable_size, _current_function_name);
     }
