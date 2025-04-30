@@ -442,13 +442,13 @@ static int _get_variables_size(tree_t* head, const char* func) {
         if (expression->token->t_type == ARRAY_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->next_sibling->next_sibling->token->value, func, &arr_info)) {
-                size += arr_info.size * ALIGN_TO(arr_info.el_size, 4);
+                size += arr_info.size * arr_info.el_size;
             }
         }
         else if (expression->token->t_type == STR_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->token->value, func, &arr_info)) {
-                size += arr_info.size * ALIGN_TO(arr_info.el_size, 4);
+                size += arr_info.size * arr_info.el_size;
             }
         }
         else if (
