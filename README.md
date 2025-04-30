@@ -31,7 +31,7 @@ The following types are supported:
             glob int aGlobal = 5; : Global :
             
             short b = 1234;
-            char c = 48;
+            char c = 'X';
             
             str name = "Hello, World!";
             ptr char strPtr = name; : Pointer to name string :
