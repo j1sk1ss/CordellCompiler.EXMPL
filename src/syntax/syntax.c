@@ -27,6 +27,8 @@ static tree_t* (*_get_parser(token_type_t t_type))(token_t**) {
         case INT_VARIABLE_TOKEN:
         case STR_VARIABLE_TOKEN:
         case ARR_VARIABLE_TOKEN:
+        case CHAR_VARIABLE_TOKEN:
+        case SHORT_VARIABLE_TOKEN:
         case UNKNOWN_STRING_TOKEN:  return _parse_expression;
         case SYSCALL_TOKEN:         return _parse_syscall;
         case IMPORT_SELECT_TOKEN:   return _parse_import;
@@ -244,7 +246,6 @@ static tree_t* _parse_function_declaration(token_t** curr) {
     }
 
     add_child_node(func_node, args_node);
-
     tree_t* body_node = _parse_scope(curr, CLOSE_BLOCK_TOKEN);
     if (!body_node) {
         unload_syntax_tree(func_node);

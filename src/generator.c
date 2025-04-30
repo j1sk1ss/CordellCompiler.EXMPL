@@ -334,6 +334,16 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         iprintf(output, "cdq\n");
         iprintf(output, "idiv rbx\n");
     }
+    else if (node->token->t_type == MODULO_TOKEN) {
+        _generate_expression(node->first_child, output, func);
+        iprintf(output, "push rax\n");
+        _generate_expression(node->first_child->next_sibling, output, func);
+        iprintf(output, "mov rbx, rax\n");
+        iprintf(output, "pop rax\n");
+        iprintf(output, "cdq\n");
+        iprintf(output, "idiv rbx\n");
+        iprintf(output, "mov rax, rdx\n");
+    }
     else if (node->token->t_type == LARGER_TOKEN) {
         _generate_expression(node->first_child, output, func);
         iprintf(output, "push rax\n");
@@ -752,7 +762,7 @@ static int _generate_assignment(tree_t* node, FILE* output, const char* func) {
         If left is array or string (array too) with elem size info.
         */
         array_info_t arr_info = { .el_size = 1 };
-        get_array_info((char*)left->token->value, func, &arr_info);
+        int is_ptr = get_array_info((char*)node->first_child->token->value, func, NULL) && !(node->first_child->token->ro || node->first_child->token->glob);
 
         /*
         Generate offset movement in this array-like data type.
@@ -760,7 +770,7 @@ static int _generate_assignment(tree_t* node, FILE* output, const char* func) {
         */
         _generate_expression(left->first_child, output, func);
         if (arr_info.el_size > 1) iprintf(output, "imul rax, %d\n", arr_info.el_size);
-        iprintf(output, "%s rbx, %s\n", (left->token->ro || left->token->glob) ? "mov" : "lea", GET_ASMVAR(left));
+        iprintf(output, "%s rbx, %s\n", !is_ptr ? "mov" : "lea", GET_ASMVAR(left));
 
         iprintf(output, "add rax, rbx\n");
         iprintf(output, "push rax\n");

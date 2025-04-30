@@ -32,22 +32,22 @@ function atoi ptr char buffer; int bsize; {
 
 function itoa ptr char buffer; int dsize; int num; {
     int index = dsize - 1;
-    int tmp = 0;
-
     int isNegative = 0;
     if num < 0; {
         isNegative = 1;
         num = num * -1;
     }
 
+    int tmp = 0;
     while num > 0; {
-        tmp = num / 10;
-        tmp = tmp * 10;
-        tmp = num - tmp;
-        tmp = tmp + 48;
-        buffer[index] = tmp;
+        tmp = num % 10;
+        buffer[index] = tmp + 48;
         index = index - 1;
         num = num / 10;
+    }
+
+    if isNegative == 1; {
+        buffer[0] = 'n';
     }
 
     return 1;
