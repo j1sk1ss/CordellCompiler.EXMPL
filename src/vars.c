@@ -16,6 +16,7 @@ int get_variable_type(token_t* token) {
         case STRING_VALUE_TOKEN: return 1;
         case INT_VARIABLE_TOKEN: return 32;
         case SHORT_VARIABLE_TOKEN: return 16;
+        case CHAR_VALUE_TOKEN:
         case CHAR_VARIABLE_TOKEN: return 8;
         default: return 0;
     }
@@ -30,6 +31,7 @@ int get_variable_size(token_t* token) {
         case ARR_VARIABLE_TOKEN:
         case STR_VARIABLE_TOKEN: return 32;
         case SHORT_VARIABLE_TOKEN: return 16;
+        case CHAR_VALUE_TOKEN:
         case CHAR_VARIABLE_TOKEN: return 8;
         default: return 1;
     }

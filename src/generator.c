@@ -139,6 +139,9 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         */
         iprintf(output, "mov eax, %s\n", node->token->value);
     }
+    else if (node->token->t_type == CHAR_VALUE_TOKEN) {
+        iprintf(output, "mov eax, %i\n", *node->token->value);
+    }
     else if (node->token->ptr && is_variable(node->token->t_type)) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
@@ -251,7 +254,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             fprintf(output, "\n ; --------------- String setup %s --------------- \n", name_node->token->value);
             tree_t* val_node = name_node->next_sibling;
             char* val_head = (char*)val_node->token->value;
-            int base_off = node->variable_offset;
+            int base_off = name_node->variable_offset;
             while (*val_head) {
                 iprintf(output, "mov eax, %d ; %c\n", *val_head, *val_head);
                 iprintf(output, "mov [ebp - %d], eax\n", base_off--);

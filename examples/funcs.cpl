@@ -1,7 +1,7 @@
-function test int num; {
-    function local int locNum; {
-        return 2;
-    }
-    
-    return local num;
-}
+from "string.cpl" import prints;
+start
+    str string = "Hello there!";
+    string[0] = 'W';
+    string[3] = 'K';
+    prints string;
+exit a;

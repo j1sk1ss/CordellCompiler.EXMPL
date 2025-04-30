@@ -79,13 +79,15 @@ typedef enum {
     ARR_VARIABLE_TOKEN,
 
     // Values
-    STRING_VALUE_TOKEN
+    STRING_VALUE_TOKEN,
+    CHAR_VALUE_TOKEN
 } token_type_t;
 
 typedef enum {
     CHAR_ALPHA,
     CHAR_DIGIT,
     CHAR_QUOTE,
+    CHAR_SING_QUOTE,
     CHAR_OPEN_INDEX,
     CHAR_CLOSE_INDEX,
     CHAR_OTHER,

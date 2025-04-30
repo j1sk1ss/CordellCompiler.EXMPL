@@ -45,6 +45,7 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             default: break;
         }
 
+        if (t->token->t_type == STRING_VALUE_TOKEN || t->token->t_type == CHAR_VALUE_TOKEN) continue;
         if (!str_strncmp(varname, (char*)t->token->value, TOKEN_MAX_SIZE)) {
             *status = 1;
             return 1;

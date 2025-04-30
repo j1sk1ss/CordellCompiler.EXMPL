@@ -421,7 +421,7 @@ static tree_t* _parse_expression(token_t** curr) {
     *curr = (*curr)->next;
     if ((*curr)->t_type == SYSCALL_TOKEN)   right = _parse_syscall(curr);
     else if ((*curr)->t_type == CALL_TOKEN) right = _parse_function_call(curr);
-    else                                    right = _parse_expression(curr);
+    else right = _parse_expression(curr);
     
     if (!right) {
         unload_syntax_tree(left_node);

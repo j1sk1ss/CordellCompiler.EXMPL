@@ -7,6 +7,7 @@
         if (isalpha(ch)) return CHAR_ALPHA;
         else if (str_isdigit(ch) || ch == '-') return CHAR_DIGIT;
         else if (ch == '"')  return CHAR_QUOTE;
+        else if (ch == '\'') return CHAR_SING_QUOTE;
         else if (ch == '\n') return CHAR_NEWLINE;
         else if (ch == ' ')  return CHAR_SPACE;
         else if (ch == ';')  return CHAR_DELIMITER;
@@ -69,21 +70,26 @@ token_t* tokenize(int fd) {
 
         int comment_open = 0;
         int quotes_open  = 0;
+        int sing_quotes_open = 0;
         
         for (ssize_t i = 0; i < bytes_read; ++i) {
             unsigned char ch = buffer[i];
             char_type_t ct = _get_char_type(ch);
-            if (ct == CHAR_QUOTE) {
+            if (ct == CHAR_SING_QUOTE) {
+                sing_quotes_open = !sing_quotes_open;
+                continue;
+            }
+            else if (ct == CHAR_QUOTE) {
                 quotes_open = !quotes_open;
                 continue;
             }
-            else if (ct == CHAR_COMMENT && !quotes_open) {
+            else if (ct == CHAR_COMMENT && !quotes_open && !sing_quotes_open) {
                 comment_open = !comment_open;
                 continue;
             }
 
             if (comment_open && !quotes_open) continue;
-            if ((ct != CHAR_SPACE && ct != CHAR_NEWLINE) || quotes_open) {
+            if ((ct != CHAR_SPACE && ct != CHAR_NEWLINE) || quotes_open || sing_quotes_open) {
                 token_type_t new_type = UNKNOWN_STRING_TOKEN;
 
                 /*
@@ -91,6 +97,7 @@ token_t* tokenize(int fd) {
                 */
                 //if (current_type != UNKNOWN_STRING_TOKEN) {
                     if (quotes_open) new_type = STRING_VALUE_TOKEN;
+                    else if (sing_quotes_open) new_type = CHAR_VALUE_TOKEN;
                     else {
                         if (ct == CHAR_ALPHA)            new_type = UNKNOWN_STRING_TOKEN;
                         else if (ct == CHAR_DIGIT)       new_type = UNKNOWN_NUMERIC_TOKEN;
