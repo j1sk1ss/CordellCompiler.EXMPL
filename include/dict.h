@@ -40,6 +40,7 @@
 #define PLUS_STATEMENT          "+"
 #define MINUS_STATEMENT         "-"
 #define DIVIDE_STATEMENT        "/"
+#define MODULO_STATEMENT        "%"
 #define MULTIPLY_STATEMENT      "*"
 #define LOWER_STATEMENT         "<"
 #define LARGER_STATEMENT        ">"

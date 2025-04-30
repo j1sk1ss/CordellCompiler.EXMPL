@@ -57,6 +57,7 @@ static markup_token_t _markups[] = {
     { .value = LOWER_STATEMENT,        .type = LOWER_TOKEN         },
     { .value = MULTIPLY_STATEMENT,     .type = MULTIPLY_TOKEN      },
     { .value = DIVIDE_STATEMENT,       .type = DIVIDE_TOKEN        },
+    { .value = MODULO_STATEMENT,       .type = MODULO_TOKEN        },
     { .value = BITMOVE_LEFT_STATEMENT, .type = BITMOVE_LEFT_TOKEN  },
     { .value = BITMOVE_RIGHT_STATMENT, .type = BITMOVE_RIGHT_TOKEN },
     { .value = BITAND_STATEMENT,       .type = BITAND_TOKEN        },
