@@ -144,11 +144,13 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             variable_info_t info;
             if (get_var_info((char*)node->token->value, func, &info)) {
                 _generate_expression(node->first_child, output, func);
-                if (info.size > 1) iprintf(output, "imul rax, %d\n", info.size);
+
+                if (node->token->t_type == SHORT_VARIABLE_TOKEN) iprintf(output, "imul rax, 2\n");
+                else if (node->token->t_type == INT_VARIABLE_TOKEN) iprintf(output, "imul rax, 8\n");
                 iprintf(output, "add rax, %s\n", GET_ASMVAR(node));
 
-                if (info.size == 1) iprintf(output, "movzx rax, byte [rax]\n");
-                else if (info.size == 2) iprintf(output, "movzx rax, word [rax]\n");
+                if (node->token->t_type == CHAR_VARIABLE_TOKEN) iprintf(output, "movzx rax, byte [rax]\n");
+                else if (node->token->t_type == SHORT_VARIABLE_TOKEN) iprintf(output, "movzx rax, word [rax]\n");
                 else iprintf(output, "mov rax, [rax]\n");
             }
         }
@@ -163,36 +165,36 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
             _generate_expression(name_node->next_sibling, output, func);
-            iprintf(output, "mov %s, rax ; int %s = rax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
+            iprintf(output, "mov %s, rax ; int64 %s = rax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
         }
     }
     else if (node->token->t_type == INT_VARIABLE_TOKEN) {
         /*
         Getting integer from stack, and saving in EAX shared register.
         */
-        iprintf(output, "mov rax, %s ; int %s\n", GET_ASMVAR(node), node->token->value);
+        iprintf(output, "mov rax, %s ; int64 %s\n", GET_ASMVAR(node), node->token->value);
         _generate_expression(node->first_child, output, func);
     }
     else if (node->token->t_type == SHORT_TYPE_TOKEN) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
             _generate_expression(name_node->next_sibling, output, func);
-            iprintf(output, "mov word %s, ax ; short %s = ax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
+            iprintf(output, "mov word %s, ax ; int16 %s = ax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
         }
     }
     else if (node->token->t_type == SHORT_VARIABLE_TOKEN) {
-        iprintf(output, "mov ax, %s ; short %s\n", GET_ASMVAR(node), node->token->value);
+        iprintf(output, "mov ax, %s ; int16 %s\n", GET_ASMVAR(node), node->token->value);
         _generate_expression(node->first_child, output, func);
     }
     else if (node->token->t_type == CHAR_TYPE_TOKEN) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
             _generate_expression(name_node->next_sibling, output, func);
-            iprintf(output, "mov byte %s, al ; char %s = al\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
+            iprintf(output, "mov byte %s, al ; int8 %s = al\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
         }
     }
     else if (node->token->t_type == CHAR_VARIABLE_TOKEN) {
-        iprintf(output, "mov al, %s ; char %s\n", GET_ASMVAR(node), node->token->value);
+        iprintf(output, "mov al, %s ; int8 %s\n", GET_ASMVAR(node), node->token->value);
         _generate_expression(node->first_child, output, func);
     }
     else if (node->token->t_type == ARRAY_TYPE_TOKEN) {
@@ -229,7 +231,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                         else if (v->token->t_type == CHAR_VALUE_TOKEN) iprintf(output, "mov%s[rbp - %d], %d\n", mov_op, base_off, *v->token->value);
                         else {
                             int is_ptr = get_array_info((char*)v->token->value, func, NULL) && !(v->token->ro || v->token->glob);
-                            iprintf(output, "%s %s, %s ; uint64 %s \n", !is_ptr ? "mov" : "lea", reg, GET_ASMVAR(v), v->token->value); 
+                            iprintf(output, "%s %s, %s ; int64 %s \n", !is_ptr ? "mov" : "lea", reg, GET_ASMVAR(v), v->token->value); 
                             iprintf(output, "mov%s[rbp - %d], %s\n", mov_op, base_off, reg);
                         }
     
@@ -409,10 +411,10 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                 case 1: 
                 case 64:
                     int is_ptr = get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob);
-                    iprintf(output, "%s %s, %s ; uint32 %s \n", !is_ptr ? "mov" : "lea", args_regs[pushed_args], GET_ASMVAR(arg), arg->token->value); 
+                    iprintf(output, "%s %s, %s ; int64 %s \n", !is_ptr ? "mov" : "lea", args_regs[pushed_args], GET_ASMVAR(arg), arg->token->value); 
                     break;
-                case 16: iprintf(output, "mov word %s, %s ; uint16 %s \n", GET_ASMVAR(arg), args_regs[pushed_args], arg->token->value); break;
-                case 8:  iprintf(output, "mov byte %s, %s ; uint8 %s \n", GET_ASMVAR(arg), args_regs[pushed_args], arg->token->value); break;
+                case 16: iprintf(output, "mov word %s, %s ; int16 %s \n", GET_ASMVAR(arg), args_regs[pushed_args], arg->token->value); break;
+                case 8:  iprintf(output, "mov byte %s, %s ; int8 %s \n", GET_ASMVAR(arg), args_regs[pushed_args], arg->token->value); break;
                 default: break;
             }
         }
@@ -424,10 +426,10 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                 case 1: 
                 case 64:
                     int is_ptr = get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob);
-                    iprintf(output, "%s rax, %s ; uint32 %s \n", !is_ptr ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
+                    iprintf(output, "%s rax, %s ; uint64 %s \n", !is_ptr ? "mov" : "lea", GET_ASMVAR(arg), arg->token->value); 
                     break;
-                case 16: iprintf(output, "mov word rax, %s ; uint16 %s \n", GET_ASMVAR(arg), arg->token->value); break;
-                case 8:  iprintf(output, "mov byte rax, %s ; uint8 %s \n", GET_ASMVAR(arg), arg->token->value); break;
+                case 16: iprintf(output, "mov word rax, %s ; int16 %s \n", GET_ASMVAR(arg), arg->token->value); break;
+                case 8:  iprintf(output, "mov byte rax, %s ; int8 %s \n", GET_ASMVAR(arg), arg->token->value); break;
                 default: break;
             }
 
@@ -530,17 +532,17 @@ static int _generate_function(tree_t* node, FILE* output, const char* func) {
             switch (get_variable_type(param->first_child->token)) {
                 case 1:
                 case 64:
-                    iprintf(output, "mov rax, [rbp + %d] ; int %s \n", stack_offset, param_name);
+                    iprintf(output, "mov rax, [rbp + %d] ; int64 %s \n", stack_offset, param_name);
                     iprintf(output, "mov [rbp - %d], rax\n", param_offset - param_size);
                     break;
 
                 case 16:
-                    iprintf(output, "mov ax, [rbp + %d] ; short %s \n", stack_offset, param_name);
+                    iprintf(output, "mov ax, [rbp + %d] ; int16 %s \n", stack_offset, param_name);
                     iprintf(output, "mov word [rbp - %d], ax\n", param_offset - param_size);
                     break;
 
                 case 8:
-                    iprintf(output, "mov al, [rbp + %d] ; char %s \n", stack_offset, param_name);
+                    iprintf(output, "mov al, [rbp + %d] ; int8 %s \n", stack_offset, param_name);
                     iprintf(output, "mov byte [rbp - %d], al\n", param_offset - param_size);
                     break;
                 default: break;

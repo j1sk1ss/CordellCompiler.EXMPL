@@ -288,7 +288,7 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     
     if ((name_token->ptr || get_variable_type(name_token) != 1) && !decl_node->token->ro && !decl_node->token->glob) {
         int var_size = 8;
-        if (name_token->ptr) {
+        if (!name_token->ptr) {
             if (!str_strcmp((char*)type_token->value, CHAR_VARIABLE)) var_size = 1;
             else if (!str_strcmp((char*)type_token->value, SHORT_VARIABLE)) var_size = 2;
             else if (!str_strcmp((char*)type_token->value, INT_VARIABLE)) var_size = 8;
