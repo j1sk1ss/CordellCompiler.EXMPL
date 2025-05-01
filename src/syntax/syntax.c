@@ -289,10 +289,10 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     
     if ((name_token->ptr || get_variable_type(name_token) != 1) && !decl_node->token->ro && !decl_node->token->glob) {
         int var_size = 4;
-        if (name_token->ptr) {
-            if (!str_strcmp((char*)type_token->value, CHAR_VARIABLE)) var_size = 1;
-            else if (!str_strcmp((char*)type_token->value, SHORT_VARIABLE)) var_size = 2;
-            else if (!str_strcmp((char*)type_token->value, INT_VARIABLE)) var_size = 4;
+        if (!name_token->ptr) {
+            if (type_token->t_type == CHAR_VARIABLE_TOKEN) var_size = 1;
+            else if (type_token->t_type == SHORT_VARIABLE_TOKEN) var_size = 2;
+            else if (type_token->t_type == INT_VARIABLE_TOKEN) var_size = 4;
         }
 
         decl_node->variable_offset = add_variable_info((char*)name_node->token->value, var_size, _current_function_name);
@@ -347,8 +347,8 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     }
     
     int el_size = 1;
-    if (!str_strcmp((char*)elem_size_token->value, SHORT_VARIABLE)) el_size = 2;
-    else if (!str_strcmp((char*)elem_size_token->value, INT_VARIABLE)) el_size = 4;
+    if (elem_size_token->t_type == SHORT_VARIABLE_TOKEN) el_size = 2;
+    else if (elem_size_token->t_type == INT_VARIABLE_TOKEN) el_size = 4;
     
     tree_t* elem_size_node = create_tree_node(elem_size_token);
     if (!elem_size_node) {

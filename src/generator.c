@@ -148,11 +148,12 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             variable_info_t info;
             if (get_var_info((char*)node->token->value, func, &info)) {
                 _generate_expression(node->first_child, output, func);
-                if (info.size > 1) iprintf(output, "imul eax, %d\n", info.size);
+                if (node->token->t_type == SHORT_VARIABLE_TOKEN) iprintf(output, "imul eax, 2\n");
+                else if (node->token->t_type == INT_VARIABLE_TOKEN) iprintf(output, "imul rax, 4\n");
                 iprintf(output, "add eax, %s\n", GET_ASMVAR(node));
 
-                if (info.size == 1) iprintf(output, "movzx eax, byte [eax]\n");
-                else if (info.size == 2) iprintf(output, "movzx eax, word [eax]\n");
+                if (node->token->t_type == CHAR_VARIABLE_TOKEN) iprintf(output, "movzx eax, byte [eax]\n");
+                else if (node->token->t_type == SHORT_VARIABLE_TOKEN) iprintf(output, "movzx eax, word [eax]\n");
                 else iprintf(output, "mov eax, [eax]\n");
             }
         }
@@ -452,13 +453,13 @@ static int _get_variables_size(tree_t* head, const char* func) {
         if (expression->token->t_type == ARRAY_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->next_sibling->next_sibling->token->value, func, &arr_info)) {
-                size += arr_info.size * arr_info.el_size;
+                size += ALIGN_TO(arr_info.size * arr_info.el_size, 4);
             }
         }
         else if (expression->token->t_type == STR_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->token->value, func, &arr_info)) {
-                size += arr_info.size * arr_info.el_size;
+                size += ALIGN_TO(arr_info.size * arr_info.el_size, 4);
             }
         }
         else if (
