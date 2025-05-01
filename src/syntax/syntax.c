@@ -230,7 +230,7 @@ static tree_t* _parse_function_declaration(token_t** curr) {
     }
 
     while (!*curr || (*curr)->t_type != OPEN_BLOCK_TOKEN) {
-        if (is_variable((*curr)->t_type)) {
+        if (is_variable_decl((*curr)->t_type)) {
             tree_t* param_node = _parse_variable_declaration(curr);
             if (!param_node) {
                 unload_syntax_tree(func_node);

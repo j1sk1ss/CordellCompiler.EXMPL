@@ -131,14 +131,14 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
     else if (node->token->t_type == ASIGN_TOKEN)    _generate_assignment(node, output, func);
     else if (node->token->t_type == UNKNOWN_NUMERIC_TOKEN) iprintf(output, "mov rax, %s\n", node->token->value);
     else if (node->token->t_type == CHAR_VALUE_TOKEN) iprintf(output, "mov rax, %i\n", *node->token->value);
-    else if (node->token->ptr && is_variable(node->token->t_type)) {
+    else if (node->token->ptr && is_variable_decl(node->token->t_type)) {
         tree_t* name_node = node->first_child;
         if (name_node->next_sibling && !name_node->token->ro && !name_node->token->glob) {
             _generate_expression(name_node->next_sibling, output, func);
             iprintf(output, "mov %s, rax ; ptr %s = rax\n", GET_ASMVAR(name_node), (char*)name_node->token->value);
         }
     }
-    else if (node->token->ptr && !is_variable(node->token->t_type) && get_variable_type(node->token)) {
+    else if (node->token->ptr && !is_variable_decl(node->token->t_type) && get_variable_type(node->token)) {
         if (!node->first_child) iprintf(output, "mov rax, %s\n", GET_ASMVAR(node));
         else {
             variable_info_t info;

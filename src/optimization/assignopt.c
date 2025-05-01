@@ -99,7 +99,7 @@ static int _find_decl(tree_t* root, tree_t* entry, int* change) {
             default: break;
         }
 
-        if (is_variable(t->token->t_type) && t->token->t_type != STR_TYPE_TOKEN && t->token->t_type != ARRAY_TYPE_TOKEN) {
+        if (is_variable_decl(t->token->t_type) && t->token->t_type != STR_TYPE_TOKEN && t->token->t_type != ARRAY_TYPE_TOKEN) {
             int is_changed = 0;
             tree_t* name_node = t->first_child;
             if (t->token->ro || t->token->glob) _find_assign(entry, (char*)name_node->token->value, &is_changed, 0);

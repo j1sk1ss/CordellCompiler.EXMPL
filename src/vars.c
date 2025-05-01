@@ -37,7 +37,7 @@ int get_variable_size(token_t* token) {
     }
 }
 
-int is_variable(token_type_t token) {
+int is_variable_decl(token_type_t token) {
     switch (token) {
         case ARRAY_TYPE_TOKEN:
         case INT_TYPE_TOKEN:
