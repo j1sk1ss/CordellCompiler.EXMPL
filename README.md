@@ -18,10 +18,11 @@ Every program begins with the `start` keyword and ends with the `exit [return_co
 
 The following types are supported:
 
-- `int` — Integer (typically 64-bit).
-- `short` — Short integer (16-bit).
-- `char` — 8-bit integer.
-- `str` — String (array of characters).
+- `long` — Integer (64-bit).
+- `int` — Integer (32-bit).
+- `short` — Integer (16-bit).
+- `char` — Integer (8-bit).
+- `str` — String (Array of characters).
 - `arr` — Array.
 
 ### Declaring Variables

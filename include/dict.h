@@ -18,6 +18,7 @@
 #define PTR_COMMAND     "ptr"
 #define RO_COMMAND      "ro"
 #define GLOB_COMMAND    "glob"
+#define LONG_VARIABLE   "long"
 #define INT_VARIABLE    "int"
 #define SHORT_VARIABLE  "short"
 #define CHAR_VARIABLE   "char"

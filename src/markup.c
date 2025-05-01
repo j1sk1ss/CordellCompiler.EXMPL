@@ -33,6 +33,7 @@ static markup_token_t _markups[] = {
     { .value = PTR_COMMAND,            .type = PTR_TYPE_TOKEN      },
     { .value = RO_COMMAND,             .type = RO_TYPE_TOKEN       },
     { .value = GLOB_COMMAND,           .type = GLOB_TYPE_TOKEN     },
+    { .value = LONG_VARIABLE,          .type = LONG_TYPE_TOKEN     },
     { .value = INT_VARIABLE,           .type = INT_TYPE_TOKEN      },
     { .value = SHORT_VARIABLE,         .type = SHORT_TYPE_TOKEN    },
     { .value = CHAR_VARIABLE,          .type = CHAR_TYPE_TOKEN     },
@@ -116,6 +117,7 @@ int variable_markup(token_t* head) {
                 is_ptr = 1;
             break;
 
+            case LONG_TYPE_TOKEN:
             case INT_TYPE_TOKEN:
             case SHORT_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN:
@@ -128,6 +130,7 @@ int variable_markup(token_t* head) {
                     str_strncpy((char*)variables[var_count].name, (char*)next->value, TOKEN_MAX_SIZE);
                     
                     switch (curr->t_type) {
+                        case LONG_TYPE_TOKEN:   variables[var_count].type = LONG_VARIABLE_TOKEN; break;
                         case INT_TYPE_TOKEN:    variables[var_count].type = INT_VARIABLE_TOKEN; break;
                         case SHORT_TYPE_TOKEN:  variables[var_count].type = SHORT_VARIABLE_TOKEN; break;
                         case CHAR_TYPE_TOKEN:   variables[var_count].type = CHAR_VARIABLE_TOKEN; break;

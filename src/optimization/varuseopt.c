@@ -13,6 +13,7 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
         }
         
         switch (t->token->t_type) {
+            case LONG_TYPE_TOKEN:
             case INT_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN: 
             case SHORT_TYPE_TOKEN: _find_usage(t, varname, status, local, 1); continue;

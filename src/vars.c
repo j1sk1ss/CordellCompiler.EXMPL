@@ -14,7 +14,8 @@ int get_variable_type(token_t* token) {
         case STR_VARIABLE_TOKEN:
         case ARR_VARIABLE_TOKEN:
         case STRING_VALUE_TOKEN: return 1;
-        case INT_VARIABLE_TOKEN: return 64;
+        case LONG_VARIABLE_TOKEN: return 64;
+        case INT_VARIABLE_TOKEN: return 32;
         case SHORT_VARIABLE_TOKEN: return 16;
         case CHAR_VALUE_TOKEN:
         case CHAR_VARIABLE_TOKEN: return 8;
@@ -23,13 +24,14 @@ int get_variable_type(token_t* token) {
 } 
 
 int get_variable_size(token_t* token) {
-    if (token->ptr) return 32;
+    if (token->ptr) return 64;
     switch (token->t_type) {
         case UNKNOWN_NUMERIC_TOKEN:
         case STRING_VALUE_TOKEN:
-        case INT_VARIABLE_TOKEN:
         case ARR_VARIABLE_TOKEN:
-        case STR_VARIABLE_TOKEN: return 32;
+        case STR_VARIABLE_TOKEN: 
+        case LONG_VARIABLE_TOKEN: return 64;
+        case INT_VARIABLE_TOKEN: return 32;
         case SHORT_VARIABLE_TOKEN: return 16;
         case CHAR_VALUE_TOKEN:
         case CHAR_VARIABLE_TOKEN: return 8;
@@ -40,6 +42,7 @@ int get_variable_size(token_t* token) {
 int is_variable_decl(token_type_t token) {
     switch (token) {
         case ARRAY_TYPE_TOKEN:
+        case LONG_TYPE_TOKEN:
         case INT_TYPE_TOKEN:
         case SHORT_TYPE_TOKEN:
         case CHAR_TYPE_TOKEN:

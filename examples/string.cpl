@@ -1,6 +1,6 @@
 function strlen ptr char string; {
     char brk = 0;
-    int index = 0;
+    long index = 0;
     while string[index] != brk; {
         index = index + 1;
     }
@@ -9,7 +9,7 @@ function strlen ptr char string; {
 }
 
 function prints ptr char string; {
-    int strSize = strlen string;
+    long strSize = strlen string;
     return syscall 1 1 string strSize;
 }
 
