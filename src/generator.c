@@ -690,7 +690,7 @@ static int _generate_switch(tree_t* node, FILE* output, const char* func) {
         iprintf(output, "jmp __end_switch_%d__\n", current_label);
     }
 
-    qsort(values, cases_count, sizeof(int), _cmp);
+    sort_qsort(values, cases_count, sizeof(int), _cmp);
     iprintf(output, "__end_cases_%d__:\n", current_label);
     _generate_expression(stmt, output, func);
     _generate_case_binary_jump(output, values, 0, cases_count - 1, current_label, have_default);
@@ -872,8 +872,8 @@ int generate_asm(tree_t* root, FILE* output) {
     }
 
     if (main_body) {
-        fprintf(output, "\nglobal _start\n\n");
-        fprintf(output, "    _start:\n");
+        fprintf(output, "\nglobal _main\n\n");
+        fprintf(output, "    _main:\n");
 
         /*
         Before start, find all "global" variables and reserve stack frame.

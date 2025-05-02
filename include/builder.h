@@ -23,9 +23,7 @@ typedef struct {
     tree_t* ast;
     array_info_t* ast_arrinfo;
     variable_info_t* ast_varinfo;
-
     char* path;
-    int main;
 } object_t;
 
 typedef struct {
