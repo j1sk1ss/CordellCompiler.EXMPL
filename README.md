@@ -58,7 +58,8 @@ Basic arithmetic and logical operations are supported:
 | `==`      | Equality            |
 | `!=`      | Inequality          |
 | `>` `<`   | Comparison          |
-| `>>` `<<` `&`  `\|` | Bit operations |
+| `&&` `\|\|`             | Logic operations |
+| `>>` `<<` `&`  `\|` `^` | Bit operations   |
 
 ---
 

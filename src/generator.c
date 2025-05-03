@@ -318,6 +318,29 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         iprintf(output, "pop rbx\n");
         iprintf(output, "or rax, rbx\n");
     }
+    else if (node->token->t_type == BITXOR_TOKEN) {
+        _generate_expression(node->first_child, output, func);
+        iprintf(output, "push rax\n");
+        _generate_expression(node->first_child->next_sibling, output, func);
+        iprintf(output, "pop rbx\n");
+        iprintf(output, "xor rax, rbx\n");
+    }
+    else if (node->token->t_type == AND_TOKEN) {
+        _generate_expression(node->first_child, output, func);
+        iprintf(output, "push rax\n");
+        _generate_expression(node->first_child->next_sibling, output, func);
+        iprintf(output, "mov rbx, rax\n");
+        iprintf(output, "pop rax\n");
+        iprintf(output, "and rax, rbx\n");
+    }
+    else if (node->token->t_type == OR_TOKEN) {
+        _generate_expression(node->first_child, output, func);
+        iprintf(output, "push rax\n");
+        _generate_expression(node->first_child->next_sibling, output, func);
+        iprintf(output, "mov rbx, rax\n");
+        iprintf(output, "pop rax\n");
+        iprintf(output, "or rax, rbx\n"); 
+    }
     else if (node->token->t_type == PLUS_TOKEN) {
         _generate_expression(node->first_child, output, func);
         iprintf(output, "push rax\n");
@@ -872,12 +895,9 @@ int generate_asm(tree_t* root, FILE* output) {
     }
 
     if (main_body) {
-        fprintf(output, "\nglobal _main\n\n");
-        fprintf(output, "    _main:\n");
+        fprintf(output, "\nglobal _start\n\n");
+        fprintf(output, "    _start:\n");
 
-        /*
-        Before start, find all "global" variables and reserve stack frame.
-        */
         iprintf(output, "push rbp\n");
         iprintf(output, "mov rbp, rsp\n");
         iprintf(output, "sub rsp, %d\n", ALIGN_TO(_get_variables_size(main_body->first_child, NULL), 8));

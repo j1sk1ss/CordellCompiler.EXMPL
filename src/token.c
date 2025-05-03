@@ -12,8 +12,11 @@
         else if (ch == ' ')  return CHAR_SPACE;
         else if (ch == ';')  return CHAR_DELIMITER;
         else if (ch == ':')  return CHAR_COMMENT;
-        else if (ch == '[')  return CHAR_OPEN_INDEX;
-        else if (ch == ']')  return CHAR_CLOSE_INDEX;
+        else if (
+            ch == '(' || ch == ')' || 
+            ch == '[' || ch == ']' || 
+            ch == '{' || ch == '}'
+        ) return CHAR_BRACKET;
         return CHAR_OTHER;
     }
 
@@ -92,21 +95,15 @@ token_t* tokenize(int fd) {
             if ((ct != CHAR_SPACE && ct != CHAR_NEWLINE) || quotes_open || sing_quotes_open) {
                 token_type_t new_type = UNKNOWN_STRING_TOKEN;
 
-                /*
-                If current type is UNKNOWS_STRING, we know, that this can be variable name.
-                */
-                //if (current_type != UNKNOWN_STRING_TOKEN) {
-                    if (quotes_open) new_type = STRING_VALUE_TOKEN;
-                    else if (sing_quotes_open) new_type = CHAR_VALUE_TOKEN;
-                    else {
-                        if (ct == CHAR_ALPHA)            new_type = UNKNOWN_STRING_TOKEN;
-                        else if (ct == CHAR_DIGIT)       new_type = UNKNOWN_NUMERIC_TOKEN;
-                        else if (ct == CHAR_DELIMITER)   new_type = DELIMITER_TOKEN;
-                        else if (ct == CHAR_OPEN_INDEX)  new_type = OPEN_INDEX_TOKEN;
-                        else if (ct == CHAR_CLOSE_INDEX) new_type = CLOSE_INDEX_TOKEN;
-                        else new_type = UNKNOWN_STRING_TOKEN;
-                    }
-                //}
+                if (quotes_open) new_type = STRING_VALUE_TOKEN;
+                else if (sing_quotes_open) new_type = CHAR_VALUE_TOKEN;
+                else {
+                    if (ct == CHAR_ALPHA)          new_type = UNKNOWN_STRING_TOKEN;
+                    else if (ct == CHAR_DIGIT)     new_type = UNKNOWN_NUMERIC_TOKEN;
+                    else if (ct == CHAR_DELIMITER) new_type = DELIMITER_TOKEN;
+                    else if (ct == CHAR_BRACKET)   new_type = UNKNOWN_CHAR_VALUE;
+                    else new_type = UNKNOWN_CHAR_VALUE;
+                }
                 
                 if (in_token) {
                     if (current_type != new_type && new_type != STRING_VALUE_TOKEN) {

@@ -7,6 +7,11 @@
 #define IMPORT_COMMAND          "import"
 #define IMPORT_SELECT_COMMAND   "from"
 
+#define OPEN_INDEX      "["
+#define CLOSE_INDEX     "]"
+#define OPEN_BRACKET    "("
+#define CLOSE_BRACKET   ")"
+
 #define OPEN_BLOCK      "{"
 #define RETURN_COMMAND  "return"
 #define CLOSE_BLOCK     "}"
@@ -49,5 +54,8 @@
 #define BITMOVE_LEFT_STATEMENT  "<<"
 #define BITAND_STATEMENT        "&"
 #define BITOR_STATEMENT         "|"
+#define BITXOR_STATEMENT        "^"
+#define AND_STATEMENT           "&&"
+#define OR_STATEMENT            "||"
 
 #endif
