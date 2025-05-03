@@ -97,7 +97,7 @@ Basic arithmetic and logical operations are supported:
 
 ## Functions
 
-Functions are declared using the `function` keyword and defined within `fstart ... fend`.
+Functions are declared using the `function` keyword.
 
 ### Function Signature:
             function [name] [type1] arg1; [type2] arg2; ...; {
