@@ -1,4 +1,4 @@
-from "string.cpl" import prints gets strlen;
+from "string.cpl" import prints gets itoa;
 
 :
 Brainfuck interpriter on CPL

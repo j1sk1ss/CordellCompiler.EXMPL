@@ -109,6 +109,9 @@ int builder_add_file(char* input) {
 int builder_compile(char* output) {
     if (_current_file == 0) return 0;
 
+    for (int i = 0; i < _current_file; i++) funcopt_add_ast(_files[i].ast);
+    func_optimization();
+
     /*
     Production of .asm files with temporary saving in files directory.
     */
