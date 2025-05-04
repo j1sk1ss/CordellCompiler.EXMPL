@@ -1,0 +1,10 @@
+struct person {
+    ptr char name;
+    int age;
+    int person;
+}
+
+start
+    person pstruct;
+    ptr char pname = pstruct.name;
+exit 1;

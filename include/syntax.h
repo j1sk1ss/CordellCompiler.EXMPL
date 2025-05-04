@@ -8,8 +8,6 @@
 #include "vars.h"
 #include "str.h"
 
-#define ALIGN_TO(x, a) (((x) + (a) - 1) & ~((a) - 1))
-
 typedef struct tree {
     token_t* token;
     struct tree* parent;

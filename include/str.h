@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <limits.h>
 
+#define ALIGN_TO(x, a) (((x) + (a) - 1) & ~((a) - 1))
+
 
 void* str_memcpy(void* destination, const void* source, size_t num);
 void* str_memset(void* pointer, unsigned char value, size_t num);

@@ -23,7 +23,7 @@
     static int _add_token(token_t** head, token_t** tail, token_type_t type, const unsigned char* buffer, size_t len, int line) {
         token_t* new_token = create_token(type, buffer, len, line);
         if (!new_token) return 0;
-        
+        print_debug("name=%s type=%i", new_token->value, new_token->t_type);
         if (!*head) *head = new_token;
         else (*tail)->next = new_token;
         *tail = new_token; 
