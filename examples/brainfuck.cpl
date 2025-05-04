@@ -36,22 +36,18 @@ start
         char c = code[pos];
         int handled = 0;
 
-        if c == openBracket; {
-            stack[stackptr * 8] = pos;
-            stackptr = stackptr + 1;
-            handled = 1;
-        }
-        
-        if handled == 0; {
-            if c == closedBracket; {
+        switch c; {
+            case openBracket; {
+                stack[stackptr * 8] = pos;
+                stackptr = stackptr + 1;
+            }
+            case closedBracket; {
                 if stackptr > 0; {
                     stackptr = stackptr - 1;
                     int matchpos = stack[stackptr * 8];
                     bracketmap[pos * 4] = matchpos;
                     bracketmap[matchpos * 4] = pos;
                 }
-
-                handled = 1;
             }
         }
         
