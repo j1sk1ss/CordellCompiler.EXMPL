@@ -7,7 +7,7 @@ typedef struct {
     token_type_t type;
 } markup_token_t;
 
-typedef struct Variable {
+typedef struct {
     unsigned char name[TOKEN_MAX_SIZE];
     token_type_t type;
     int glob;

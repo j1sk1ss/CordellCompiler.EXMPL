@@ -21,6 +21,7 @@
 
 typedef struct {
     tree_t* ast;
+    token_t* tokens;
     array_info_t* ast_arrinfo;
     variable_info_t* ast_varinfo;
     char* path;

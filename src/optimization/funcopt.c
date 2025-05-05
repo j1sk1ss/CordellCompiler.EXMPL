@@ -56,6 +56,7 @@ static int _find_func(tree_t* root, int* delete) {
                 _find_func_usage((char*)t->first_child->token->value, &used);
                 if (!used) {
                     remove_child_node(root, t);
+                    unload_syntax_tree(t);
                     *delete = 1;
                 }
                 else _find_func(t->first_child->next_sibling->next_sibling, delete);

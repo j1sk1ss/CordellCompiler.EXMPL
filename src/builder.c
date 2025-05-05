@@ -51,6 +51,7 @@ static int _generate_raw_ast(object_t* obj) {
         return -4;
     }
 
+    obj->tokens = tokens;
     obj->ast = parse_tree;
 
     obj->ast_arrinfo = get_arrmap_head();
@@ -97,6 +98,7 @@ static int _compile_object(object_t* obj) {
     system(compile_command);
 
     unload_syntax_tree(obj->ast);
+    unload_tokens(obj->tokens);
     unload_arrmap(obj->ast_arrinfo);
     unload_varmap(obj->ast_varinfo);
     return 1;
