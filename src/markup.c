@@ -8,11 +8,11 @@ typedef struct {
 } markup_token_t;
 
 typedef struct {
-    unsigned char name[TOKEN_MAX_SIZE];
-    token_type_t type;
-    int glob;
-    int ptr;
     int ro;
+    int ptr;
+    int glob;
+    token_type_t type;
+    unsigned char name[TOKEN_MAX_SIZE];
 } variable_t;
 
 static markup_token_t _markups[] = {
@@ -44,15 +44,16 @@ static markup_token_t _markups[] = {
     /*
     Variable tokens.
     */
-    { .value = PTR_COMMAND,    .type = PTR_TYPE_TOKEN   },
-    { .value = RO_COMMAND,     .type = RO_TYPE_TOKEN    },
-    { .value = GLOB_COMMAND,   .type = GLOB_TYPE_TOKEN  },
-    { .value = LONG_VARIABLE,  .type = LONG_TYPE_TOKEN  },
-    { .value = INT_VARIABLE,   .type = INT_TYPE_TOKEN   },
-    { .value = SHORT_VARIABLE, .type = SHORT_TYPE_TOKEN },
-    { .value = CHAR_VARIABLE,  .type = CHAR_TYPE_TOKEN  },
-    { .value = STR_VARIABLE,   .type = STR_TYPE_TOKEN   },
-    { .value = ARR_VARIABLE,   .type = ARRAY_TYPE_TOKEN },
+    { .value = PTR_COMMAND,     .type = PTR_TYPE_TOKEN    },
+    { .value = RO_COMMAND,      .type = RO_TYPE_TOKEN     },
+    { .value = GLOB_COMMAND,    .type = GLOB_TYPE_TOKEN   },
+    { .value = BIGINT_VARIABLE, .type = BIGINT_TYPE_TOKEN },
+    { .value = LONG_VARIABLE,   .type = LONG_TYPE_TOKEN   },
+    { .value = INT_VARIABLE,    .type = INT_TYPE_TOKEN    },
+    { .value = SHORT_VARIABLE,  .type = SHORT_TYPE_TOKEN  },
+    { .value = CHAR_VARIABLE,   .type = CHAR_TYPE_TOKEN   },
+    { .value = STR_VARIABLE,    .type = STR_TYPE_TOKEN    },
+    { .value = ARR_VARIABLE,    .type = ARRAY_TYPE_TOKEN  },
 
     /*
     Little jump tokens.
@@ -150,6 +151,7 @@ int variable_markup(token_t* head) {
                         case CHAR_TYPE_TOKEN:   variables[var_count].type = CHAR_VARIABLE_TOKEN; break;
                         case SHORT_TYPE_TOKEN:  variables[var_count].type = SHORT_VARIABLE_TOKEN; break;
                         case ARRAY_TYPE_TOKEN:  variables[var_count].type = ARR_VARIABLE_TOKEN; break;
+                        case BIGINT_TYPE_TOKEN: variables[var_count].type = BIGINT_VARIABLE_TOKEN; break;
                         default: break;
                     }
 
@@ -162,8 +164,8 @@ int variable_markup(token_t* head) {
                     var_count++;
                 }
 
-                is_ro = 0;
-                is_ptr = 0;
+                is_ro   = 0;
+                is_ptr  = 0;
                 is_glob = 0;
             break;
             default: break;

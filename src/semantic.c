@@ -58,6 +58,7 @@ int check_semantic(tree_t* node) {
                 break;
             }
 
+            case BIGINT_TYPE_TOKEN:
             case LONG_TYPE_TOKEN:
             case INT_TYPE_TOKEN:
             case STR_TYPE_TOKEN:
