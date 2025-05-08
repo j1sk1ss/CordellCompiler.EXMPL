@@ -3,7 +3,7 @@
 
 /*
 Return 1 if variable is an array-like data object.
-Return 512 if 512bit variable.
+Return 1024 if 1024bit variable.
 Return 64 if 64bit variable.
 Return 32 if 32bit variable.
 Return 16 if 16bit variable.
@@ -16,7 +16,7 @@ int get_variable_type(token_t* token) {
         case STR_VARIABLE_TOKEN:
         case ARR_VARIABLE_TOKEN:
         case STRING_VALUE_TOKEN: return 1;
-        case BIGINT_VARIABLE_TOKEN: return 512;
+        case BIGINT_VARIABLE_TOKEN: return 1024;
         case LONG_VARIABLE_TOKEN: return 64;
         case INT_VARIABLE_TOKEN: return 32;
         case SHORT_VARIABLE_TOKEN: return 16;
@@ -33,7 +33,7 @@ int get_variable_size(token_t* token) {
         case STRING_VALUE_TOKEN:
         case ARR_VARIABLE_TOKEN:
         case STR_VARIABLE_TOKEN: 
-        case BIGINT_VARIABLE_TOKEN: return 512;
+        case BIGINT_VARIABLE_TOKEN: return 1024;
         case LONG_VARIABLE_TOKEN: return 64;
         case INT_VARIABLE_TOKEN: return 32;
         case SHORT_VARIABLE_TOKEN: return 16;
