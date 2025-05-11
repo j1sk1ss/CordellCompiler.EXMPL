@@ -156,6 +156,40 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             }
         }
     }
+    else if (node->token->t_type == BIGINT_TYPE_TOKEN) {
+        tree_t* name_node  = node->first_child;
+        tree_t* value_node = name_node->next_sibling;
+        int offset = name_node->variable_offset;
+
+        fprintf(output, "\n; ----------- bigint %s declaration ----------- \n", name_node->token->value);
+        if (value_node->token->t_type != UNKNOWN_NUMERIC_TOKEN && value_node->token->t_type != CHAR_VALUE_TOKEN) {
+            _generate_expression(value_node, output, func);
+            for (int i = 0; i < name_node->variable_size / 8; i++) {
+                iprintf(output, "mov rbx, [rax + %d]\n", i * 8);
+                iprintf(output, "mov [rbp - %d], rbx\n", offset - i * 8);
+                offset -= 8;
+            }
+        }
+        else {
+            char* digit = (char*)value_node->token->value;
+            int digit_len = str_strlen(digit);
+            while (digit_len > 0) {
+                char buffer[20] = { 0 };
+                snprintf(buffer, 20, "%s", digit + MAX(digit_len - 19, 0));
+
+                iprintf(output, "mov rax, %s\n", buffer);
+                iprintf(output, "mov qword [rbp - %i], rax\n", offset);
+                
+                offset -= 8;
+                digit_len -= 19;
+            }
+        }
+
+        fprintf(output, "; ---------------------- \n");
+    }
+    else if (node->token->t_type == BIGINT_VARIABLE_TOKEN) {
+        iprintf(output, "lea rax, %s\n", GET_ASMVAR(node));
+    }
     else if (node->token->t_type == LONG_TYPE_TOKEN) _generate_declaration(node, output, func);
     else if (node->token->t_type == LONG_VARIABLE_TOKEN) {
         iprintf(output, "mov rax, %s ; int64 %s\n", GET_ASMVAR(node), node->token->value);
@@ -510,15 +544,17 @@ static int _generate_declaration(tree_t* node, FILE* output, const char* func) {
     char* derictive = " ";
     
     tree_t* name_node = node->first_child;
-    if (name_node->next_sibling->token->t_type != UNKNOWN_NUMERIC_TOKEN && name_node->next_sibling->token->t_type != CHAR_VALUE_TOKEN) {
+    tree_t* value_node = name_node->next_sibling;
+
+    if (value_node->token->t_type != UNKNOWN_NUMERIC_TOKEN && value_node->token->t_type != CHAR_VALUE_TOKEN) {
         type = 0;
-        _generate_expression(name_node->next_sibling, output, func);
+        _generate_expression(value_node, output, func);
     }
     else {
         type = 1;
         derictive = " qword ";
-        if (name_node->next_sibling->token->t_type == UNKNOWN_NUMERIC_TOKEN) val = str_atoi((char*)name_node->next_sibling->token->value);
-        else if (name_node->next_sibling->token->t_type == CHAR_VALUE_TOKEN) val = *name_node->next_sibling->token->value;
+        if (value_node->token->t_type == UNKNOWN_NUMERIC_TOKEN) val = str_atoi((char*)value_node->token->value);
+        else if (value_node->token->t_type == CHAR_VALUE_TOKEN) val = *value_node->token->value;
     }
     
     char source[36] = { 0 };

@@ -17,6 +17,7 @@ static tree_t* _parse_array_expression(token_t**);
 
 static tree_t* (*_get_parser(token_type_t t_type))(token_t**) {
     switch (t_type) {
+        case BIGINT_TYPE_TOKEN:
         case LONG_TYPE_TOKEN:
         case INT_TYPE_TOKEN:
         case SHORT_TYPE_TOKEN:
@@ -25,6 +26,7 @@ static tree_t* (*_get_parser(token_type_t t_type))(token_t**) {
         case SWITCH_TOKEN:          return _parse_switch_expression;
         case WHILE_TOKEN:
         case IF_TOKEN:              return _parse_condition_scope;
+        case BIGINT_VARIABLE_TOKEN:
         case LONG_VARIABLE_TOKEN:
         case INT_VARIABLE_TOKEN:
         case STR_VARIABLE_TOKEN:
@@ -291,10 +293,11 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     if ((name_token->ptr || get_variable_type(name_token) != 1) && !decl_node->token->ro && !decl_node->token->glob) {
         int var_size = 8;
         if (!name_token->ptr) {
-            if (type_token->t_type == CHAR_VARIABLE_TOKEN) var_size = 1;
-            else if (type_token->t_type == SHORT_VARIABLE_TOKEN) var_size = 2;
-            else if (type_token->t_type == INT_VARIABLE_TOKEN) var_size = 4;
-            else if (type_token->t_type == LONG_VARIABLE_TOKEN) var_size = 8;
+            if (type_token->t_type == CHAR_TYPE_TOKEN)          var_size = 1;
+            else if (type_token->t_type == SHORT_TYPE_TOKEN)    var_size = 2;
+            else if (type_token->t_type == INT_TYPE_TOKEN)      var_size = 4;
+            else if (type_token->t_type == LONG_TYPE_TOKEN)     var_size = 8;
+            else if (type_token->t_type == BIGINT_TYPE_TOKEN)   var_size = 128;
         }
 
         decl_node->variable_offset = add_variable_info((char*)name_node->token->value, var_size, _current_function_name);
@@ -352,6 +355,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     if (elem_size_token->t_type == SHORT_VARIABLE_TOKEN) el_size = 2;
     else if (elem_size_token->t_type == INT_VARIABLE_TOKEN) el_size = 4;
     else if (elem_size_token->t_type == LONG_VARIABLE_TOKEN) el_size = 8;
+    else if (elem_size_token->t_type == BIGINT_VARIABLE_TOKEN) el_size = 128;
     
     tree_t* elem_size_node = create_tree_node(elem_size_token);
     if (!elem_size_node) {

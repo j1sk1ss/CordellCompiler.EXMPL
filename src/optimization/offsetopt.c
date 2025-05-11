@@ -19,6 +19,7 @@ static int _recalc_offs(tree_t* root, const char* func) {
             break;
             case ARR_VARIABLE_TOKEN:
             case STR_VARIABLE_TOKEN:
+            case BIGINT_VARIABLE_TOKEN:
             case LONG_VARIABLE_TOKEN:
             case INT_VARIABLE_TOKEN:
             case SHORT_VARIABLE_TOKEN:
@@ -27,7 +28,7 @@ static int _recalc_offs(tree_t* root, const char* func) {
                 variable_info_t info;
                 if (get_var_info((char*)t->token->value, func, &info)) t->variable_offset = info.offset;
                 else t->variable_offset = add_variable_info((char*)t->token->value, t->variable_size, func);
-                }
+            }
 
                 _recalc_offs(t, func);
             break;

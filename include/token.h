@@ -9,7 +9,7 @@
 #include "mm.h"
 #include "str.h"
 
-#define TOKEN_MAX_SIZE  128
+#define TOKEN_MAX_SIZE  356
 #define BUFFER_SIZE     8192
 
 typedef enum {

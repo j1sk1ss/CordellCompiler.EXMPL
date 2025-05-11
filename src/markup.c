@@ -138,6 +138,7 @@ int variable_markup(token_t* head) {
             case CHAR_TYPE_TOKEN:
             case SHORT_TYPE_TOKEN:
             case ARRAY_TYPE_TOKEN:
+            case BIGINT_TYPE_TOKEN:
                 token_t* next = curr->next;
                 if (next && (next->t_type == UNKNOWN_STRING_TOKEN || next->t_type == UNKNOWN_CHAR_VALUE)) {
                     variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
@@ -178,7 +179,7 @@ int variable_markup(token_t* head) {
     while (curr) {
         if (curr->t_type == UNKNOWN_STRING_TOKEN || curr->t_type == UNKNOWN_CHAR_VALUE) {
             for (size_t i = 0; i < var_count; i++) {
-                if (str_strncmp((char*)curr->value, (char*)variables[i].name, TOKEN_MAX_SIZE) == 0) {
+                if (!str_strncmp((char*)curr->value, (char*)variables[i].name, TOKEN_MAX_SIZE)) {
                     curr->t_type = variables[i].type;
                     curr->glob   = variables[i].glob;
                     curr->ro     = variables[i].ro;
