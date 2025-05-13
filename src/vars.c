@@ -66,3 +66,26 @@ int is_operand(token_type_t token) {
         default: return 0;
     }
 }
+
+int get_token_priority(token_type_t type) {
+    switch (type) {
+        case OR_TOKEN:             return 1;
+        case AND_TOKEN:            return 2;
+        case BITOR_TOKEN:          return 3;
+        case BITXOR_TOKEN:         return 4;
+        case BITAND_TOKEN:         return 5;
+        case COMPARE_TOKEN:
+        case NCOMPARE_TOKEN:
+        case LOWER_TOKEN:
+        case LARGER_TOKEN:         return 6;
+        case BITMOVE_LEFT_TOKEN:
+        case BITMOVE_RIGHT_TOKEN:  return 7;
+        case PLUS_TOKEN:
+        case MINUS_TOKEN:          return 8;
+        case MULTIPLY_TOKEN:
+        case DIVIDE_TOKEN:
+        case MODULO_TOKEN:         return 9;
+        case ASIGN_TOKEN:          return 0;
+        default:                   return -1;
+    }
+}
