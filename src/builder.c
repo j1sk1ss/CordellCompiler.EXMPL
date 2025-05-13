@@ -81,6 +81,7 @@ static int _compile_object(object_t* obj) {
     
     unload_varmap(obj->ast_varinfo);
     varuse_optimization(obj->ast);
+    stmt_optimization(obj->ast);
     offset_optimization(obj->ast);
 
     char save_path[128] = { 0 };

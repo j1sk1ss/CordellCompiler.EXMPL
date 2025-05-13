@@ -65,6 +65,8 @@ static int _find_decl(tree_t* root, tree_t* entry, int* delete) {
         }
 
         switch (t->token->t_type) {
+            case CASE_TOKEN:   _find_decl(t, entry, delete); break; 
+            case SWITCH_TOKEN: _find_decl(t->first_child->next_sibling, entry, delete); continue; 
             case IF_TOKEN:
             case WHILE_TOKEN:  _find_decl(t->first_child->next_sibling, entry, delete); continue;
             case FUNC_TOKEN:   _find_decl(t->first_child->next_sibling->next_sibling, entry, delete); continue;

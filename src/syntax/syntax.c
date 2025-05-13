@@ -442,7 +442,6 @@ static tree_t* _parse_primary(token_t** curr) {
     if ((*curr)->t_type == OPEN_BRACKET_TOKEN) {
         *curr = (*curr)->next;
         tree_t* node = _parse_binary_expression(curr, 0);
-        print_debug("%i", (*curr)->t_type);
         if (!node || !*curr || (*curr)->t_type != CLOSE_BRACKET_TOKEN) {
             unload_syntax_tree(node);
             return NULL;
@@ -452,17 +451,15 @@ static tree_t* _parse_primary(token_t** curr) {
         return node;
     }
 
-    if ((*curr)->t_type == ARR_VARIABLE_TOKEN || (*curr)->t_type == STR_VARIABLE_TOKEN || (*curr)->ptr)
-        return _parse_array_expression(curr);
-    if ((*curr)->t_type == CALL_TOKEN)
-        return _parse_function_call(curr);
-    if ((*curr)->t_type == SYSCALL_TOKEN)
-        return _parse_syscall(curr);
+    if ((*curr)->t_type == ARR_VARIABLE_TOKEN || 
+        (*curr)->t_type == STR_VARIABLE_TOKEN || 
+        (*curr)->ptr) return _parse_array_expression(curr);
+    if ((*curr)->t_type == CALL_TOKEN) return _parse_function_call(curr);
+    if ((*curr)->t_type == SYSCALL_TOKEN) return _parse_syscall(curr);
 
-    token_t* tok = *curr;
-    *curr = (*curr)->next;
-    tree_t* node = create_tree_node(tok);
+    tree_t* node = create_tree_node(*curr);
     _fill_variable(node);
+    *curr = (*curr)->next;
     return node;
 }
 
