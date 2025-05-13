@@ -533,7 +533,6 @@ static int _generate_function(tree_t* node, FILE* output, const char* func) {
     tree_t* name_node   = node->first_child;
     tree_t* params_node = name_node->next_sibling;
     tree_t* body_node   = params_node->next_sibling;
-    tree_t* return_node = body_node->next_sibling;
 
     fprintf(output, "\n ; --------------- Function %s --------------- \n", name_node->token->value);
     iprintf(output, "jmp __end_%s__\n", name_node->token->value);
