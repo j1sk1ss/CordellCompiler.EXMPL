@@ -1,7 +1,12 @@
-start
-    int a = 1234 + (432 * (2 + 12) ) / 87;
+function hello int a; {
+    return a;
+}
 
-    if 0; {
+
+start
+    int a = 1234 + (432 * (2 + 12)) / 87;
+
+    if (a > a) && (b < b); {
         
     }
 
@@ -32,4 +37,6 @@ start
     while 0; {
         
     }
+
+    
 exit a;

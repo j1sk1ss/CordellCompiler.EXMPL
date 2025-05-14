@@ -16,9 +16,9 @@ glob arr bracketmap 10000 int =;
 glob arr stack 10000 int =;
 
 start
-    prints "Brainfuck interpriter! Input code ";
+    prints("Brainfuck interpriter! Input code: ");
 
-    int codelength = gets code 10000;
+    int codelength = gets(code, 10000);
     int stackptr = 0;
     int pos = 0;
 
@@ -78,12 +78,12 @@ start
             case dot; {
                 arr fbuf 3 char = ' ' 0;
                 fbuf[0] = tape[pointer];
-                prints fbuf;
+                prints(fbuf);
                 pc = pc + 1;
             }
             case comma; {
                 arr sbuf 3 char = ' ' ' ' 0;
-                gets sbuf 2;
+                gets(sbuf, 2);
                 tape[pointer] = sbuf[0];
                 pc = pc + 1;
             }

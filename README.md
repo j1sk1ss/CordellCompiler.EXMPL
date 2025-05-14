@@ -90,7 +90,7 @@ Basic arithmetic and logical operations are supported:
 
 ### While Loop
 
-            while x < 10; {
+            while (x < 10) && (y > 20); {
                 : ... loop body : 
             }
 
@@ -116,9 +116,9 @@ Functions are declared using the `function` keyword.
 
 ## Function Calls
 
-            int result = sumfunc 5 10;
+            int result = sumfunc(5, 10);
             : Functions without return values can be called directly :
-            printStr strptr size;
+            printStr(strptr, size);
 
 ---
 
@@ -131,12 +131,12 @@ Functions are declared using the `function` keyword.
 
 ### Wrapping in a function:
 
-            function printStr int ptr; int size; {
-                return syscall 4 1 ptr size; 
+            function printStr ptr char buffer; int size; {
+                return syscall 4 1 buffer size; 
             }
             
-            function getStr int ptr; int size; {
-                return syscall 3 0 ptr size; 
+            function getStr ptr char buffer; int size; {
+                return syscall 3 0 buffer size; 
             }
 
 ---
@@ -176,7 +176,7 @@ Comments are written as annotations `:` within functions and code blocks:
                     num = num / 10;
                 }
 
-                if isNegative == 1; {
+                if isNegative; {
                     buffer[index - 1] = '-';
                 }
 
@@ -196,8 +196,8 @@ Comments are written as annotations `:` within functions and code blocks:
                     b = c;
                     
                     arr buffer 40 char =;
-                    itoa buffer 40 c;
-                    prints buffer 40;
+                    itoa(buffer, 40, c);
+                    prints(buffer, 40);
 
                     count = count + 1;
                 }

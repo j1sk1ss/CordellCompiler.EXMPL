@@ -62,7 +62,8 @@ static int _find_stmt(tree_t* root) {
                         if (option_case != case_value) {
                             remove_child_node(cases, curr_case);
                             unload_syntax_tree(curr_case);
-                            curr_case = cases->first_child;
+                            _find_stmt(root);
+                            return 1;
                         }
                     }
                 }

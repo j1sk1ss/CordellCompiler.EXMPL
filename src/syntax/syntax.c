@@ -172,17 +172,17 @@ static tree_t* _parse_function_call(token_t** curr) {
         return NULL;
     }
 
-    while (*curr && (*curr)->t_type != DELIMITER_TOKEN) {
-        tree_t* arg_name_node = create_tree_node((*curr));
-        if (!arg_name_node) {
-            unload_syntax_tree(call_node);
-            unload_syntax_tree(args_node);
-            return NULL;
-        }
-        
-        _fill_variable(arg_name_node);
-        add_child_node(args_node, arg_name_node);
+    if (*curr && (*curr)->t_type == OPEN_BRACKET_TOKEN) {
         *curr = (*curr)->next;
+        while (*curr && (*curr)->t_type != CLOSE_BRACKET_TOKEN) {
+            if ((*curr)->t_type == COMMA_TOKEN) {
+                *curr = (*curr)->next;
+                continue;
+            }
+
+            tree_t* arg = _parse_expression(curr);
+            if (arg) add_child_node(args_node, arg);
+        }
     }
 
     add_child_node(call_node, args_node);
