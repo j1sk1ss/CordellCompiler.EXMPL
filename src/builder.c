@@ -20,7 +20,7 @@ static int _print_parse_tree(tree_t* node, int depth) {
 }
 
 
-static params_t _params = { .syntax = 0, .save_asm = 0 };
+static params_t _params = { };
 static object_t _files[MAX_FILES];
 static int _current_file = 0;
 
@@ -95,7 +95,9 @@ static int _compile_object(object_t* obj) {
     fclose(output);
 
     char compile_command[128] = { 0 };
-    sprintf(compile_command, "%s -f%s %s -g -o %s.o", DEFAULT_ASM_COMPILER, DEFAULT_ARCH, save_path, save_path);
+    sprintf(compile_command, "%s -f%s %s -g -o %s.o", _params.asm_compiler, _params.arch, save_path, save_path);
+
+    print_debug("COMPILING: system(%s)", compile_command);
     system(compile_command);
 
     unload_syntax_tree(obj->ast);
@@ -109,7 +111,7 @@ int builder_add_file(char* input) {
     return _add_object(input);
 }
 
-int builder_compile(char* output) {
+int builder_compile() {
     if (_current_file == 0) return 0;
 
     for (int i = 0; i < _current_file; i++) funcopt_add_ast(_files[i].ast);
@@ -127,7 +129,7 @@ int builder_compile(char* output) {
     Linking output files
     */
     char link_command[256] = { 0 };
-    sprintf(link_command, "%s -m %s %s ", DEFAULT_LINKER, DEFAULT_LINKER_ARCH, LINKER_FLAGS);
+    sprintf(link_command, "%s -m %s %s ", _params.linker, _params.linker_arch, _params.linker_flags);
 
     for (int i = _current_file - 1; i >= 0; i--) {
         char object_path[128] = { 0 };
@@ -136,7 +138,9 @@ int builder_compile(char* output) {
     }
 
     str_strcat(link_command, " -o ");
-    str_strcat(link_command, output);
+    str_strcat(link_command, _params.save_path);
+
+    print_debug("LINKING: system(%s)", link_command);
     system(link_command);
 
     /*
@@ -145,6 +149,8 @@ int builder_compile(char* output) {
     for (int i = _current_file - 1; i >= 0; i--) {
         char delete_command[128] = { 0 };
         if (!_params.save_asm) sprintf(delete_command, "rm %s.asm %s.asm.o", _files[i].path, _files[i].path);
+
+        print_debug("CLEANUP: system(%s)", delete_command);
         system(delete_command);
     }
 

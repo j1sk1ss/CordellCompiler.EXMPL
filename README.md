@@ -16,7 +16,8 @@
 
 # Summary
 
-**Cordell Compiler** is a compact hobby compiler for `Cordell Programming Language` with a simple syntax, inspired by C and assembly. It is designed for studying compilation, code optimization, translation, and low-level microcode generation.
+**Cordell Compiler** is a compact hobby compiler for `Cordell Programming Language` with a simple syntax, inspired by C and assembly. It is designed for studying compilation, code optimization, translation, and low-level microcode generation. </br>
+**Main goal** of this project is learning of compilers architecture and porting one to `CordellOS` project.
 
 ---
 
@@ -36,7 +37,7 @@ Main idea of this compiler is simplification of architecture of real compilers l
 - deadopt - [WIP algorithm. See description here: https://en.wikipedia.org/wiki/Control_flow]
 
 After compiler optimization, we go into the `backend`.</br>
-In backend we generate ASM microcode, whose architecture depends on the target system architecture, such as `x86_64` or `x86_32`.
+In backend we generate ASM microcode (WIP opcodes and ELF executable), whose architecture depends on the target system architecture, such as `x86_64` or `x86_32`.
 
 ## AST
 
@@ -78,9 +79,9 @@ A number of compilers generate an Abstract Syntax Tree (next `AST`), and this on
 Every program begins with the `start` entrypoint and ends with the `exit [return_code];` statement.
 
 ```
-start 
-    ... // code 
-exit 0;
+    start 
+        ... // code 
+    exit 0;
 ```
 
 Also every program can contain `pre-implemented` code blocks and data segments:

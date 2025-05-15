@@ -30,11 +30,19 @@ typedef struct {
 typedef struct {
     int syntax;
     int save_asm;
+    
+    char* arch;
+    char* linker;
+    char* linker_arch;
+    char* linker_flags;
+    char* asm_compiler;
+
+    char* save_path;
 } params_t;
 
 
 int builder_add_file(char* input);
-int builder_compile(char* output);
+int builder_compile();
 int set_params(params_t* params);
 
 #endif
