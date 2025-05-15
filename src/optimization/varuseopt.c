@@ -12,6 +12,10 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             continue;
         }
         
+        if (t->token->ptr) {
+            _find_usage(t, varname, status, local, 0);
+        }
+        
         switch (t->token->t_type) {
             case STR_TYPE_TOKEN:
             case LONG_TYPE_TOKEN:
@@ -45,7 +49,7 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             case FUNC_TOKEN: if (!local) _find_usage(t->first_child->next_sibling->next_sibling, varname, status, local, 0); continue;
             default: break;
         }
-
+        
         if (t->token->t_type == STRING_VALUE_TOKEN || t->token->t_type == CHAR_VALUE_TOKEN) continue;
         if (!str_strncmp(varname, (char*)t->token->value, TOKEN_MAX_SIZE)) {
             *status = 1;

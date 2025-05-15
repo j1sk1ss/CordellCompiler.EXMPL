@@ -17,6 +17,23 @@ function gets ptr char buffer; int size; {
     return syscall 0 0 buffer size;
 }
 
+function reverse ptr char string; int size; {
+    int l = 0;
+    int r = size;
+    while l < r; {
+        if string[r] != 0; {
+            char tmp = string[l];
+            string[l] = string[r];
+            string[r] = tmp;
+            l = l + 1;
+        }
+
+        r = r - 1;
+    }
+
+    return 1;
+}
+
 function atoi ptr char buffer; int bsize; {
     int num = 0;
     bsize = bsize - 1;
@@ -30,19 +47,24 @@ function atoi ptr char buffer; int bsize; {
     return num;
 }
 
-function itoa ptr char buffer; int dsize; int num; {
-    int index = dsize - 1;
+function itoa ptr char buffer; long buffer_size; int num; {
+    int index = 0;
     int isNegative = 0;
+    if num == 0; {
+        buffer[0] = '0';
+        return 1;
+    }
+
     if num < 0; {
         isNegative = 1;
         num = num * -1;
     }
 
     int tmp = 0;
-    while num > 0; {
+    while (num > 0) && (index < buffer_size); {
         tmp = num % 10;
         buffer[index] = tmp + 48;
-        index = index - 1;
+        index = index + 1;
         num = num / 10;
     }
 
@@ -50,5 +72,5 @@ function itoa ptr char buffer; int dsize; int num; {
         buffer[0] = 'n';
     }
 
-    return 1;
+    return index;
 }

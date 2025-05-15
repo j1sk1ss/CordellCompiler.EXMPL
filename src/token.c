@@ -4,7 +4,7 @@
 #pragma region [Misc]
 
     static char_type_t _get_char_type(unsigned char ch) {
-        if (isalpha(ch)) return CHAR_ALPHA;
+        if (isalpha(ch) || ch == '_') return CHAR_ALPHA;
         else if (str_isdigit(ch) || ch == '-') return CHAR_DIGIT;
         else if (ch == '"')  return CHAR_QUOTE;
         else if (ch == '\'') return CHAR_SING_QUOTE;

@@ -454,8 +454,8 @@ static tree_t* _parse_primary(token_t** curr) {
     if ((*curr)->t_type == ARR_VARIABLE_TOKEN || 
         (*curr)->t_type == STR_VARIABLE_TOKEN || 
         (*curr)->ptr) return _parse_array_expression(curr);
-    if ((*curr)->t_type == CALL_TOKEN) return _parse_function_call(curr);
-    if ((*curr)->t_type == SYSCALL_TOKEN) return _parse_syscall(curr);
+    else if ((*curr)->t_type == CALL_TOKEN) return _parse_function_call(curr);
+    else if ((*curr)->t_type == SYSCALL_TOKEN) return _parse_syscall(curr);
 
     tree_t* node = create_tree_node(*curr);
     _fill_variable(node);

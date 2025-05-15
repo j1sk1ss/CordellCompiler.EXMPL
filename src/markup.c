@@ -119,7 +119,9 @@ int variable_markup(token_t* head) {
                     variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
                     str_strncpy((char*)variables[var_count].name, (char*)curr->value, TOKEN_MAX_SIZE);
                     variables[var_count].type = CALL_TOKEN;
-                    variables[var_count].ptr = 0;
+                    variables[var_count].ptr  = 0;
+                    variables[var_count].glob = 0;
+                    variables[var_count].ro   = 0;
                     var_count++;
                     
                     curr = curr->next;
