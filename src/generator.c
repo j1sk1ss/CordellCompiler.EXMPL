@@ -16,7 +16,45 @@
 #pragma endregion
 
 
-static int _generate_global(token_type_t t_type, tree_t* entry, FILE* output) {
+static int _generate_raw(token_type_t t_type, tree_t* entry, FILE* output) {
+    switch (t_type) {
+        case LONG_TYPE_TOKEN:  if (!entry->first_child) iprintf(output, "__%s__: resq 1\n", (char*)entry->first_child->token->value); break;
+        case INT_TYPE_TOKEN:   if (!entry->first_child) iprintf(output, "__%s__: resd 1\n", (char*)entry->first_child->token->value); break;
+        case SHORT_TYPE_TOKEN: if (!entry->first_child) iprintf(output, "__%s__: resw 1\n", (char*)entry->first_child->token->value); break;
+        case CHAR_TYPE_TOKEN:  if (!entry->first_child) iprintf(output, "__%s__: resb 1\n", (char*)entry->first_child->token->value); break;
+        case ARRAY_TYPE_TOKEN:
+            tree_t* size   = entry->first_child;
+            tree_t* t_type = size->next_sibling;
+            tree_t* name   = t_type->next_sibling;
+        
+            int el_size = 1;
+            const char* directive = NULL;
+            if (t_type->token->t_type == CHAR_TYPE_TOKEN) directive = "resb";
+            else if (t_type->token->t_type == SHORT_TYPE_TOKEN) {
+                directive = "resw";
+                el_size = 2;
+            }
+            else if (t_type->token->t_type == INT_TYPE_TOKEN) {
+                directive = "resd";
+                el_size = 4;
+            }
+            else if (t_type->token->t_type == LONG_TYPE_TOKEN) {
+                directive = "resq";
+                el_size = 8;
+            }
+        
+            if (!name->next_sibling) {
+                iprintf(output, "__%s__: %s %s\n", name->token->value, directive, size->token->value);
+            }
+
+            break;
+        default: break;
+    }
+
+    return 1;
+}
+
+static int _generate_init(token_type_t t_type, tree_t* entry, FILE* output) {
     switch (t_type) {
         case STR_TYPE_TOKEN:   iprintf(output, "__%s__ db '%s', 0\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
         case LONG_TYPE_TOKEN:  iprintf(output, "__%s__ dq %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
@@ -44,8 +82,7 @@ static int _generate_global(token_type_t t_type, tree_t* entry, FILE* output) {
                 el_size = 8;
             }
         
-            if (!name->next_sibling) iprintf(output, "__%s__ times %s %s 0\n", name->token->value, size->token->value, directive);
-            else {
+            if (name->next_sibling) {
                 iprintf(output, "%s %s ", name->token->value, directive);
                 for (tree_t* elem = name->next_sibling; elem; elem = elem->next_sibling) {
                     if (elem->token->t_type == UNKNOWN_NUMERIC_TOKEN) fprintf(output, "%s%s", elem->token->value, elem->next_sibling ? "," : "\n");
@@ -69,56 +106,30 @@ static int _generate_global(token_type_t t_type, tree_t* entry, FILE* output) {
     return 1;
 }
 
-static int _generate_rodata_section(tree_t* node, FILE* output) {
-    if (!node) return 0;
-    static int num = 0;
-    for (tree_t* child = node->first_child; child; child = child->next_sibling) {
-        if (!child->token) {
-            _generate_rodata_section(child, output);
-            continue;
-        }
-
-        if (child->token->ro) {
-            _generate_global(child->token->t_type, child, output);
-        }
-        else if (!child->token->glob) {
-            switch (child->token->t_type) {
-                case IF_TOKEN:
-                case CALL_TOKEN:
-                case SYSCALL_TOKEN:
-                case WHILE_TOKEN:  _generate_rodata_section(child, output); break;
-                case SWITCH_TOKEN: _generate_rodata_section(child->first_child->next_sibling, output); break;
-                case DEFAULT_TOKEN:
-                case CASE_TOKEN:   _generate_rodata_section(child->first_child->first_child, output); break;
-                case FUNC_TOKEN:   _generate_rodata_section(child->first_child->next_sibling->next_sibling, output); break;
-                default: break;
-            }
-        }
-    }
-
-    return 1;
-}
-
-static int _generate_data_section(tree_t* node, FILE* output) {
+/*
+section 1 is a data section
+section 2 is a rodata section
+*/
+static int _generate_data_section(tree_t* node, FILE* output, int section, int (*data_gen)(token_type_t, tree_t*, FILE*)) {
     if (!node) return 0;
     for (tree_t* child = node->first_child; child; child = child->next_sibling) {
         if (!child->token) {
-            _generate_data_section(child, output);
+            _generate_data_section(child, output, section, data_gen);
             continue;
         }
 
-        if (child->token->glob) {
-            _generate_global(child->token->t_type, child, output);
+        if ((section == 1 && child->token->glob) || (section == 2 && child->token->ro)) {
+            data_gen(child->token->t_type, child, output);
         }
-        else if (!child->token->ro) {
+        else if (!child->token->ro && !child->token->glob) {
             switch (child->token->t_type) {
                 case IF_TOKEN:
                 case SYSCALL_TOKEN:
-                case WHILE_TOKEN: _generate_data_section(child, output); break;
-                case SWITCH_TOKEN: _generate_data_section(child->first_child->next_sibling, output); break;
+                case WHILE_TOKEN:  _generate_data_section(child, output, section, data_gen); break;
+                case SWITCH_TOKEN: _generate_data_section(child->first_child->next_sibling, output, section, data_gen); break;
                 case DEFAULT_TOKEN:
-                case CASE_TOKEN: _generate_data_section(child->first_child->first_child, output); break;
-                case FUNC_TOKEN: _generate_data_section(child->first_child->next_sibling->next_sibling, output); break;
+                case CASE_TOKEN:   _generate_data_section(child->first_child->first_child, output, section, data_gen); break;
+                case FUNC_TOKEN:   _generate_data_section(child->first_child->next_sibling->next_sibling, output, section, data_gen); break;
                 default: break;
             }
         }
@@ -513,13 +524,14 @@ static int _generate_declaration(tree_t* node, FILE* output, const char* func) {
     char* derictive = " ";
     
     tree_t* name_node = node->first_child;
+    if (name_node->token->ro || name_node->token->glob) return 0;
+
     if (name_node->next_sibling->token->t_type != UNKNOWN_NUMERIC_TOKEN && name_node->next_sibling->token->t_type != CHAR_VALUE_TOKEN) {
         type = 0;
         _generate_expression(name_node->next_sibling, output, func);
     }
     else {
         type = 1;
-
         switch (get_variable_size(name_node->token)) {
             default:
             case 64: derictive = " qword "; break;
@@ -868,16 +880,23 @@ int generate_asm(tree_t* root, FILE* output) {
     Also we store here global vars.
     */
     fprintf(output, "\nsection .data\n");
-    _generate_data_section(prestart, output);
-    _generate_data_section(main_body, output);
+    _generate_data_section(prestart, output, 1, _generate_init);
+    _generate_data_section(main_body, output, 1, _generate_init);
 
     /*
     Generate rodata section. Here we store strings, that
     not assign to any variable.
     */
     fprintf(output, "\nsection .rodata\n");
-    _generate_rodata_section(prestart, output);
-    _generate_rodata_section(main_body, output);
+    _generate_data_section(prestart, output, 2, _generate_init);
+    _generate_data_section(main_body, output, 2, _generate_init);
+
+    /*
+    Generate bss section for not pre-init arrays.
+    */
+    fprintf(output, "\nsection .bss\n");
+    _generate_data_section(prestart, output, 1, _generate_raw);
+    _generate_data_section(main_body, output, 1, _generate_raw);
 
     /*
     Generate text sction were placed while program code.
