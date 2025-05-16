@@ -8,15 +8,6 @@ function strlen ptr char string; {
     return index;
 }
 
-function prints ptr char string; {
-    long strSize = strlen(string);
-    return syscall(1, 1, string, strSize);
-}
-
-function gets ptr char buffer; int size; {
-    return syscall(0, 0, buffer, size);
-}
-
 function reverse ptr char string; int size; {
     int l = 0;
     int r = size;

@@ -1,0 +1,26 @@
+from "string.cpl" import strlen;
+
+function prints ptr char string; {
+    long strSize = strlen(string);
+    return syscall(1, 1, string, strSize);
+}
+
+function gets ptr char buffer; int size; {
+    return syscall(0, 0, buffer, size);
+}
+
+function open ptr char path; int flags; int mode; {
+    return syscall(2, path, flags, mode);
+}
+
+function fwrite int fd; ptr char buffer; int size; {
+    return syscall(1, fd, buffer, size);
+}
+
+function fread int fd; ptr char buffer; int size; {
+    return syscall(0, fd, buffer, size);
+}
+
+function close int fd; {
+    return syscall(3, fd);
+}
