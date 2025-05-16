@@ -48,7 +48,7 @@ A number of compilers generate an Abstract Syntax Tree (next `AST`), and this on
             [expression]
                 [...]
 
-- `CALL_TOKEN` - This token tells us, that the next few tokens are the function name and the function's input arguments. Token itself is the nfunction name: </br>
+- `CALL_TOKEN` - This token tells us, that the next few tokens are the function name and the function's input arguments. Token itself is the function name: </br>
 
         [CALL_TOKEN (name)]
             [SCOPE]
@@ -87,7 +87,7 @@ Also every program can contain `pre-implemented` code blocks and data segments:
 
 ```
     function a ; { }
-    glob int a = 0;
+    glob int b = 0;
 
     start
     exit 0;
@@ -211,19 +211,19 @@ Functions are declared using the `function` keyword.
 ### String Input/Output
 
 ```
-    syscall 4 1 ptr size;
-    syscall 3 0 ptr size;
+    syscall(4, 1, ptr, size);
+    syscall(3, 0, ptr, size);
 ```
 
 ### Wrapping in a function:
 
 ```
     function printStr ptr char buffer; int size; {
-        return syscall 4 1 buffer size; 
+        return syscall(4, 1, buffer, size); 
     }
 
     function getStr ptr char buffer; int size; {
-        return syscall 3 0 buffer size; 
+        return syscall(3, 0, buffer, size); 
     }
 ```
 
@@ -299,8 +299,8 @@ If you want see more examples, please look into the folder `examples`.
 
 # Links
 
-[Compiler architecture](https://cs.lmu.edu/~ray/notes/compilerarchitecture/) </br>
-[GCC architecture](https://en.wikibooks.org/wiki/GNU_C_Compiler_Internals/GNU_C_Compiler_Architecture) </br>
-[AST tips](https://dev.to/balapriya/abstract-syntax-tree-ast-explained-in-plain-english-1h38) </br>
-[Control flow algorithm](https://en.wikipedia.org/wiki/Control_flow) </br>
-[Summary about optimization](https://en.wikipedia.org/wiki/Optimizing_compiler) </br>
+- [Compiler architecture](https://cs.lmu.edu/~ray/notes/compilerarchitecture/) </br>
+- [GCC architecture](https://en.wikibooks.org/wiki/GNU_C_Compiler_Internals/GNU_C_Compiler_Architecture) </br>
+- [AST tips](https://dev.to/balapriya/abstract-syntax-tree-ast-explained-in-plain-english-1h38) </br>
+- [Control flow algorithm](https://en.wikipedia.org/wiki/Control_flow) </br>
+- [Summary about optimization](https://en.wikipedia.org/wiki/Optimizing_compiler) </br>

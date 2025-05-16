@@ -623,16 +623,17 @@ static tree_t* _parse_syscall(token_t** curr) {
     if (!syscall_node) return NULL;
 
     *curr = (*curr)->next;
-    for (int i = 0; *curr && (*curr)->t_type != DELIMITER_TOKEN; i++) {
-        tree_t* arg_node = create_tree_node(*curr);
-        if (!arg_node) {
-            unload_syntax_tree(syscall_node);
-            return NULL;
-        }
-
-        _fill_variable(arg_node);
-        add_child_node(syscall_node, arg_node);
+    if ((*curr)->t_type == OPEN_BRACKET_TOKEN) {
         *curr = (*curr)->next;
+        while (*curr && (*curr)->t_type != CLOSE_BRACKET_TOKEN) {
+            if ((*curr)->t_type == COMMA_TOKEN) {
+                *curr = (*curr)->next;
+                continue;
+            }
+
+            tree_t* arg = _parse_expression(curr);
+            if (arg) add_child_node(syscall_node, arg);
+        }
     }
 
     return syscall_node;
