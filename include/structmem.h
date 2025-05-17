@@ -38,8 +38,8 @@ typedef struct struct_info {
 
 
 int unload_associations();
-int register_association(const char* name, struct_field_info_t* info);
-struct_field_info_t* get_associated_struct(const char* name);
+int register_association(const char* name, struct_info_t* info);
+struct_info_t* get_associated_struct(const char* name);
 
 struct_info_t* get_structmap_head();
 int set_structmap_head(struct_info_t* h);

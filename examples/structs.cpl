@@ -11,11 +11,12 @@ start
     person pstruct;
     pstruct.name = alloc_arena(15);
     gets(pstruct.name, 15);
+    prints(pstruct.name);
 
     ptr person empty = alloc_arena(sizeof(person));
     empty.name = alloc_arena(15);
     gets(empty.name, 15);
-
-    prints(pstruct.name);
     prints(empty.name);
+
+    free_arena();
 exit 1;

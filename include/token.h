@@ -22,6 +22,7 @@ typedef enum {
     COMMENT_TOKEN,
     DELIMITER_TOKEN,
     COMMA_TOKEN,
+    DOT_TOKEN,
     OPEN_INDEX_TOKEN,
     CLOSE_INDEX_TOKEN,
     OPEN_BRACKET_TOKEN,
@@ -105,6 +106,7 @@ typedef enum {
     CHAR_SPACE,
     CHAR_DELIMITER,
     CHAR_COMMA,
+    CHAR_DOT,
     CHAR_COMMENT,
     CHAR_NEWLINE
 } char_type_t;

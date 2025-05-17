@@ -1,38 +1,33 @@
 #include "../include/token.h"
 
 
-#pragma region [Misc]
+static char_type_t _get_char_type(unsigned char ch) {
+    if (isalpha(ch) || ch == '_') return CHAR_ALPHA;
+    else if (str_isdigit(ch) || ch == '-') return CHAR_DIGIT;
+    else if (ch == '"')  return CHAR_QUOTE;
+    else if (ch == '\'') return CHAR_SING_QUOTE;
+    else if (ch == '\n') return CHAR_NEWLINE;
+    else if (ch == ' ')  return CHAR_SPACE;
+    else if (ch == ';')  return CHAR_DELIMITER;
+    else if (ch == ',')  return CHAR_COMMA;
+    else if (ch == '.')  return CHAR_DOT;
+    else if (ch == ':')  return CHAR_COMMENT;
+    else if (
+        ch == '(' || ch == ')' || 
+        ch == '[' || ch == ']' || 
+        ch == '{' || ch == '}'
+    ) return CHAR_BRACKET;
+    return CHAR_OTHER;
+}
 
-    static char_type_t _get_char_type(unsigned char ch) {
-        if (isalpha(ch) || ch == '_') return CHAR_ALPHA;
-        else if (str_isdigit(ch) || ch == '-') return CHAR_DIGIT;
-        else if (ch == '"')  return CHAR_QUOTE;
-        else if (ch == '\'') return CHAR_SING_QUOTE;
-        else if (ch == '\n') return CHAR_NEWLINE;
-        else if (ch == ' ')  return CHAR_SPACE;
-        else if (ch == ';')  return CHAR_DELIMITER;
-        else if (ch == ',')  return CHAR_COMMA;
-        else if (ch == ':')  return CHAR_COMMENT;
-        else if (
-            ch == '(' || ch == ')' || 
-            ch == '[' || ch == ']' || 
-            ch == '{' || ch == '}'
-        ) return CHAR_BRACKET;
-        return CHAR_OTHER;
-    }
-
-    static int _add_token(token_t** head, token_t** tail, token_type_t type, const unsigned char* buffer, size_t len, int line) {
-        token_t* new_token = create_token(type, buffer, len, line);
-        if (!new_token) return 0;
-        print_debug("name=%s type=%i", new_token->value, new_token->t_type);
-        if (!*head) *head = new_token;
-        else (*tail)->next = new_token;
-        *tail = new_token; 
-        return 1;
-    }
-
-#pragma endregion
-
+static int _add_token(token_t** head, token_t** tail, token_type_t type, const unsigned char* buffer, size_t len, int line) {
+    token_t* new_token = create_token(type, buffer, len, line);
+    if (!new_token) return 0;
+    if (!*head) *head = new_token;
+    else (*tail)->next = new_token;
+    *tail = new_token; 
+    return 1;
+}
 
 token_t* create_token(token_type_t type, const unsigned char* value, size_t len, int line) {
     if (len > TOKEN_MAX_SIZE) return NULL;
@@ -102,6 +97,7 @@ token_t* tokenize(int fd) {
                     else if (ct == CHAR_DIGIT)     new_type = UNKNOWN_NUMERIC_TOKEN;
                     else if (ct == CHAR_DELIMITER) new_type = DELIMITER_TOKEN;
                     else if (ct == CHAR_COMMA)     new_type = COMMA_TOKEN;
+                    else if (ct == CHAR_DOT)       new_type = DOT_TOKEN;
                     else if (ct == CHAR_BRACKET)   new_type = UNKNOWN_CHAR_VALUE;
                     else new_type = UNKNOWN_CHAR_VALUE;
                 }

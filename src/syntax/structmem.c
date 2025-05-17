@@ -3,13 +3,13 @@
 
 typedef struct struct_association {
     char name[TOKEN_MAX_SIZE];
-    struct_field_info_t* info;
+    struct_info_t* info;
     struct struct_association* next;
 } struct_association_t;
 
 static struct_association_t* _associations_h = NULL;
 
-static struct_association_t* _create_association(const char* name, struct_field_info_t* info) {
+static struct_association_t* _create_association(const char* name, struct_info_t* info) {
     struct_association_t* node = (struct_association_t*)mm_malloc(sizeof(struct_association_t));
     if (!node) return NULL;
 
@@ -29,9 +29,9 @@ int unload_associations() {
     return 1;
 }
 
-int register_association(const char* name, struct_field_info_t* info) {
+int register_association(const char* name, struct_info_t* info) {
     struct_association_t* node = _create_association(name, info);
-    if (!node) return NULL;
+    if (!node) return 0;
     if (!_associations_h) {
         _associations_h = node;
         return 1;
@@ -43,10 +43,10 @@ int register_association(const char* name, struct_field_info_t* info) {
     return 1;
 }
 
-struct_field_info_t* get_associated_struct(const char* name) {
+struct_info_t* get_associated_struct(const char* name) {
     struct_association_t* h = _associations_h;
     while (h) {
-        if (!str_strcmp(h->name, name)) return h;
+        if (!str_strcmp(h->name, name)) return h->info;
         h = h->next;
     }
 

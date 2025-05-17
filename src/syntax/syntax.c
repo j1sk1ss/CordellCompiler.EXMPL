@@ -376,7 +376,39 @@ static tree_t* _parse_struct_expression(token_t** curr) {
 
     tree_t* name_node = create_tree_node(name_token);
     if (!name_node) return NULL;
+
+    (*curr) = (*curr)->next;
+    tree_t* expression_node = create_tree_node(*curr);
+    if (!expression_node) {
+        unload_syntax_tree(name_node);
+        return NULL;
+    }
+
     name_node->variable_offset = struct_info->offset;
+    add_child_node(expression_node, name_node);
+
+    if ((*curr)->t_type == DOT_TOKEN) {
+        /*
+        We accessing to the field, If we in the stack, we use offsets + base struct offset, otherwise use offset only.
+        */
+        (*curr) = (*curr)->next;
+
+        /*
+        If it packed struct
+        */
+        tree_t* field_node = _parse_expression(curr);
+        add_child_node(expression_node, field_node);
+    }
+    else if (name_token->ptr) {
+        /*
+        We accessing to variable. This kind of operation permitted only for pointer type.
+        */
+        (*curr) = (*curr)->next;
+        tree_t* exp_node = _parse_expression(curr);
+        add_child_node(expression_node, exp_node);
+    }
+
+    return expression_node;
 }
 
 static tree_t* _parse_variable_declaration(token_t** curr) {
@@ -564,9 +596,10 @@ static tree_t* _parse_primary(token_t** curr) {
         return node;
     }
 
-    if ((*curr)->t_type == ARR_VARIABLE_TOKEN || 
-        (*curr)->t_type == STR_VARIABLE_TOKEN || 
-        (*curr)->ptr) return _parse_array_expression(curr);
+    if ((*curr)->t_type == STRUCT_INSTANCE_TOKEN) return _parse_struct_expression(curr);
+    else if ((*curr)->t_type == ARR_VARIABLE_TOKEN || 
+             (*curr)->t_type == STR_VARIABLE_TOKEN || 
+             ((*curr)->ptr)) return _parse_array_expression(curr);
     else if ((*curr)->t_type == CALL_TOKEN) return _parse_function_call(curr);
     else if ((*curr)->t_type == SYSCALL_TOKEN) return _parse_syscall(curr);
 
