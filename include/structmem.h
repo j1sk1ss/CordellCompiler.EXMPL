@@ -36,8 +36,16 @@ typedef struct struct_info {
     int offset;
 } struct_info_t;
 
+typedef struct struct_association {
+    char name[TOKEN_MAX_SIZE];
+    struct_info_t* info;
+    struct struct_association* next;
+} struct_association_t;
 
-int unload_associations();
+
+int unload_associations(struct_association_t* h);
+struct_association_t* get_structassocmap_head();
+int set_structassocmap_head(struct_association_t* h);
 int register_association(const char* name, struct_info_t* info);
 struct_info_t* get_associated_struct(const char* name);
 

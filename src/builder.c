@@ -68,6 +68,13 @@ Second markup will mark all complicated objects like struct instances.
 
     obj->ast_varinfo = get_varmap_head();
     set_varmap_head(NULL);
+
+    obj->ast_struct_info = get_structmap_head();
+    set_structmap_head(NULL);
+
+    obj->ast_struct_associations = get_structassocmap_head();
+    set_structassocmap_head(NULL);
+
     close(fd);
     return 1;
 }
@@ -80,24 +87,34 @@ static int _add_object(char* path) {
 }
 
 static int _compile_object(object_t* obj) {
+    print_log("Compiling of [%s] start...", obj->path);
     string_optimization(obj->ast);
+    print_log("String optimization...");
 
     int is_fold_vars = 0;
     do {
         assign_optimization(obj->ast);
         is_fold_vars = muldiv_optimization(obj->ast);
     } while (is_fold_vars);
+    print_log("Assign & muldiv optimization...");
     
-    unload_varmap(obj->ast_varinfo);
     stmt_optimization(obj->ast);
+    print_log("STMT optimization...");
+
     varuse_optimization(obj->ast);
+    print_log("Varuse optimization...");
+
+    unload_varmap(obj->ast_varinfo);
     offset_optimization(obj->ast);
+    print_log("Recalculation offsets...");
 
     char save_path[128] = { 0 };
     sprintf(save_path, "%s.asm", obj->path);
     FILE* output = fopen(save_path, "w");
     if (_params.syntax) _print_parse_tree(obj->ast, 0);
 
+    set_structassocmap_head(obj->ast_struct_associations);
+    set_structmap_head(obj->ast_struct_info);
     set_varmap_head(obj->ast_varinfo);
     set_arrmap_head(obj->ast_arrinfo);
     generate_asm(obj->ast, output);
@@ -113,6 +130,10 @@ static int _compile_object(object_t* obj) {
     unload_tokens(obj->tokens);
     unload_arrmap(obj->ast_arrinfo);
     unload_varmap(obj->ast_varinfo);
+    unload_structmap(obj->ast_struct_info);
+    unload_associations(obj->ast_struct_associations);
+
+    print_log("Compiling complete!");
     return 1;
 }
 

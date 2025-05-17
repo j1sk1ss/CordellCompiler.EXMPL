@@ -392,12 +392,17 @@ static tree_t* _parse_struct_expression(token_t** curr) {
         We accessing to the field, If we in the stack, we use offsets + base struct offset, otherwise use offset only.
         */
         (*curr) = (*curr)->next;
+        tree_t* field_name_node = create_tree_node(*curr);
+        add_child_node(expression_node, field_name_node);
 
-        /*
-        If it packed struct
-        */
         tree_t* field_node = _parse_expression(curr);
-        add_child_node(expression_node, field_node);
+        if (field_node->first_child) {
+            remove_child_node(field_node, field_node->first_child);
+            expression_node->parent = field_node;
+            expression_node->next_sibling = field_node->first_child;
+            field_node->first_child = expression_node;
+            expression_node = field_node;
+        }
     }
     else if (name_token->ptr) {
         /*

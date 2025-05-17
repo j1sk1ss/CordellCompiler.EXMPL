@@ -23,10 +23,10 @@ static int _recalc_offs(tree_t* root, const char* func) {
             case INT_VARIABLE_TOKEN:
             case SHORT_VARIABLE_TOKEN:
             case CHAR_VARIABLE_TOKEN:
-            if (!t->token->ro && !t->token->glob) {
-                variable_info_t info;
-                if (get_var_info((char*)t->token->value, func, &info)) t->variable_offset = info.offset;
-                else t->variable_offset = add_variable_info((char*)t->token->value, t->variable_size, func);
+                if (!t->token->ro && !t->token->glob) {
+                    variable_info_t info;
+                    if (get_var_info((char*)t->token->value, func, &info)) t->variable_offset = info.offset;
+                    else t->variable_offset = add_variable_info((char*)t->token->value, t->variable_size, func);
                 }
 
                 _recalc_offs(t, func);

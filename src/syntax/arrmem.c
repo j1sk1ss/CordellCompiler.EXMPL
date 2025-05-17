@@ -12,7 +12,6 @@ int set_arrmap_head(array_info_t* h) {
     return 1;
 }
 
-
 static array_info_t* _create_info_array_entry(const char* name, const char* func, int el_size, int size) {
     array_info_t* entry = (array_info_t*)mm_malloc(sizeof(array_info_t));
     if (!entry) return NULL;

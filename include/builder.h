@@ -7,6 +7,7 @@
 #include "generator.h"
 #include "semantic.h"
 #include "syntax.h"
+#include "structmem.h"
 #include "arrmem.h"
 #include "varmem.h"
 #include "token.h"
@@ -20,10 +21,13 @@
 #define LINKER_FLAGS            "-z relro -z now"
 
 typedef struct {
-    tree_t* ast;
-    token_t* tokens;
-    array_info_t* ast_arrinfo;
-    variable_info_t* ast_varinfo;
+    tree_t*                 ast;
+    token_t*                tokens;
+    array_info_t*           ast_arrinfo;
+    variable_info_t*        ast_varinfo;
+
+    struct_association_t*   ast_struct_associations;
+    struct_info_t*          ast_struct_info;
     char* path;
 } object_t;
 

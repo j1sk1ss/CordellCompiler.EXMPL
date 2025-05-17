@@ -146,8 +146,8 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
     else if (node->token->t_type == FUNC_TOKEN)     _generate_function(node, output, func);
     else if (node->token->t_type == SYSCALL_TOKEN)  _generate_syscall(node, output, func);
     else if (node->token->t_type == ASIGN_TOKEN)    _generate_assignment(node, output, func);
-    else if (node->token->t_type == UNKNOWN_NUMERIC_TOKEN) iprintf(output, "mov rax, %s\n", node->token->value);
-    else if (node->token->t_type == CHAR_VALUE_TOKEN) iprintf(output, "mov rax, %i\n", *node->token->value);
+    else if (node->token->t_type == UNKNOWN_NUMERIC_TOKEN)  iprintf(output, "mov rax, %s\n", node->token->value);
+    else if (node->token->t_type == CHAR_VALUE_TOKEN)       iprintf(output, "mov rax, %i\n", *node->token->value);
     else if (node->token->ptr && is_variable_decl(node->token->t_type)) _generate_declaration(node, output, func);
     else if (node->token->ptr && !is_variable_decl(node->token->t_type) && get_variable_type(node->token)) {
         if (!node->first_child) iprintf(output, "mov rax, %s\n", GET_ASMVAR(node));
@@ -166,6 +166,10 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                 else iprintf(output, "mov rax, [rax]\n");
             }
         }
+    }
+    else if (node->token->t_type == DOT_TOKEN) {
+        tree_t* struct_node = node->first_child;
+        tree_t* field_name  = struct_node->next_sibling;
     }
     else if (node->token->t_type == LONG_TYPE_TOKEN) _generate_declaration(node, output, func);
     else if (node->token->t_type == LONG_VARIABLE_TOKEN) {

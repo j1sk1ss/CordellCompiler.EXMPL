@@ -1,13 +1,16 @@
 #include "../../include/structmem.h"
 
 
-typedef struct struct_association {
-    char name[TOKEN_MAX_SIZE];
-    struct_info_t* info;
-    struct struct_association* next;
-} struct_association_t;
-
 static struct_association_t* _associations_h = NULL;
+
+struct_association_t* get_structassocmap_head() {
+    return _associations_h;
+}
+
+int set_structassocmap_head(struct_association_t* h) {
+    _associations_h = h;
+    return 1;
+}
 
 static struct_association_t* _create_association(const char* name, struct_info_t* info) {
     struct_association_t* node = (struct_association_t*)mm_malloc(sizeof(struct_association_t));
@@ -19,11 +22,11 @@ static struct_association_t* _create_association(const char* name, struct_info_t
     return node;
 }
 
-int unload_associations() {
-    while (_associations_h) {
-        struct_association_t* n = _associations_h->next;
-        mm_free(_associations_h);
-        _associations_h = n;
+int unload_associations(struct_association_t* head) {
+    while (head) {
+        struct_association_t* n = head->next;
+        mm_free(head);
+        head = n;
     }
 
     return 1;
