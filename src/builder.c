@@ -36,7 +36,16 @@ static int _generate_raw_ast(object_t* obj) {
     }
 
     int markup_res = command_markup(tokens);
+
+/*
+First markup will mark all primitives and struct declarations.
+*/
     markup_res = variable_markup(tokens);
+/*
+Second markup will mark all complicated objects like struct instances.
+*/
+    markup_res = variable_markup(tokens);
+
     if (!markup_res) {
         unload_tokens(tokens);
         close(fd);

@@ -33,6 +33,7 @@ typedef enum {
     PTR_TYPE_TOKEN,   // ptr
     RO_TYPE_TOKEN,    // ro
     GLOB_TYPE_TOKEN,  // glob
+    STRUCT_TYPE_TOKEN,
     LONG_TYPE_TOKEN,
     INT_TYPE_TOKEN,
     SHORT_TYPE_TOKEN,
@@ -80,12 +81,14 @@ typedef enum {
     OR_TOKEN,            // ||
     
     // Vars
-    LONG_VARIABLE_TOKEN,  // long
-    INT_VARIABLE_TOKEN,   // int
-    SHORT_VARIABLE_TOKEN, // short
-    CHAR_VARIABLE_TOKEN,  // char
-    STR_VARIABLE_TOKEN,   // str
-    ARR_VARIABLE_TOKEN,   // arr
+    STRUCT_VARIABLE_TOKEN, // struct
+    STRUCT_INSTANCE_TOKEN, 
+    LONG_VARIABLE_TOKEN,   // long
+    INT_VARIABLE_TOKEN,    // int
+    SHORT_VARIABLE_TOKEN,  // short
+    CHAR_VARIABLE_TOKEN,   // char
+    STR_VARIABLE_TOKEN,    // str
+    ARR_VARIABLE_TOKEN,    // arr
 
     // Values
     STRING_VALUE_TOKEN,

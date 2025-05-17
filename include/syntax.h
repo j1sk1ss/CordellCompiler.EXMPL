@@ -1,6 +1,7 @@
 #ifndef PARSER_H_
 #define PARSER_H_
 
+#include "structmem.h"
 #include "arrmem.h"
 #include "varmem.h"
 #include "token.h"

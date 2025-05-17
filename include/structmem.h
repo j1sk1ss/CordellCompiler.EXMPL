@@ -33,8 +33,13 @@ typedef struct struct_info {
     char name[TOKEN_MAX_SIZE];
     struct struct_info* next;
     struct_field_info_t* field;
+    int offset;
 } struct_info_t;
 
+
+int unload_associations();
+int register_association(const char* name, struct_field_info_t* info);
+struct_field_info_t* get_associated_struct(const char* name);
 
 struct_info_t* get_structmap_head();
 int set_structmap_head(struct_info_t* h);

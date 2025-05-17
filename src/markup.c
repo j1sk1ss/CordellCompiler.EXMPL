@@ -44,15 +44,16 @@ static markup_token_t _markups[] = {
     /*
     Variable tokens.
     */
-    { .value = PTR_COMMAND,    .type = PTR_TYPE_TOKEN   },
-    { .value = RO_COMMAND,     .type = RO_TYPE_TOKEN    },
-    { .value = GLOB_COMMAND,   .type = GLOB_TYPE_TOKEN  },
-    { .value = LONG_VARIABLE,  .type = LONG_TYPE_TOKEN  },
-    { .value = INT_VARIABLE,   .type = INT_TYPE_TOKEN   },
-    { .value = SHORT_VARIABLE, .type = SHORT_TYPE_TOKEN },
-    { .value = CHAR_VARIABLE,  .type = CHAR_TYPE_TOKEN  },
-    { .value = STR_VARIABLE,   .type = STR_TYPE_TOKEN   },
-    { .value = ARR_VARIABLE,   .type = ARRAY_TYPE_TOKEN },
+    { .value = PTR_COMMAND,    .type = PTR_TYPE_TOKEN    },
+    { .value = RO_COMMAND,     .type = RO_TYPE_TOKEN     },
+    { .value = GLOB_COMMAND,   .type = GLOB_TYPE_TOKEN   },
+    { .value = STRUCT_COMMAND, .type = STRUCT_TYPE_TOKEN },
+    { .value = LONG_VARIABLE,  .type = LONG_TYPE_TOKEN   },
+    { .value = INT_VARIABLE,   .type = INT_TYPE_TOKEN    },
+    { .value = SHORT_VARIABLE, .type = SHORT_TYPE_TOKEN  },
+    { .value = CHAR_VARIABLE,  .type = CHAR_TYPE_TOKEN   },
+    { .value = STR_VARIABLE,   .type = STR_TYPE_TOKEN    },
+    { .value = ARR_VARIABLE,   .type = ARRAY_TYPE_TOKEN  },
 
     /*
     Little jump tokens.
@@ -139,19 +140,23 @@ int variable_markup(token_t* head) {
             case CHAR_TYPE_TOKEN:
             case SHORT_TYPE_TOKEN:
             case ARRAY_TYPE_TOKEN:
+            case STRUCT_TYPE_TOKEN:
+            case STRUCT_VARIABLE_TOKEN:
                 token_t* next = curr->next;
                 if (next && (next->t_type == UNKNOWN_STRING_TOKEN || next->t_type == UNKNOWN_CHAR_VALUE)) {
                     variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
                     str_strncpy((char*)variables[var_count].name, (char*)next->value, TOKEN_MAX_SIZE);
                     
                     switch (curr->t_type) {
-                        case FUNC_TOKEN:        variables[var_count].type = CALL_TOKEN; break;
-                        case INT_TYPE_TOKEN:    variables[var_count].type = INT_VARIABLE_TOKEN; break;
-                        case STR_TYPE_TOKEN:    variables[var_count].type = STR_VARIABLE_TOKEN; break;
-                        case LONG_TYPE_TOKEN:   variables[var_count].type = LONG_VARIABLE_TOKEN; break;
-                        case CHAR_TYPE_TOKEN:   variables[var_count].type = CHAR_VARIABLE_TOKEN; break;
-                        case SHORT_TYPE_TOKEN:  variables[var_count].type = SHORT_VARIABLE_TOKEN; break;
-                        case ARRAY_TYPE_TOKEN:  variables[var_count].type = ARR_VARIABLE_TOKEN; break;
+                        case FUNC_TOKEN:            variables[var_count].type = CALL_TOKEN;            break;
+                        case INT_TYPE_TOKEN:        variables[var_count].type = INT_VARIABLE_TOKEN;    break;
+                        case STR_TYPE_TOKEN:        variables[var_count].type = STR_VARIABLE_TOKEN;    break;
+                        case LONG_TYPE_TOKEN:       variables[var_count].type = LONG_VARIABLE_TOKEN;   break;
+                        case CHAR_TYPE_TOKEN:       variables[var_count].type = CHAR_VARIABLE_TOKEN;   break;
+                        case SHORT_TYPE_TOKEN:      variables[var_count].type = SHORT_VARIABLE_TOKEN;  break;
+                        case ARRAY_TYPE_TOKEN:      variables[var_count].type = ARR_VARIABLE_TOKEN;    break;
+                        case STRUCT_TYPE_TOKEN:     variables[var_count].type = STRUCT_VARIABLE_TOKEN; break;
+                        case STRUCT_VARIABLE_TOKEN: variables[var_count].type = STRUCT_INSTANCE_TOKEN; break;
                         default: break;
                     }
 
@@ -164,8 +169,8 @@ int variable_markup(token_t* head) {
                     var_count++;
                 }
 
-                is_ro = 0;
-                is_ptr = 0;
+                is_ro   = 0;
+                is_ptr  = 0;
                 is_glob = 0;
             break;
             default: break;

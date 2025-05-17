@@ -1,3 +1,6 @@
+from "cpllib/memory.cpl" import alloc_arena memset free_arena;
+from "cpllib/stdio.cpl" import prints gets;
+
 struct person {
     ptr char name;
     int age;
@@ -6,5 +9,13 @@ struct person {
 
 start
     person pstruct;
-    ptr char pname = pstruct.name;
+    pstruct.name = alloc_arena(15);
+    gets(pstruct.name, 15);
+
+    ptr person empty = alloc_arena(sizeof(person));
+    empty.name = alloc_arena(15);
+    gets(empty.name, 15);
+
+    prints(pstruct.name);
+    prints(empty.name);
 exit 1;

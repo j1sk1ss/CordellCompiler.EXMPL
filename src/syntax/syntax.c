@@ -4,6 +4,9 @@
 static char* _current_function_name = NULL;
 static tree_t* _parser_dummy(token_t**);
 static tree_t* _parse_import(token_t**);
+static tree_t* _parse_struct_declaration(token_t**);
+static tree_t* _parse_struct_instance_declaration(token_t**);
+static tree_t* _parse_struct_expression(token_t**);
 static tree_t* _parse_variable_declaration(token_t**);
 static tree_t* _parse_array_declaration(token_t**);
 static tree_t* _parse_binary_expression(token_t**, int);
@@ -19,6 +22,7 @@ static tree_t* _parse_array_expression(token_t**);
 
 static tree_t* (*_get_parser(token_type_t t_type))(token_t**) {
     switch (t_type) {
+        case STRUCT_TYPE_TOKEN:    return _parse_struct_declaration;
         case LONG_TYPE_TOKEN:
         case INT_TYPE_TOKEN:
         case SHORT_TYPE_TOKEN:
@@ -27,6 +31,8 @@ static tree_t* (*_get_parser(token_type_t t_type))(token_t**) {
         case SWITCH_TOKEN:          return _parse_switch_expression;
         case WHILE_TOKEN:
         case IF_TOKEN:              return _parse_condition_scope;
+        case STRUCT_VARIABLE_TOKEN: return _parse_struct_instance_declaration;
+        case STRUCT_INSTANCE_TOKEN: return _parse_struct_expression;
         case LONG_VARIABLE_TOKEN:
         case INT_VARIABLE_TOKEN:
         case STR_VARIABLE_TOKEN:
@@ -266,6 +272,113 @@ static tree_t* _parse_function_declaration(token_t** curr) {
     return func_node;
 }
 
+/*
+struct <name> {
+    <type> <file_name>;
+    ...
+}
+*/
+static tree_t* _parse_struct_declaration(token_t** curr) {
+    token_t* type_token = *curr;
+    if (!type_token) return NULL;
+    (*curr) = (*curr)->next;
+
+    token_t* name_token = *curr;
+    if (!name_token) return NULL;
+    (*curr) = (*curr)->next;
+
+    int struct_size = 8;
+    add_struct_info((char*)name_token->value);
+    if (*curr && (*curr)->t_type == OPEN_BLOCK_TOKEN) {
+        (*curr) = (*curr)->next;
+        while (*curr && (*curr)->t_type != CLOSE_BLOCK_TOKEN) {
+            tree_t* field = _parse_variable_declaration(curr);
+            if (field) {
+                struct_size += field->variable_size;
+                add_struct_field((char*)name_token->value, (char*)field->first_child->token->value, field->variable_size);
+                unload_syntax_tree(field);
+            }
+
+            (*curr) = (*curr)->next;
+        }
+    }
+
+    return NULL;
+}
+
+/*
+struct <name> { }
+<name> <struct_instance_name>; <--- Init in stack.
+ptr <name> <struct_instance_name> = ...; <--- Init in stack only pointer.
+*/
+static tree_t* _parse_struct_instance_declaration(token_t** curr) {
+    int struct_size = 8;
+    token_t* base_token = *curr;
+    if (!base_token) return NULL;
+
+    tree_t* decl_node = create_tree_node(base_token);
+    if (!decl_node) return NULL;
+
+    (*curr) = (*curr)->next;
+    token_t* name_token = *curr;
+    if (!name_token) return NULL;
+
+    tree_t* name_node = create_tree_node(name_token);
+    if (!name_node) {
+        unload_syntax_tree(decl_node);
+        return NULL;
+    }
+
+    add_child_node(decl_node, name_node);
+
+    (*curr) = (*curr)->next;
+    token_t* asign_token = *curr;
+    if (!asign_token) {
+        unload_syntax_tree(decl_node);
+        return NULL;
+    }
+
+    struct_info_t* struct_info = get_struct_info((char*)base_token->value);
+    if (!struct_info) return NULL;
+
+    if (base_token->ptr) {
+        /*
+        Without stack initialization. Only reserve 8 bytes.
+        */
+        (*curr) = (*curr)->next;
+        tree_t* exp_node = _parse_expression(curr);
+    }
+    else {
+        /*
+        With stack initialization. Reserve whole space in stack.
+        */
+        struct_field_info_t* field_h = struct_info->field;
+        while (field_h) {
+            struct_size += field_h->size;
+            field_h = field_h->next;
+        }
+    }
+
+    register_association((char*)name_token->value, struct_info);
+    decl_node->variable_offset = add_variable_info((char*)name_token->value, struct_size, _current_function_name);
+    decl_node->variable_size = struct_size;
+    struct_info->offset = decl_node->variable_offset;
+    return decl_node;
+}
+
+/*
+<struct_instance_name>.<field_name>
+*/
+static tree_t* _parse_struct_expression(token_t** curr) {
+    token_t* name_token = *curr;
+    struct_info_t* struct_info = get_associated_struct((char*)name_token->value);
+    if (!struct_info || !name_token) return NULL;
+
+    tree_t* name_node = create_tree_node(name_token);
+    if (!name_node) return NULL;
+    name_node->variable_offset = struct_info->offset;
+}
+
 static tree_t* _parse_variable_declaration(token_t** curr) {
     token_t* type_token = *curr;
     token_t* name_token = type_token->next;
@@ -293,10 +406,10 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     if ((name_token->ptr || get_variable_type(name_token) != 1) && !decl_node->token->ro && !decl_node->token->glob) {
         int var_size = 8;
         if (!name_token->ptr) {
-            if (type_token->t_type == CHAR_VARIABLE_TOKEN) var_size = 1;
+            if (type_token->t_type == CHAR_VARIABLE_TOKEN)       var_size = 1;
             else if (type_token->t_type == SHORT_VARIABLE_TOKEN) var_size = 2;
-            else if (type_token->t_type == INT_VARIABLE_TOKEN) var_size = 4;
-            else if (type_token->t_type == LONG_VARIABLE_TOKEN) var_size = 8;
+            else if (type_token->t_type == INT_VARIABLE_TOKEN)   var_size = 4;
+            else if (type_token->t_type == LONG_VARIABLE_TOKEN)  var_size = 8;
         }
 
         decl_node->variable_offset = add_variable_info((char*)name_node->token->value, var_size, _current_function_name);
@@ -351,8 +464,8 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     }
     
     int el_size = 1;
-    if (elem_size_token->t_type == SHORT_VARIABLE_TOKEN) el_size = 2;
-    else if (elem_size_token->t_type == INT_VARIABLE_TOKEN) el_size = 4;
+    if (elem_size_token->t_type == SHORT_VARIABLE_TOKEN)     el_size = 2;
+    else if (elem_size_token->t_type == INT_VARIABLE_TOKEN)  el_size = 4;
     else if (elem_size_token->t_type == LONG_VARIABLE_TOKEN) el_size = 8;
     
     tree_t* elem_size_node = create_tree_node(elem_size_token);
