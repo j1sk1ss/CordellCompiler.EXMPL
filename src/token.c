@@ -4,13 +4,14 @@
 #pragma region [Misc]
 
     static char_type_t _get_char_type(unsigned char ch) {
-        if (isalpha(ch)) return CHAR_ALPHA;
+        if (isalpha(ch) || ch == '_') return CHAR_ALPHA;
         else if (str_isdigit(ch) || ch == '-') return CHAR_DIGIT;
         else if (ch == '"')  return CHAR_QUOTE;
         else if (ch == '\'') return CHAR_SING_QUOTE;
         else if (ch == '\n') return CHAR_NEWLINE;
         else if (ch == ' ')  return CHAR_SPACE;
         else if (ch == ';')  return CHAR_DELIMITER;
+        else if (ch == ',')  return CHAR_COMMA;
         else if (ch == ':')  return CHAR_COMMENT;
         else if (
             ch == '(' || ch == ')' || 
@@ -94,19 +95,20 @@ token_t* tokenize(int fd) {
             if (comment_open && !quotes_open) continue;
             if ((ct != CHAR_SPACE && ct != CHAR_NEWLINE) || quotes_open || sing_quotes_open) {
                 token_type_t new_type = UNKNOWN_STRING_TOKEN;
-
                 if (quotes_open) new_type = STRING_VALUE_TOKEN;
                 else if (sing_quotes_open) new_type = CHAR_VALUE_TOKEN;
                 else {
                     if (ct == CHAR_ALPHA)          new_type = UNKNOWN_STRING_TOKEN;
                     else if (ct == CHAR_DIGIT)     new_type = UNKNOWN_NUMERIC_TOKEN;
                     else if (ct == CHAR_DELIMITER) new_type = DELIMITER_TOKEN;
+                    else if (ct == CHAR_COMMA)     new_type = COMMA_TOKEN;
                     else if (ct == CHAR_BRACKET)   new_type = UNKNOWN_CHAR_VALUE;
                     else new_type = UNKNOWN_CHAR_VALUE;
                 }
                 
                 if (in_token) {
-                    if (current_type != new_type && new_type != STRING_VALUE_TOKEN) {
+                    if ((current_type != new_type ||
+                        (current_type == UNKNOWN_CHAR_VALUE && new_type == UNKNOWN_CHAR_VALUE && ct == CHAR_BRACKET))) {
                         if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) goto error;
                         in_token = 0;
                     }
@@ -122,7 +124,6 @@ token_t* tokenize(int fd) {
                 token_buf[token_len++] = ch;
             } 
             else {
-                // current_type = UNKNOWN_COMMAND_TOKEN;
                 if (in_token) {
                     if (ct == CHAR_NEWLINE) line++;
                     if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) goto error;

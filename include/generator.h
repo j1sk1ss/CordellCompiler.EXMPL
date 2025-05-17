@@ -22,7 +22,8 @@ static inline char* format_from_stack(int offset) {
 static inline char* format_from_data(unsigned char* name, token_type_t type) {
     if (type != UNKNOWN_NUMERIC_TOKEN) {
         static char data_buff[64] = { 0 };
-        snprintf(data_buff, sizeof(data_buff), "__%s__", name);
+        if (type == ARR_VARIABLE_TOKEN || type == STR_VARIABLE_TOKEN) snprintf(data_buff, sizeof(data_buff), "__%s__", name);
+        else snprintf(data_buff, sizeof(data_buff), "[__%s__]", name);
         return data_buff;
     }
     else {

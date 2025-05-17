@@ -7,12 +7,12 @@ typedef struct {
     token_type_t type;
 } markup_token_t;
 
-typedef struct Variable {
-    unsigned char name[TOKEN_MAX_SIZE];
-    token_type_t type;
-    int glob;
-    int ptr;
+typedef struct {
     int ro;
+    int ptr;
+    int glob;
+    token_type_t type;
+    unsigned char name[TOKEN_MAX_SIZE];
 } variable_t;
 
 static markup_token_t _markups[] = {
@@ -27,12 +27,12 @@ static markup_token_t _markups[] = {
     /*
     Bracket tokens. 
     */
-    { .value = OPEN_BLOCK,    .type = OPEN_BLOCK_TOKEN   },
-    { .value = CLOSE_BLOCK,   .type = CLOSE_BLOCK_TOKEN  },
-    { .value = OPEN_INDEX,    .type = OPEN_INDEX_TOKEN   },
-    { .value = CLOSE_INDEX,   .type = CLOSE_INDEX_TOKEN  },
-    { .value = OPEN_BRACKET,  .type = OPEN_BRACKET_TOKEN },
-    { .value = CLOSE_BRACKET, .type = CLOSE_BLOCK_TOKEN  },
+    { .value = OPEN_BLOCK,    .type = OPEN_BLOCK_TOKEN    },
+    { .value = CLOSE_BLOCK,   .type = CLOSE_BLOCK_TOKEN   },
+    { .value = OPEN_INDEX,    .type = OPEN_INDEX_TOKEN    },
+    { .value = CLOSE_INDEX,   .type = CLOSE_INDEX_TOKEN   },
+    { .value = OPEN_BRACKET,  .type = OPEN_BRACKET_TOKEN  },
+    { .value = CLOSE_BRACKET, .type = CLOSE_BRACKET_TOKEN },
     
     /*
     Function and jmp tokens.
@@ -119,7 +119,9 @@ int variable_markup(token_t* head) {
                     variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
                     str_strncpy((char*)variables[var_count].name, (char*)curr->value, TOKEN_MAX_SIZE);
                     variables[var_count].type = CALL_TOKEN;
-                    variables[var_count].ptr = 0;
+                    variables[var_count].ptr  = 0;
+                    variables[var_count].glob = 0;
+                    variables[var_count].ro   = 0;
                     var_count++;
                     
                     curr = curr->next;

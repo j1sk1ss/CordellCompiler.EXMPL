@@ -1,4 +1,4 @@
-from "string.cpl" import prints gets strlen;
+from "string.cpl" import prints gets itoa;
 
 :
 Brainfuck interpriter on CPL
@@ -16,9 +16,9 @@ glob arr bracketmap 10000 int =;
 glob arr stack 10000 int =;
 
 start
-    prints "Brainfuck interpriter! Input code ";
+    prints("Brainfuck interpriter! Input code: ");
 
-    int codelength = gets code 10000;
+    int codelength = gets(code, 10000);
     int stackptr = 0;
     int pos = 0;
 
@@ -36,22 +36,18 @@ start
         char c = code[pos];
         int handled = 0;
 
-        if c == openBracket; {
-            stack[stackptr * 8] = pos;
-            stackptr = stackptr + 1;
-            handled = 1;
-        }
-        
-        if handled == 0; {
-            if c == closedBracket; {
+        switch c; {
+            case openBracket; {
+                stack[stackptr * 8] = pos;
+                stackptr = stackptr + 1;
+            }
+            case closedBracket; {
                 if stackptr > 0; {
                     stackptr = stackptr - 1;
                     int matchpos = stack[stackptr * 8];
                     bracketmap[pos * 4] = matchpos;
                     bracketmap[matchpos * 4] = pos;
                 }
-
-                handled = 1;
             }
         }
         
@@ -82,12 +78,12 @@ start
             case dot; {
                 arr fbuf 3 char = ' ' 0;
                 fbuf[0] = tape[pointer];
-                prints fbuf;
+                prints(fbuf);
                 pc = pc + 1;
             }
             case comma; {
                 arr sbuf 3 char = ' ' ' ' 0;
-                gets sbuf 2;
+                gets(sbuf, 2);
                 tape[pointer] = sbuf[0];
                 pc = pc + 1;
             }
@@ -113,4 +109,4 @@ start
         }
     }
 
-exit 1;
+exit 0;

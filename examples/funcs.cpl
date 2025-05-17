@@ -1,0 +1,14 @@
+from "string.cpl" import prints itoa reverse;
+from "memory.cpl" import alloc_arena free_arena memset;
+
+start
+    ptr char buffer = alloc_arena(8);
+    memset(buffer, 0, 8);
+
+    int digit_len = itoa(buffer, 8, 1234567);
+    reverse(buffer, digit_len);
+    buffer[digit_len] = 10;
+
+    prints(buffer);
+    free_arena();
+exit 0;

@@ -12,7 +12,12 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             continue;
         }
         
+        if (t->token->ptr) {
+            _find_usage(t, varname, status, local, 0);
+        }
+        
         switch (t->token->t_type) {
+            case STR_TYPE_TOKEN:
             case LONG_TYPE_TOKEN:
             case INT_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN: 
@@ -40,12 +45,11 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             case BITMOVE_LEFT_TOKEN:
             case BITMOVE_RIGHT_TOKEN: _find_usage(t, varname, status, local, 0); continue;
             case CASE_TOKEN:
-            case STR_TYPE_TOKEN:
             case ARRAY_TYPE_TOKEN: _find_usage(t, varname, status, local, 0); break;
             case FUNC_TOKEN: if (!local) _find_usage(t->first_child->next_sibling->next_sibling, varname, status, local, 0); continue;
             default: break;
         }
-
+        
         if (t->token->t_type == STRING_VALUE_TOKEN || t->token->t_type == CHAR_VALUE_TOKEN) continue;
         if (!str_strncmp(varname, (char*)t->token->value, TOKEN_MAX_SIZE)) {
             *status = 1;
@@ -65,6 +69,8 @@ static int _find_decl(tree_t* root, tree_t* entry, int* delete) {
         }
 
         switch (t->token->t_type) {
+            case CASE_TOKEN:   _find_decl(t, entry, delete); break; 
+            case SWITCH_TOKEN: _find_decl(t->first_child->next_sibling, entry, delete); continue; 
             case IF_TOKEN:
             case WHILE_TOKEN:  _find_decl(t->first_child->next_sibling, entry, delete); continue;
             case FUNC_TOKEN:   _find_decl(t->first_child->next_sibling->next_sibling, entry, delete); continue;
