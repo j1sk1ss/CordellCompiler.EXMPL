@@ -145,6 +145,7 @@ int add_struct_field(const char* struct_name, const char* filed_name, int field_
         filed_offset += field_h->size;
     }
 
+    field->size   = field_size;
     field->offset = filed_offset;
     field_h->next = field;
     return 1;

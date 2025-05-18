@@ -287,15 +287,13 @@ static tree_t* _parse_struct_declaration(token_t** curr) {
     if (!name_token) return NULL;
     (*curr) = (*curr)->next;
 
-    int struct_size = 8;
     add_struct_info((char*)name_token->value);
     if (*curr && (*curr)->t_type == OPEN_BLOCK_TOKEN) {
         (*curr) = (*curr)->next;
         while (*curr && (*curr)->t_type != CLOSE_BLOCK_TOKEN) {
             tree_t* field = _parse_variable_declaration(curr);
             if (field) {
-                struct_size += field->variable_size;
-                add_struct_field((char*)name_token->value, (char*)field->first_child->token->value, field->variable_size);
+                add_struct_field((char*)name_token->value, (char*)field->first_child->token->value, ALIGN_TO(field->variable_size, 8));
                 unload_syntax_tree(field);
             }
 
@@ -312,7 +310,7 @@ struct <name> { }
 ptr <name> <struct_instance_name> = ...; <--- Init in stack only pointer.
 */
 static tree_t* _parse_struct_instance_declaration(token_t** curr) {
-    int struct_size = 8;
+    int struct_size = 0;
     token_t* base_token = *curr;
     if (!base_token) return NULL;
 
@@ -346,7 +344,9 @@ static tree_t* _parse_struct_instance_declaration(token_t** curr) {
         Without stack initialization. Only reserve 8 bytes.
         */
         (*curr) = (*curr)->next;
+        struct_size = 8;
         tree_t* exp_node = _parse_expression(curr);
+        add_child_node(decl_node, exp_node);
     }
     else {
         /*
@@ -363,11 +363,14 @@ static tree_t* _parse_struct_instance_declaration(token_t** curr) {
     decl_node->variable_offset = add_variable_info((char*)name_token->value, struct_size, _current_function_name);
     decl_node->variable_size = struct_size;
     struct_info->offset = decl_node->variable_offset;
+    
+    _fill_variable(name_node);
     return decl_node;
 }
 
 /*
-<struct_instance_name>.<field_name>
+<struct_instance_name>.<field_name> = ...
+<struct_instance_name> = ...
 */
 static tree_t* _parse_struct_expression(token_t** curr) {
     token_t* name_token = *curr;
@@ -376,6 +379,7 @@ static tree_t* _parse_struct_expression(token_t** curr) {
 
     tree_t* name_node = create_tree_node(name_token);
     if (!name_node) return NULL;
+    _fill_variable(name_node);
 
     (*curr) = (*curr)->next;
     tree_t* expression_node = create_tree_node(*curr);
@@ -393,8 +397,15 @@ static tree_t* _parse_struct_expression(token_t** curr) {
         */
         (*curr) = (*curr)->next;
         tree_t* field_name_node = create_tree_node(*curr);
-        add_child_node(expression_node, field_name_node);
+        for (struct_field_info_t* field = struct_info->field; field; field = field->next) {
+            if (!str_strcmp(field->name, (char*)field_name_node->token->value)) {
+                field_name_node->variable_size   = field->size;
+                field_name_node->variable_offset = field->offset;
+                break;
+            }
+        }
 
+        add_child_node(expression_node, field_name_node);
         tree_t* field_node = _parse_expression(curr);
         if (field_node->first_child) {
             remove_child_node(field_node, field_node->first_child);
@@ -417,6 +428,8 @@ static tree_t* _parse_struct_expression(token_t** curr) {
 }
 
 static tree_t* _parse_variable_declaration(token_t** curr) {
+    while (!is_variable_decl((*curr)->t_type)) (*curr) = (*curr)->next;
+
     token_t* type_token = *curr;
     token_t* name_token = type_token->next;
     if (!type_token || !name_token) return NULL;
@@ -457,22 +470,25 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     add_child_node(decl_node, name_node);
     if (!assign_token || assign_token->t_type != ASIGN_TOKEN) return decl_node;
 
-    tree_t* value_node = _parse_expression(&value_token);
-    if (!value_node) {
-        unload_syntax_tree(decl_node);
-        unload_syntax_tree(name_node);
-        return NULL;
+    if (value_token->t_type != DELIMITER_TOKEN) {
+        tree_t* value_node = _parse_expression(&value_token);
+        if (!value_node) {
+            unload_syntax_tree(decl_node);
+            unload_syntax_tree(name_node);
+            return NULL;
+        }
+
+        add_child_node(decl_node, value_node);
+
+        if (type_token->t_type == STR_TYPE_TOKEN && !decl_node->token->ro && !decl_node->token->glob) {
+            int str_size = str_strlen((char*)value_node->token->value);
+            decl_node->variable_size = ALIGN_TO(str_size, 8);
+            decl_node->variable_offset = add_variable_info((char*)name_node->token->value, decl_node->variable_size, _current_function_name);
+            add_array_info((char*)name_node->token->value, _current_function_name, 1, decl_node->variable_size);
+            _fill_variable(name_node);
+        }
     }
 
-    if (type_token->t_type == STR_TYPE_TOKEN && !decl_node->token->ro && !decl_node->token->glob) {
-        int str_size = str_strlen((char*)value_node->token->value);
-        decl_node->variable_size = ALIGN_TO(str_size, 8);
-        decl_node->variable_offset = add_variable_info((char*)name_node->token->value, decl_node->variable_size, _current_function_name);
-        add_array_info((char*)name_node->token->value, _current_function_name, 1, decl_node->variable_size);
-        _fill_variable(name_node);
-    }
-
-    add_child_node(decl_node, value_node);
     return decl_node;
 }
 
