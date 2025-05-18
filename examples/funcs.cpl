@@ -1,8 +1,14 @@
-from "string.cpl" import prints itoa reverse;
-from "memory.cpl" import alloc_arena free_arena memset;
+from "string.cpl" import itoa reverse;
+from "memory.cpl" import mm_init malloc free memset;
+from "stdio.cpl" import gets prints;
 
 start
-    ptr char buffer = alloc_arena(8);
+    ptr char input = malloc(25);
+    memset(input, 0, 35);
+    gets(input, 35);
+    prints(input);
+
+    ptr char buffer = malloc(8);
     memset(buffer, 0, 8);
 
     int digit_len = itoa(buffer, 8, 1234567);
@@ -10,5 +16,7 @@ start
     buffer[digit_len] = 10;
 
     prints(buffer);
-    free_arena();
+    prints(input);
+    free(buffer);
+    free(input);
 exit 0;

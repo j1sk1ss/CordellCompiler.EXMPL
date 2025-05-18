@@ -3,12 +3,12 @@
 
 static int _print_parse_tree(tree_t* node, int depth) {
     if (!node) return 0;
-    for (int i = 0; i < depth; i++) printf("  ");
+    for (int i = 0; i < depth; i++) printf("\t");
     if (node->token) printf(
         "[%s] (t=%d, size=%i, is_ptr=%i, off=%i, ro=%i glob=%i)\n", 
         (char*)node->token->value, node->token->t_type, node->variable_size, node->token->ptr, node->variable_offset, node->token->ro, node->token->glob
     );
-    else printf("scope\n");
+    else printf("{ scope }\n");
     
     tree_t* child = node->first_child;
     while (child) {
@@ -19,11 +19,9 @@ static int _print_parse_tree(tree_t* node, int depth) {
     return 1;
 }
 
-
 static params_t _params = { };
 static object_t _files[MAX_FILES];
 static int _current_file = 0;
-
 
 static int _generate_raw_ast(object_t* obj) {
     int fd = open(obj->path, O_RDONLY);
@@ -65,14 +63,17 @@ static int _generate_raw_ast(object_t* obj) {
 
 static int _add_object(char* path) {
     _files[_current_file].path = path;
+    print_log("Raw AST generation for [%s]...", path);
     _generate_raw_ast(&_files[_current_file]);
     _current_file++;
     return 1;
 }
 
 static int _compile_object(object_t* obj) {
+    print_log("String optimization of [%s]...", obj->path);
     string_optimization(obj->ast);
 
+    print_log("Assign and muldiv optimization...");
     int is_fold_vars = 0;
     do {
         assign_optimization(obj->ast);
@@ -80,8 +81,14 @@ static int _compile_object(object_t* obj) {
     } while (is_fold_vars);
     
     unload_varmap(obj->ast_varinfo);
+
+    print_log("Statement optimization...");
     stmt_optimization(obj->ast);
+    
+    print_log("Varuse optimization...");
     varuse_optimization(obj->ast);
+
+    print_log("Offset recalculation...");
     offset_optimization(obj->ast);
 
     char save_path[128] = { 0 };
@@ -104,6 +111,7 @@ static int _compile_object(object_t* obj) {
     unload_tokens(obj->tokens);
     unload_arrmap(obj->ast_arrinfo);
     unload_varmap(obj->ast_varinfo);
+    print_log("Optimization of [%s] complete", obj->path);
     return 1;
 }
 
@@ -112,8 +120,7 @@ int builder_add_file(char* input) {
 }
 
 int builder_compile() {
-    if (_current_file == 0) return 0;
-
+    if (!_current_file) return 0;
     for (int i = 0; i < _current_file; i++) funcopt_add_ast(_files[i].ast);
     func_optimization();
 
@@ -126,7 +133,7 @@ int builder_compile() {
     }
 
     /*
-    Linking output files
+    Linking output files.
     */
     char link_command[256] = { 0 };
     sprintf(link_command, "%s -m %s %s ", _params.linker, _params.linker_arch, _params.linker_flags);
@@ -144,7 +151,7 @@ int builder_compile() {
     system(link_command);
 
     /*
-    Cleanup
+    Cleanup .asm and .o files.
     */
     for (int i = _current_file - 1; i >= 0; i--) {
         char delete_command[128] = { 0 };

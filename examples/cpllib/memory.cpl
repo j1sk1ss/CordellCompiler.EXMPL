@@ -1,13 +1,8 @@
 glob arr _mm_head 100000 char =;
+glob arr _blocks_info 100000 int =;
 glob long _head = 0;
 
-function alloc_arena long size; {
-    ptr int mm = _mm_head + _head;
-    _head = _head + size;
-    return mm;
-}
-
-function memset ptr char buffer; char val; long size; {
+function memset ptr char buffer; int val; long size; {
     long index = 0;
     while index < size; {
         buffer[index] = val;
@@ -17,7 +12,40 @@ function memset ptr char buffer; char val; long size; {
     return 1;
 }
 
-function free_arena ; {
-    _head = 0;
+function mm_init ; {
+    memset(_blocks_info, 0, 100000);
+}
+
+function malloc long size; {
+    if size > 0; {
+        ptr int curr_mem = _mm_head;
+        int block_index = 0;
+        while block_index < 100000; {
+            if _blocks_info[block_index] == 0; {
+                _blocks_info[block_index] = 1;
+                _blocks_info[block_index + 1] = size;
+                _blocks_info[block_index + 2] = curr_mem;
+                return curr_mem;
+            }
+
+            curr_mem = curr_mem + _blocks_info[block_index + 1];
+            block_index = block_index + 3;
+        }
+    }
+
+    return -1;
+}
+
+function free ptr int mem; {
+    int block_index = 0;
+    while block_index < 100000; {
+        if _blocks_info[block_index + 2] == mem; {
+            _blocks_info[block_index] = 0;
+            return 1;
+        }
+
+        block_index = block_index + 3;
+    }
+
     return 1;
 }
