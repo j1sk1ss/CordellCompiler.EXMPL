@@ -12,10 +12,6 @@ function memset ptr char buffer; int val; long size; {
     return 1;
 }
 
-function mm_init ; {
-    memset(_blocks_info, 0, 100000);
-}
-
 function malloc long size; {
     if size > 0; {
         ptr int curr_mem = _mm_head;
