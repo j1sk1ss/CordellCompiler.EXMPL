@@ -287,6 +287,8 @@ static tree_t* _parse_struct_declaration(token_t** curr) {
     if (!name_token) return NULL;
     (*curr) = (*curr)->next;
 
+    int prev_offset = get_vars_offset();
+    set_vars_offset(0);
     add_struct_info((char*)name_token->value);
     if (*curr && (*curr)->t_type == OPEN_BLOCK_TOKEN) {
         (*curr) = (*curr)->next;
@@ -301,6 +303,7 @@ static tree_t* _parse_struct_declaration(token_t** curr) {
         }
     }
 
+    set_vars_offset(prev_offset);
     return NULL;
 }
 
@@ -359,10 +362,10 @@ static tree_t* _parse_struct_instance_declaration(token_t** curr) {
         }
     }
 
-    register_association((char*)name_token->value, struct_info);
     decl_node->variable_offset = add_variable_info((char*)name_token->value, struct_size, _current_function_name);
     decl_node->variable_size = struct_size;
     struct_info->offset = decl_node->variable_offset;
+    register_association((char*)name_token->value, struct_info);
     
     _fill_variable(name_node);
     return decl_node;

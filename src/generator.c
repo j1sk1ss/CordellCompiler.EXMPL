@@ -189,7 +189,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         }
 
         if (!struct_node->token->ptr) {
-            iprintf(output, "mov rax, [rbp - %d]\n", used_struct->offset + field_offset);
+            iprintf(output, "mov rax, [rbp - %d]\n", used_struct->offset - field_offset);
         }
         else {
             iprintf(output, "lea rax, [rbp - %d]\n", used_struct->offset);
@@ -461,6 +461,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             tree_t* arg = args[pushed_args];
             _generate_expression(arg, output, func);
             switch (get_variable_type(arg->token)) {
+                default:
                 case 1: 
                 case 64:
                     int is_ptr = (get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob));
@@ -469,7 +470,6 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                 case 32: iprintf(output, "mov dword %s, eax ; int32 %s \n", args_regs32[pushed_args], arg->token->value); break;
                 case 16: iprintf(output, "mov word %s, ax ; int16 %s \n", args_regs16[pushed_args], arg->token->value); break;
                 case 8:  iprintf(output, "mov byte %s, al ; int8 %s \n", args_regs8[pushed_args], arg->token->value); break;
-                default: break;
             }
         }
     
@@ -481,6 +481,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             iprintf(output, "mav rbx, rax\n");
 
             switch (get_variable_type(arg->token)) {
+                default:
                 case 1: 
                 case 64:
                     int is_ptr = (get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob));
@@ -489,7 +490,6 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                 case 32: iprintf(output, "mov rax, rbx ; int16 %s \n", arg->token->value); break;
                 case 16: iprintf(output, "mov rax, eax ; int16 %s \n", arg->token->value); break;
                 case 8:  iprintf(output, "mov rax, bl ; int8 %s \n", arg->token->value); break;
-                default: break;
             }
 
             iprintf(output, "push rax\n");
@@ -547,17 +547,6 @@ static int _get_variables_size(tree_t* head, const char* func) {
             expression->token->t_type == WHILE_TOKEN || 
             expression->token->t_type == IF_TOKEN
         ) size += _get_variables_size(expression->first_child->next_sibling->first_child, func);
-        else if (expression->token->t_type == STRUCT_VARIABLE_TOKEN) {
-            struct_info_t* used_struct = get_associated_struct((char*)expression->token->value);
-            if (used_struct && expression->token->ptr) {
-                for (struct_field_info_t* field = used_struct->field; field; field = field->next) {
-                    size += field->size;
-                }
-            }
-            else {
-                size += 8;
-            }
-        }
         else if (expression->token->t_type == CASE_TOKEN) size += _get_variables_size(expression->first_child->first_child, func);
         else size += expression->variable_size;
     }
@@ -888,7 +877,7 @@ static int _generate_assignment(tree_t* node, FILE* output, const char* func) {
 
         _generate_expression(right, output, func);
         if (!struct_node->token->ptr) {
-            iprintf(output, "mov [rbp - %d], rax\n", used_struct->offset + field_offset);
+            iprintf(output, "mov [rbp - %d], rax\n", used_struct->offset - field_offset);
         }
         else {
             iprintf(output, "lea rbx, [rbp - %d]\n", used_struct->offset);
