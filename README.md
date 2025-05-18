@@ -12,6 +12,10 @@
     - [Loops and Conditions](#loops-and-conditions)
     - [Functions](#functions)
     - [System calls](#inputoutput-via-system-calls)
+- [Examples](#examples)
+    - [Printing a number](#example-of-printing-a-number)
+    - [Fibonacci N-number print](#example-of-fibonacci-n-number-print)
+    - [Simple memory manager](#example-of-simple-memory-manager)
 - [Links](#links)
 
 # Summary
@@ -242,7 +246,7 @@ Comments are written as annotations `:` within functions and code blocks:
     :
 ```
 
-## Examples
+# Examples
 
 If you want see more examples, please look into the folder `examples`. 
 
