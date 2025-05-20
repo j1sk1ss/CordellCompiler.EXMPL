@@ -15,8 +15,8 @@
 #define MAX_FILES   100
 #define DEFAULT_ASM_COMPILER    "nasm"
 #define DEFAULT_LINKER          "ld"
-#define DEFAULT_ARCH            "elf64"
-#define DEFAULT_LINKER_ARCH     "elf_x86_64"
+#define DEFAULT_ARCH            "elf32"
+#define DEFAULT_LINKER_ARCH     "elf_i386"
 #define LINKER_FLAGS            "-z relro -z now"
 
 typedef struct {

@@ -1,9 +1,9 @@
 glob arr _mm_head 100000 char =;
 glob arr _blocks_info 100000 int =;
-glob long _head = 0;
+glob int _head = 0;
 
-function memset ptr char buffer; int val; long size; {
-    long index = 0;
+function memset ptr char buffer; int val; int size; {
+    int index = 0;
     while index < size; {
         buffer[index] = val;
         index = index + 1;
@@ -12,7 +12,7 @@ function memset ptr char buffer; int val; long size; {
     return 1;
 }
 
-function malloc long size; {
+function malloc int size; {
     if size > 0; {
         ptr int curr_mem = _mm_head;
         int block_index = 0;
