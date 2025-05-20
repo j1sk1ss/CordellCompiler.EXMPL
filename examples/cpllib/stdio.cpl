@@ -5,7 +5,7 @@ function prints ptr char string; {
     return syscall(1, 1, string, strSize);
 }
 
-function gets ptr char buffer; int size; {
+function gets ptr char buffer; long size; {
     return syscall(0, 0, buffer, size);
 }
 

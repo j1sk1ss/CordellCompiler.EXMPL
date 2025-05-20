@@ -122,13 +122,34 @@ typedef struct token {
 } token_t;
 
 
+/*
+Allocate and create token.
+Params:
+    - type - Token type.
+    - value - Token content.
+    - len - Value variable size.
+    - line - Token line.
+
+Return pointer to token, or NULL if malloc error.
+*/
 token_t* create_token(token_type_t type, const unsigned char* value, size_t len, int line);
 
 /*
+Tokenize input file by provided FD.
+Params:
+    - fd - File descriptor of target file.
+
+Return NULL or pointer to linked list of tokens.
+Note: Function don't close file.
 */
 token_t* tokenize(int fd);
 
 /*
+Unload linked list of tokens.
+Params:
+    - head - Linked list head.
+
+Return 1 if unload success.
 */
 int unload_tokens(token_t* head);
 

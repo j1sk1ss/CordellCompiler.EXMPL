@@ -38,15 +38,15 @@ start
 
         switch c; {
             case openBracket; {
-                stack[stackptr * 8] = pos;
+                stack[stackptr] = pos;
                 stackptr = stackptr + 1;
             }
             case closedBracket; {
                 if stackptr > 0; {
                     stackptr = stackptr - 1;
-                    int matchpos = stack[stackptr * 8];
-                    bracketmap[pos * 4] = matchpos;
-                    bracketmap[matchpos * 4] = pos;
+                    int matchpos = stack[stackptr];
+                    bracketmap[pos] = matchpos;
+                    bracketmap[matchpos] = pos;
                 }
             }
         }
@@ -89,7 +89,7 @@ start
             }
             case openBracket; {
                 if tape[pointer] == brk; {
-                    pc = bracketmap[pc * 4] + 1;
+                    pc = bracketmap[pc] + 1;
                 }
                 else {
                     pc = pc + 1;
@@ -97,7 +97,7 @@ start
             }
             case closedBracket; {
                 if tape[pointer] != brk; {
-                    pc = bracketmap[pc * 4] + 1;
+                    pc = bracketmap[pc] + 1;
                 }
                 else {
                     pc = pc + 1;

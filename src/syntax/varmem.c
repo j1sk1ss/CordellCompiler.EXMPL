@@ -49,6 +49,7 @@ static variable_info_t* _create_variable_info(const char* name, int size, const 
     var->next = NULL;
 
     _current_offset_var += size;
+    _current_offset_var = (_current_offset_var + 7) & ~(7);
     return var;
 }
 

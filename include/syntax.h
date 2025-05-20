@@ -32,19 +32,45 @@ Return 1 if markup success.
 int command_markup(token_t* head);
 
 /*
+Iterate throught tokens and mark variables. 
+Params:
+- head - Tokens list head.
+
+Return -1 if somehing goes wrong.
+Return 1 if markup success.
 */
 int variable_markup(token_t* head);
 
 /*
+Generate AST from tokens list.
+Params: 
+- head - Tokens list head.
+
+Return NULL if somehing goes wrong.
+Return pointer to tree head if markup success.
 */
 tree_t* create_syntax_tree(token_t* head);
 
 /*
+Create new tree node with token.
+Note: Avoid token free before tree free.
+Params:
+- token - Pointer to token.
+
+Return pointer to tree.
+*/
+tree_t* create_tree_node(token_t* token);
+
+/*
+*/
+int add_child_node(tree_t* parent, tree_t* child);
+
+/*
+*/
+int remove_child_node(tree_t* parent, tree_t* child);
+
+/*
 */
 int unload_syntax_tree(tree_t* node);
-
-tree_t* create_tree_node(token_t* token);
-int add_child_node(tree_t* parent, tree_t* child);
-int remove_child_node(tree_t* parent, tree_t* child);
 
 #endif
