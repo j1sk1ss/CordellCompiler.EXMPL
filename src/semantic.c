@@ -16,7 +16,7 @@ int check_semantic(tree_t* node) {
                 tree_t* body = args->next_sibling;
 
                 for (tree_t* param = args->first_child; param; param = param->next_sibling) {
-                    if (!is_variable(param->token->t_type)) {
+                    if (!is_variable_decl(param->token->t_type)) {
                         print_error("Unknown variable type at %i, (%s)", param->token->line_number, param->token->value);
                         result = 0;
                         break;
@@ -58,6 +58,7 @@ int check_semantic(tree_t* node) {
                 break;
             }
 
+            case LONG_TYPE_TOKEN:
             case INT_TYPE_TOKEN:
             case STR_TYPE_TOKEN:
             case SHORT_TYPE_TOKEN:

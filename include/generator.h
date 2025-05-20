@@ -1,11 +1,10 @@
 #ifndef TRANSLATOR_H_
 #define TRANSLATOR_H_
 
-#include <stdlib.h> // TODO implement sort.
+#include "qsort.h"
 #include "vars.h"
 #include "arrmem.h"
 #include "syntax.h"
-
 
 #define ARRAYS_MAX_TOKEN 100
 #define iprintf(out, fmt, ...) fprintf(out, "%*s" fmt, _current_depth * 4, "", ##__VA_ARGS__)
@@ -16,14 +15,15 @@
 
 static inline char* format_from_stack(int offset) {
     static char stack_buff[64] = { 0 };
-    snprintf(stack_buff, sizeof(stack_buff), "[ebp - %d]", ALIGN_TO(offset, 4));
+    snprintf(stack_buff, sizeof(stack_buff), "[rbp - %d]", ALIGN_TO(offset, 8));
     return stack_buff;
 }
 
 static inline char* format_from_data(unsigned char* name, token_type_t type) {
     if (type != UNKNOWN_NUMERIC_TOKEN) {
         static char data_buff[64] = { 0 };
-        snprintf(data_buff, sizeof(data_buff), "__%s__", name);
+        if (type == ARR_VARIABLE_TOKEN || type == STR_VARIABLE_TOKEN) snprintf(data_buff, sizeof(data_buff), "__%s__", name);
+        else snprintf(data_buff, sizeof(data_buff), "[__%s__]", name);
         return data_buff;
     }
     else {

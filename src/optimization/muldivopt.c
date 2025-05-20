@@ -10,6 +10,7 @@ static int _find_muldiv(tree_t* root, int* fold) {
         }
 
         switch (t->token->t_type) {
+            case LONG_TYPE_TOKEN:
             case INT_TYPE_TOKEN:
             case SHORT_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN: 

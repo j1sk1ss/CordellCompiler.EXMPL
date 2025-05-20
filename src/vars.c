@@ -14,6 +14,7 @@ int get_variable_type(token_t* token) {
         case STR_VARIABLE_TOKEN:
         case ARR_VARIABLE_TOKEN:
         case STRING_VALUE_TOKEN: return 1;
+        case LONG_VARIABLE_TOKEN: return 64;
         case INT_VARIABLE_TOKEN: return 32;
         case SHORT_VARIABLE_TOKEN: return 16;
         case CHAR_VALUE_TOKEN:
@@ -23,13 +24,14 @@ int get_variable_type(token_t* token) {
 } 
 
 int get_variable_size(token_t* token) {
-    if (token->ptr) return 32;
+    if (token->ptr) return 64;
     switch (token->t_type) {
         case UNKNOWN_NUMERIC_TOKEN:
         case STRING_VALUE_TOKEN:
-        case INT_VARIABLE_TOKEN:
         case ARR_VARIABLE_TOKEN:
-        case STR_VARIABLE_TOKEN: return 32;
+        case STR_VARIABLE_TOKEN: 
+        case LONG_VARIABLE_TOKEN: return 64;
+        case INT_VARIABLE_TOKEN: return 32;
         case SHORT_VARIABLE_TOKEN: return 16;
         case CHAR_VALUE_TOKEN:
         case CHAR_VARIABLE_TOKEN: return 8;
@@ -37,9 +39,10 @@ int get_variable_size(token_t* token) {
     }
 }
 
-int is_variable(token_type_t token) {
+int is_variable_decl(token_type_t token) {
     switch (token) {
         case ARRAY_TYPE_TOKEN:
+        case LONG_TYPE_TOKEN:
         case INT_TYPE_TOKEN:
         case SHORT_TYPE_TOKEN:
         case CHAR_TYPE_TOKEN:
@@ -61,5 +64,28 @@ int is_operand(token_type_t token) {
         case BITMOVE_LEFT_TOKEN:
         case BITMOVE_RIGHT_TOKEN: return 1;
         default: return 0;
+    }
+}
+
+int get_token_priority(token_type_t type) {
+    switch (type) {
+        case OR_TOKEN:             return 1;
+        case AND_TOKEN:            return 2;
+        case BITOR_TOKEN:          return 3;
+        case BITXOR_TOKEN:         return 4;
+        case BITAND_TOKEN:         return 5;
+        case COMPARE_TOKEN:
+        case NCOMPARE_TOKEN:
+        case LOWER_TOKEN:
+        case LARGER_TOKEN:         return 6;
+        case BITMOVE_LEFT_TOKEN:
+        case BITMOVE_RIGHT_TOKEN:  return 7;
+        case PLUS_TOKEN:
+        case MINUS_TOKEN:          return 8;
+        case MULTIPLY_TOKEN:
+        case DIVIDE_TOKEN:
+        case MODULO_TOKEN:         return 9;
+        case ASIGN_TOKEN:          return 0;
+        default:                   return -1;
     }
 }
