@@ -40,6 +40,7 @@ static int _recalc_offs(tree_t* root, const char* func) {
 
 
 int offset_optimization(tree_t* root) {
+    if (!root) return 0;
     _recalc_offs(root, NULL);
     return 1;
 }

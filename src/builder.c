@@ -23,6 +23,13 @@ static params_t _params = { };
 static object_t _files[MAX_FILES];
 static int _current_file = 0;
 
+/*
+-1 - Can't open file.
+-2 - Tokenize error.
+-3 - Markup error.
+-4 - Semantic check failed.
+1 - Success.
+*/
 static int _generate_raw_ast(object_t* obj) {
     int fd = open(obj->path, O_RDONLY);
     if (fd < 0) return -1;
@@ -64,8 +71,9 @@ static int _generate_raw_ast(object_t* obj) {
 static int _add_object(char* path) {
     _files[_current_file].path = path;
     print_log("Raw AST generation for [%s]...", path);
-    _generate_raw_ast(&_files[_current_file]);
-    _current_file++;
+
+    int res_code = _generate_raw_ast(&_files[_current_file++]);
+    print_log("AST-gen result [%s (%i)]", res_code == 1 ? "OK" : "ERROR", res_code);
     return 1;
 }
 

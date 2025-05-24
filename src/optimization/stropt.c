@@ -135,6 +135,7 @@ static int _declare_strings(tree_t* root) {
 }
 
 int string_optimization(tree_t* root) {
+    if (!root) return 0;
     tree_t* program_body = root->first_child;
     tree_t* prestart     = program_body;
     tree_t* main_body    = prestart->next_sibling;

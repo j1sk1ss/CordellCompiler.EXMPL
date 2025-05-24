@@ -4,6 +4,7 @@ static tree_t* _ast[100] = { NULL };
 static int _ast_count = 0;
 
 int funcopt_add_ast(tree_t* root) {
+    if (!root) return 0;
     _ast[_ast_count++] = root;
     return 1;
 }

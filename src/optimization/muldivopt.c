@@ -83,6 +83,7 @@ static int _find_muldiv(tree_t* root, int* fold) {
 }
 
 int muldiv_optimization(tree_t* root) {
+    if (!root) return 0;
     int is_fold = 0;
     _find_muldiv(root, &is_fold);
     return is_fold;

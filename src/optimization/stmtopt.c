@@ -81,5 +81,6 @@ static int _find_stmt(tree_t* root) {
 }
 
 int stmt_optimization(tree_t* root) {
+    if (!root) return 0;
     return _find_stmt(root);
 }

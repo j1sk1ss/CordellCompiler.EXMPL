@@ -122,6 +122,7 @@ static int _find_decl(tree_t* root, tree_t* entry, int* change) {
 
 
 int assign_optimization(tree_t* root) {
+    if (!root) return 0;
     int is_changed = 0;
     _find_decl(root, root, &is_changed);
     return is_changed;

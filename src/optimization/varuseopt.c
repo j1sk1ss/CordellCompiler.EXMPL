@@ -96,6 +96,7 @@ static int _find_decl(tree_t* root, tree_t* entry, int* delete) {
 
 
 int varuse_optimization(tree_t* root) {
+    if (!root) return 0;
     int delete = 0;
     do {
         delete = 0;

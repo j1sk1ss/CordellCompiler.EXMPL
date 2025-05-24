@@ -24,7 +24,6 @@
     static int _add_token(token_t** head, token_t** tail, token_type_t type, const unsigned char* buffer, size_t len, int line) {
         token_t* new_token = create_token(type, buffer, len, line);
         if (!new_token) return 0;
-        
         if (!*head) *head = new_token;
         else (*tail)->next = new_token;
         *tail = new_token; 
@@ -109,7 +108,11 @@ token_t* tokenize(int fd) {
                 if (in_token) {
                     if ((current_type != new_type ||
                         (current_type == UNKNOWN_CHAR_VALUE && new_type == UNKNOWN_CHAR_VALUE && ct == CHAR_BRACKET))) {
-                        if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) goto error;
+                        if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) {
+                            print_error("Can't add token! type=%i token_buf=[%s], token_len=%i", current_type, token_buf, token_len);
+                            goto error;
+                        }
+
                         in_token = 0;
                     }
                 }
@@ -120,22 +123,37 @@ token_t* tokenize(int fd) {
                     in_token = 1;
                 }
                 
-                if (token_len >= TOKEN_MAX_SIZE) goto error;
+                if (token_len >= TOKEN_MAX_SIZE) {
+                    print_error("Token too large!");
+                    goto error;
+                }
+
                 token_buf[token_len++] = ch;
             } 
             else {
                 if (in_token) {
                     if (ct == CHAR_NEWLINE) line++;
-                    if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) goto error;
+                    if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) {
+                        print_error("Can't add token! type=%i token_buf=[%s], token_len=%i", current_type, token_buf, token_len);
+                        goto error;
+                    }
+
                     in_token = 0;
                 }
             }
         }
     }
 
-    if (bytes_read < 0) goto error;
+    if (bytes_read < 0) {
+        print_error("Invalid read size!");
+        goto error;
+    }
+
     if (in_token) {
-        if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) goto error;
+        if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) {
+            print_error("Can't add token! type=%i token_buf=[%s], token_len=%i", current_type, token_buf, token_len);
+            goto error;
+        }
     }
     
     return head;
