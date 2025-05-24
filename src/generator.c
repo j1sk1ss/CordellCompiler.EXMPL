@@ -237,60 +237,43 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             }
         }
     }
-    else if (node->token->t_type == BITMOVE_LEFT_TOKEN) {
+    else if (
+        node->token->t_type == BITMOVE_LEFT_TOKEN ||
+        node->token->t_type == BITMOVE_RIGHT_TOKEN
+    ) {
         _generate_expression(node->first_child, output, func);
         iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
         iprintf(output, "pop rbx\n");
         iprintf(output, "mov rcx, rax\n");
-        iprintf(output, "shl rbx, cl\n");
+        if (node->token->t_type == BITMOVE_LEFT_TOKEN) iprintf(output, "shl rbx, cl\n");
+        else iprintf(output, "shr rbx, cl\n");
         iprintf(output, "mov rax, rbx\n");
     }
-    else if (node->token->t_type == BITMOVE_RIGHT_TOKEN) {
+    else if (
+        node->token->t_type == BITAND_TOKEN ||
+        node->token->t_type == BITOR_TOKEN ||
+        node->token->t_type == BITXOR_TOKEN
+    ) {
         _generate_expression(node->first_child, output, func);
         iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
         iprintf(output, "pop rbx\n");
-        iprintf(output, "mov rcx, rax\n");
-        iprintf(output, "shr rbx, cl\n");
-        iprintf(output, "mov rax, rbx\n");
+        if (node->token->t_type == BITAND_TOKEN) iprintf(output, "and rax, rbx\n");
+        else if (node->token->t_type == BITOR_TOKEN) iprintf(output, "or rax, rbx\n");
+        else iprintf(output, "xor rax, rbx\n");
     }
-    else if (node->token->t_type == BITAND_TOKEN) {
-        _generate_expression(node->first_child, output, func);
-        iprintf(output, "push rax\n");
-        _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop rbx\n");
-        iprintf(output, "and rax, rbx\n");
-    }
-    else if (node->token->t_type == BITOR_TOKEN) {
-        _generate_expression(node->first_child, output, func);
-        iprintf(output, "push rax\n");
-        _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop rbx\n");
-        iprintf(output, "or rax, rbx\n");
-    }
-    else if (node->token->t_type == BITXOR_TOKEN) {
-        _generate_expression(node->first_child, output, func);
-        iprintf(output, "push rax\n");
-        _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop rbx\n");
-        iprintf(output, "xor rax, rbx\n");
-    }
-    else if (node->token->t_type == AND_TOKEN) {
+    else if (
+        node->token->t_type == AND_TOKEN ||
+        node->token->t_type == OR_TOKEN
+    ) {
         _generate_expression(node->first_child, output, func);
         iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
         iprintf(output, "mov rbx, rax\n");
         iprintf(output, "pop rax\n");
-        iprintf(output, "and rax, rbx\n");
-    }
-    else if (node->token->t_type == OR_TOKEN) {
-        _generate_expression(node->first_child, output, func);
-        iprintf(output, "push rax\n");
-        _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "mov rbx, rax\n");
-        iprintf(output, "pop rax\n");
-        iprintf(output, "or rax, rbx\n"); 
+        if (node->token->t_type == AND_TOKEN) iprintf(output, "and rax, rbx\n");
+        else iprintf(output, "or rax, rbx\n"); 
     }
     else if (node->token->t_type == PLUS_TOKEN) {
         _generate_expression(node->first_child, output, func);
@@ -333,40 +316,21 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         iprintf(output, "idiv rbx\n");
         iprintf(output, "mov rax, rdx\n");
     }
-    else if (node->token->t_type == LARGER_TOKEN) {
+    else if (
+        node->token->t_type == LARGER_TOKEN ||
+        node->token->t_type == LOWER_TOKEN ||
+        node->token->t_type == COMPARE_TOKEN ||
+        node->token->t_type == NCOMPARE_TOKEN
+    ) {
         _generate_expression(node->first_child, output, func);
         iprintf(output, "push rax\n");
         _generate_expression(node->first_child->next_sibling, output, func);
         iprintf(output, "pop rbx\n");
         iprintf(output, "cmp rbx, rax\n");
-        iprintf(output, "setg al\n");
-        iprintf(output, "movzx rax, al\n");
-    }
-    else if (node->token->t_type == LOWER_TOKEN) {
-        _generate_expression(node->first_child, output, func);
-        iprintf(output, "push rax\n");
-        _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop rbx\n");
-        iprintf(output, "cmp rbx, rax\n");
-        iprintf(output, "setl al\n");
-        iprintf(output, "movzx rax, al\n");
-    }
-    else if (node->token->t_type == COMPARE_TOKEN) {
-        _generate_expression(node->first_child, output, func);
-        iprintf(output, "push rax\n");
-        _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop rbx\n");
-        iprintf(output, "cmp rbx, rax\n");
-        iprintf(output, "sete al\n");
-        iprintf(output, "movzx rax, al\n");
-    }
-    else if (node->token->t_type == NCOMPARE_TOKEN) {
-        _generate_expression(node->first_child, output, func);
-        iprintf(output, "push rax\n");
-        _generate_expression(node->first_child->next_sibling, output, func);
-        iprintf(output, "pop rbx\n");
-        iprintf(output, "cmp rbx, rax\n");
-        iprintf(output, "setne al\n");
+        if (node->token->t_type == LARGER_TOKEN) iprintf(output, "setg al\n");
+        else if (node->token->t_type == LOWER_TOKEN) iprintf(output, "setl al\n");
+        else if (node->token->t_type == COMPARE_TOKEN) iprintf(output, "sete al\n");
+        else iprintf(output, "setne al\n");
         iprintf(output, "movzx rax, al\n");
     }
     else if (node->token->t_type == CALL_TOKEN) {

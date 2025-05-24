@@ -26,7 +26,7 @@ int get_reg(regs_t* regs, int size, const char* base64, int ptr) {
             print_spec("%s %s %i/%i %s", _base64_names[i], base64, i,size, _regs_table[i][size]);
             regs->name      = _regs_table[i][size];
             regs->operation = _types[size];
-            regs->move      = (ptr && size == 64) ? "lea" : "mov";
+            regs->move      = (ptr && size == 8) ? "lea" : "mov";
             return 1;
         }
     }
