@@ -1,6 +1,7 @@
 #ifndef TRANSLATOR_H_
 #define TRANSLATOR_H_
 
+#include "regs.h"
 #include "vars.h"
 #include "qsort.h"
 #include "arrmem.h"

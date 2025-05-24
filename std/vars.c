@@ -3,9 +3,10 @@
 
 /*
 Return 1 if variable is an array-like data object.
-Return 32 if 32bit variable
-Return 16 if 16bit variable
-Return 8 if 8bit variable
+Return 64 if 64bit variable.
+Return 32 if 32bit variable.
+Return 16 if 16bit variable.
+Return 8 if 8bit variable.
 */
 int get_variable_type(token_t* token) {
     if (token->ptr) return 1;
