@@ -3,17 +3,16 @@ from "memory.cpl" import mm_init malloc free memset;
 from "stdio.cpl" import gets prints;
 
 start
-    ptr char input = malloc(25);
+    ptr char input = malloc(36);
     memset(input, 0, 35);
     gets(input, 35);
     prints(input);
 
-    ptr char buffer = malloc(8);
+    ptr char buffer = malloc(9);
     memset(buffer, 0, 8);
 
     int digit_len = itoa(buffer, 8, 1234567);
     reverse(buffer, digit_len);
-    buffer[digit_len] = 10;
 
     prints(buffer);
     prints(input);
