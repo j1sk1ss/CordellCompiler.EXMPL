@@ -321,7 +321,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         iprintf(output, "pop %s\n",         GET_RAW_REG(BASE_BITNESS, RAX));
         iprintf(output, "cdq\n");
         iprintf(output, "idiv %s\n",        GET_RAW_REG(BASE_BITNESS, RBX));
-        iprintf(output, "mov %s, %s\n",     GET_RAW_REG(BASE_BITNESS, RAX), GET_RAW_REG(BASE_BITNESS, RBX));
+        iprintf(output, "mov %s, %s\n",     GET_RAW_REG(BASE_BITNESS, RAX), GET_RAW_REG(BASE_BITNESS, RDX));
     }
     else if (
         node->token->t_type == LARGER_TOKEN ||
