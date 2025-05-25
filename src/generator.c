@@ -233,14 +233,14 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             _generate_expression(node->first_child, output, func);
 
             regs_t reg;
-            get_reg(&reg, arr_info.el_size, RAX, !(node->token->ro || node->token->glob));
+            get_reg(&reg, 8, RAX, !(node->token->ro || node->token->glob));
 
             if (arr_info.el_size > 1) iprintf(output, "imul %s, %d\n", GET_RAW_REG(BASE_BITNESS, RAX), arr_info.el_size);
             iprintf(output, "%s %s, %s\n", reg.move, GET_REG(node, 1), GET_ASMVAR(node));
             iprintf(output, "add %s, %s\n", GET_RAW_REG(BASE_BITNESS, RAX), GET_REG(node, 1));
             iprintf(
                 output, "%s %s,%s[%s]\n", arr_info.el_size < 3 ? "movzx" : "mov",
-                GET_RAW_REG(BASE_BITNESS, RAX), arr_info.el_size < 3 ? reg.operation : " ", GET_RAW_REG(BASE_BITNESS, RAX)
+                GET_RAW_REG(BASE_BITNESS, RAX), GET_OPERATION_TYPE(arr_info.el_size), GET_RAW_REG(BASE_BITNESS, RAX)
             );
         }
     }

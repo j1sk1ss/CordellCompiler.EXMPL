@@ -13,6 +13,15 @@ static const char* regs[4][8] = {
     { "al",  "bl",  "cl",  "dl",  "sil", "dil",  "",    ""    },
 };
 
+#define GET_OPERATION_TYPE(size) __get_operation_type__(size)
+static inline const char* __get_operation_type__(int size) {
+    switch (size) {
+        case 1:  return " byte ";
+        case 2:  return " word ";
+        default: return " ";
+    }
+}
+
 #define BASE_BITNESS    64
 enum {
     RAX, RBX, RCX, RDX, RSI, RDI, RBP, RSP, R8, R9, R10
