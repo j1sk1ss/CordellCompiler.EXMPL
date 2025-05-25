@@ -148,12 +148,16 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
             if (get_var_info((char*)node->token->value, func, &info)) {
                 _generate_expression(node->first_child, output, func);
 
-                if (info.size > 1) iprintf(output, "imul %s, %d\n", GET_RAW_REG(BASE_BITNESS, RAX), info.size);
+                int ptr_type_size = get_variable_size_wt(node->token) / 8;
+                if (ptr_type_size > 1) iprintf(output, "imul %s, %d\n", GET_RAW_REG(BASE_BITNESS, RAX), ptr_type_size);
                 iprintf(output, "add %s, %s\n", GET_REG(node, 0), GET_ASMVAR(node));
 
                 regs_t reg;
-                get_reg(&reg, info.size, RAX, 0);
-                iprintf(output, "mov %s,%s[%s]\n", reg.name, reg.operation, reg.name);
+                get_reg(&reg, ptr_type_size, RAX, 0);
+                iprintf(
+                    output, "%s %s,%s[%s]\n", ptr_type_size < 3 ? "movzx" : "mov", 
+                    GET_RAW_REG(BASE_BITNESS, RAX), reg.operation, GET_RAW_REG(BASE_BITNESS, RAX)
+                );
             }
         }
     }
@@ -671,7 +675,7 @@ static int _generate_if(tree_t* node, FILE* output, const char* func) {
 /* https://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/ */
 /* https://math.hws.edu/eck/cs220/f22/registers.html */
 static int _generate_syscall(tree_t* node, FILE* output, const char* func) {
-    static const int args_regs64[] = { RDI, RSI, RDX, RCX, R8, R9 };
+    static const int args_regs64[] = { RAX, RDI, RSI, RDX, R10, R8, R9 };
     fprintf(output, "\n ; --------------- system call --------------- \n");
 
     int arg_index = 0;
