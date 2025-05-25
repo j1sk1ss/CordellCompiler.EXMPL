@@ -6,11 +6,16 @@
 #include "token.h"
 #include "syntax.h"
 
-static const char* regs[4][4] = {
-    { "rax", "rbx", "rcx", "rdx" },
-    { "eax", "ebx", "ecx", "edx" },
-    { "ax",  "bx",  "cx",  "dx"  },
-    { "al",  "bl",  "cl",  "dl"  },
+static const char* regs[4][8] = {
+    { "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp" },
+    { "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp" },
+    { "ax",  "bx",  "cx",  "dx",  "si",  "di",   "",    ""    },
+    { "al",  "bl",  "cl",  "dl",  "sil", "dil",  "",    ""    },
+};
+
+#define BASE_BITNESS    64
+enum {
+    RAX, RBX, RCX, RDX, RSI, RDI, RBP, RSP, R8, R9, R10
 };
 
 /*
@@ -20,8 +25,11 @@ Mapping:
 1 - RBX EBX BX BL
 2 - RCX ECX CX CL
 4 - RDX EDX DX DL
+5 - RBP EBP .. ..
+6 - RSP ESP .. ..
 */
 #define GET_REG(source, register) __get_register__(get_variable_size((node)->token), register)
+#define GET_RAW_REG(size, register) __get_register__(size, register)
 static inline const char* __get_register__(int size, int pos) {
     switch (size) {
         case 8:  return regs[3][pos];
@@ -39,7 +47,7 @@ static inline const char* __get_register__(int size, int pos) {
 
 static inline char* format_from_stack(int offset) {
     static char stack_buff[64] = { 0 };
-    snprintf(stack_buff, sizeof(stack_buff), "[rbp - %d]", ALIGN_TO(offset, 8));
+    snprintf(stack_buff, sizeof(stack_buff), "[%s - %d]", GET_RAW_REG(BASE_BITNESS, RBP), ALIGN_TO(offset, 8));
     return stack_buff;
 }
 
@@ -71,6 +79,6 @@ Params:
 
 Return 1 in any case.
 */
-int get_reg(regs_t* regs, int size, const char* base64, int ptr);
+int get_reg(regs_t* regs, int size, int reg, int ptr);
 
 #endif

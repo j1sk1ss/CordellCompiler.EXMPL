@@ -16,20 +16,10 @@ static const char* _regs_table[][9] = {
 };
 
 static const char* _types[] = { "", " byte ", " word ", "", " dword ", "", "", "", " " };
-static const char* _base64_names[] = {
-    "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8", "r9", "r10"
-};
 
-int get_reg(regs_t* regs, int size, const char* base64, int ptr) {
-    for (size_t i = 0; i < sizeof(_base64_names) / sizeof(_base64_names[0]); ++i) {
-        if (!str_strcmp(_base64_names[i], base64)) {
-            print_spec("%s %s %i/%i %s", _base64_names[i], base64, i,size, _regs_table[i][size]);
-            regs->name      = _regs_table[i][size];
-            regs->operation = _types[size];
-            regs->move      = (ptr && size == 8) ? "lea" : "mov";
-            return 1;
-        }
-    }
-
-    return 0;
+int get_reg(regs_t* regs, int size, int reg, int ptr) {
+    regs->name      = _regs_table[reg][size];
+    regs->operation = _types[size];
+    regs->move      = (ptr && size == 8) ? "lea" : "mov";
+    return 1;
 }
