@@ -363,6 +363,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         static const int args_regs64[] = { RDI, RSI, RDX, RCX, R8, R9 };
 
         int pushed_args = 0;
+#if (BASE_BITNESS == 64)
         for (pushed_args = 0; pushed_args < MIN(arg_count, 6); pushed_args++) {
             tree_t* arg = args[pushed_args];
 
@@ -374,6 +375,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
                 reg.move, reg.operation, reg.name, GET_ASMVAR(arg), arg->token->value
             );
         }
+#endif
     
         int stack_args = arg_count - pushed_args;
         while (pushed_args < arg_count) {
@@ -511,14 +513,17 @@ static int _generate_function(tree_t* node, FILE* output, const char* func) {
         char* param_name = (char*)param->first_child->token->value;
 
         regs_t reg;
+#if (BASE_BITNESS == 64)
         get_reg(&reg, get_variable_size(param->first_child->token) / 8, args_regs64[pop_params], 0);
-        if (pop_params >= 6) {
+        if (pop_params < 6) iprintf(output, "mov%s[%s - %d], %s\n", reg.operation, GET_RAW_REG(BASE_BITNESS, RBP), param->first_child->variable_offset, reg.name);
+        else 
+#else
+        get_reg(&reg, get_variable_size(param->first_child->token) / 8, RAX, 0);
+#endif
+        {
             iprintf(output, "mov %s, [%s + %d] ; int64 %s \n", reg.name, GET_RAW_REG(BASE_BITNESS, RBP), stack_offset, param_name);
             iprintf(output, "mov%s[%s - %d], %s\n", reg.operation, GET_RAW_REG(BASE_BITNESS, RBP), param->first_child->variable_offset, reg.name);
             stack_offset += param_size;
-        }
-        else {
-            iprintf(output, "mov%s[%s - %d], %s\n", reg.operation, GET_RAW_REG(BASE_BITNESS, RBP), param->first_child->variable_offset, reg.name);
         }
 
         pop_params++;
