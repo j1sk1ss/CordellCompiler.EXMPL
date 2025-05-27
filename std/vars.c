@@ -3,9 +3,10 @@
 
 /*
 Return 1 if variable is an array-like data object.
-Return 32 if 32bit variable
-Return 16 if 16bit variable
-Return 8 if 8bit variable
+Return 64 if 64bit variable.
+Return 32 if 32bit variable.
+Return 16 if 16bit variable.
+Return 8 if 8bit variable.
 */
 int get_variable_type(token_t* token) {
     if (token->ptr) return 1;
@@ -23,8 +24,29 @@ int get_variable_type(token_t* token) {
     }
 } 
 
+/*
+With token handling
+*/
 int get_variable_size(token_t* token) {
     if (token->ptr) return 64;
+    switch (token->t_type) {
+        case UNKNOWN_NUMERIC_TOKEN:
+        case STRING_VALUE_TOKEN:
+        case ARR_VARIABLE_TOKEN:
+        case STR_VARIABLE_TOKEN: 
+        case LONG_VARIABLE_TOKEN: return 64;
+        case INT_VARIABLE_TOKEN: return 32;
+        case SHORT_VARIABLE_TOKEN: return 16;
+        case CHAR_VALUE_TOKEN:
+        case CHAR_VARIABLE_TOKEN: return 8;
+        default: return 1;
+    }
+}
+
+/*
+Without token handling
+*/
+int get_variable_size_wt(token_t* token) {
     switch (token->t_type) {
         case UNKNOWN_NUMERIC_TOKEN:
         case STRING_VALUE_TOKEN:

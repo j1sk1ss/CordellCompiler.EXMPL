@@ -23,9 +23,9 @@ static markup_token_t _markups[] = {
     { .value = IMPORT_COMMAND,        .type = IMPORT_TOKEN        },
     { .value = START_COMMAND,         .type = START_TOKEN         },
     { .value = EXIT_COMMAND,          .type = EXIT_TOKEN          },
-    
+
     /*
-    Bracket tokens. 
+    Bracket tokens.
     */
     { .value = OPEN_BLOCK,    .type = OPEN_BLOCK_TOKEN    },
     { .value = CLOSE_BLOCK,   .type = CLOSE_BLOCK_TOKEN   },
@@ -33,7 +33,7 @@ static markup_token_t _markups[] = {
     { .value = CLOSE_INDEX,   .type = CLOSE_INDEX_TOKEN   },
     { .value = OPEN_BRACKET,  .type = OPEN_BRACKET_TOKEN  },
     { .value = CLOSE_BRACKET, .type = CLOSE_BRACKET_TOKEN },
-    
+
     /*
     Function and jmp tokens.
     */
@@ -123,7 +123,7 @@ int variable_markup(token_t* head) {
                     variables[var_count].glob = 0;
                     variables[var_count].ro   = 0;
                     var_count++;
-                    
+
                     curr = curr->next;
                 }
             break;
@@ -138,12 +138,12 @@ int variable_markup(token_t* head) {
             case LONG_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN:
             case SHORT_TYPE_TOKEN:
-            case ARRAY_TYPE_TOKEN:
+            case ARRAY_TYPE_TOKEN: {
                 token_t* next = curr->next;
                 if (next && (next->t_type == UNKNOWN_STRING_TOKEN || next->t_type == UNKNOWN_CHAR_VALUE)) {
                     variables = mm_realloc(variables, (var_count + 1) * sizeof(variable_t));
                     str_strncpy((char*)variables[var_count].name, (char*)next->value, TOKEN_MAX_SIZE);
-                    
+
                     switch (curr->t_type) {
                         case FUNC_TOKEN:        variables[var_count].type = CALL_TOKEN; break;
                         case INT_TYPE_TOKEN:    variables[var_count].type = INT_VARIABLE_TOKEN; break;
@@ -167,6 +167,7 @@ int variable_markup(token_t* head) {
                 is_ro = 0;
                 is_ptr = 0;
                 is_glob = 0;
+            }
             break;
             default: break;
         }
