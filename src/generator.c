@@ -111,7 +111,7 @@ static int _generate_data_section(const tree_t* node, FILE* output, int section,
     return 1;
 }
 
-static int _generate_expression(tree_t* node, FILE* output, const char* func) {
+static int _generate_expression(const tree_t* node, FILE* output, const char* func) {
     if (!node) return 0;
     if (node->token->t_type == IF_TOKEN)           _generate_if(node, output, func);
     else if (node->token->t_type == SWITCH_TOKEN)  _generate_switch(node, output, func);
@@ -343,7 +343,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         fprintf(output, "\n ; --------------- Call function %s --------------- \n", func_name_node->token->value);
         int pushed_args = 0;
 
-#if (BASE_BITNESS == 64)
+#if (BASE_BITNESS == BIT64)
         static const int args_regs[] = { RDI, RSI, RDX, RCX, R8, R9 };
         for (pushed_args = 0; pushed_args < MIN(arg_count, 6); pushed_args++) {
             tree_t* arg = args[pushed_args];
@@ -383,7 +383,7 @@ static int _generate_expression(tree_t* node, FILE* output, const char* func) {
         _generate_expression(node->first_child, output, func);
         iprintf(output, "mov %s, %s\n", GET_RAW_REG(BASE_BITNESS, RDI), GET_RAW_REG(BASE_BITNESS, RAX));
         iprintf(output, "mov %s, 60\n", GET_RAW_REG(BASE_BITNESS, RAX));
-        iprintf(output, "syscall\n");
+        iprintf(output, "%s\n", SYSCALL);
     }
     else if (node->token->t_type == RETURN_TOKEN) {
         fprintf(output, "\n ; --------------- Return --------------- \n");
@@ -487,14 +487,14 @@ static int _generate_function(const tree_t* node, FILE* output, const char* func
     int pop_params = 0;
     int stack_offset = 8;
 
-    static const int args_regs64[] = { RDI, RSI, RDX, RCX, R8, R9 };
+    static const int args_regs[] = { RDI, RSI, RDX, RCX, R8, R9 };
     for (const tree_t* param = params_node->first_child; param; param = param->next_sibling) {
         int param_size = param->variable_size;
         char* param_name = (char*)param->first_child->token->value;
 
         regs_t reg;
-#if (BASE_BITNESS == 64)
-        get_reg(&reg, get_variable_size(param->first_child->token) / 8, args_regs64[pop_params], 0);
+#if (BASE_BITNESS == BIT64)
+        get_reg(&reg, get_variable_size(param->first_child->token) / 8, args_regs[pop_params], 0);
         if (pop_params < 6) iprintf(output, "mov%s[%s - %d], %s\n", reg.operation, GET_RAW_REG(BASE_BITNESS, RBP), param->first_child->variable_offset, reg.name);
         else
 #else
@@ -658,9 +658,17 @@ static int _generate_if(const tree_t* node, FILE* output, const char* func) {
 }
 
 /* https://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/ */
+/* https://gist.github.com/GabriOliv/a9411fa771a1e5d94105cb05cbaebd21 */
 /* https://math.hws.edu/eck/cs220/f22/registers.html */
 static int _generate_syscall(const tree_t* node, FILE* output, const char* func) {
-    static const int args_regs64[] = { RAX, RDI, RSI, RDX, R10, R8, R9 };
+    static const int args_regs[] = { 
+#if (BASE_BITNESS == BIT64)
+        RAX, RDI, RSI, RDX, R10, R8, R9
+#else
+        RAX, RBX, RCX, RDX, RSI, RDI, RBP
+#endif
+    };
+
     fprintf(output, "\n ; --------------- system call --------------- \n");
 
     int arg_index = 0;
@@ -669,12 +677,12 @@ static int _generate_syscall(const tree_t* node, FILE* output, const char* func)
     while (args) {
         regs_t reg;
         int is_ptr = (get_array_info((char*)node->first_child->token->value, func, NULL) && !(node->first_child->token->ro || node->first_child->token->glob));
-        get_reg(&reg, get_variable_size(args->token) / 8, args_regs64[arg_index++], is_ptr);
+        get_reg(&reg, get_variable_size(args->token) / 8, args_regs[arg_index++], is_ptr);
         iprintf(output, "%s%s%s, %s\n", reg.move, reg.operation, reg.name, GET_ASMVAR(args));
         args = args->next_sibling;
     }
 
-    iprintf(output, "syscall\n");
+    iprintf(output, "%s\n", SYSCALL);
     fprintf(output, " ; --------------- \n");
 
     return 1;

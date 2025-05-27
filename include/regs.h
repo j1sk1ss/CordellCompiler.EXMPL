@@ -25,6 +25,13 @@ static inline const char* __get_operation_type__(int size) {
 #define BIT32           32
 #define BIT64           64
 #define BASE_BITNESS    BIT64
+
+#if (BASE_BITNESS == BIT64)
+    #define SYSCALL "syscall"
+#else
+    #define SYSCALL "int 0x80"
+#endif
+
 enum {
     RAX, RBX, RCX, RDX, RSI, RDI, RBP, RSP, R8, R9, R10
 };
