@@ -20,6 +20,6 @@ Params:
 Return 1 if generation success.
 Return 0 if something goes wrong.
 */
-int generate_asm(tree_t* root, FILE* output);
+int generate_asm(const tree_t* root, FILE* output);
 
 #endif

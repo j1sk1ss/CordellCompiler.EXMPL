@@ -22,7 +22,9 @@ static inline const char* __get_operation_type__(int size) {
     }
 }
 
-#define BASE_BITNESS    64
+#define BIT32           32
+#define BIT64           64
+#define BASE_BITNESS    BIT64
 enum {
     RAX, RBX, RCX, RDX, RSI, RDI, RBP, RSP, R8, R9, R10
 };
