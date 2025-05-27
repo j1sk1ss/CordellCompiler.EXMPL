@@ -1,7 +1,6 @@
 function strlen ptr char string; {
-    char brk = 0;
     long index = 0;
-    while string[index] != brk; {
+    while string[index] != 0; {
         index = index + 1;
     }
 
@@ -40,14 +39,15 @@ function atoi ptr char buffer; int bsize; {
 
 function itoa ptr char buffer; long buffer_size; int num; {
     int index = 0;
-    int isNegative = 0;
+    int is_negative = 0;
     if num == 0; {
         buffer[0] = '0';
+        buffer[1] = 0;
         return 1;
     }
 
     if num < 0; {
-        isNegative = 1;
+        is_negative = 1;
         num = num * -1;
     }
 
@@ -59,8 +59,8 @@ function itoa ptr char buffer; long buffer_size; int num; {
         num = num / 10;
     }
 
-    if isNegative == 1; {
-        buffer[0] = 'n';
+    if is_negative; {
+        buffer[0] = 45;
     }
 
     return index;
