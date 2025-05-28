@@ -24,7 +24,7 @@ static inline const char* __get_operation_type__(int size) {
 
 #define BIT32           32
 #define BIT64           64
-#define BASE_BITNESS    BIT64
+#define BASE_BITNESS    BIT32
 
 #if (BASE_BITNESS == BIT64)
     #define SYSCALL "syscall"
@@ -65,7 +65,7 @@ static inline const char* __get_register__(int size, int pos) {
 
 static inline char* format_from_stack(int offset) {
     static char stack_buff[64] = { 0 };
-    snprintf(stack_buff, sizeof(stack_buff), "[%s - %d]", GET_RAW_REG(BASE_BITNESS, RBP), ALIGN_TO(offset, 8));
+    snprintf(stack_buff, sizeof(stack_buff), "[%s - %d]", GET_RAW_REG(BASE_BITNESS, RBP), ALIGN_TO(offset, 4));
     return stack_buff;
 }
 

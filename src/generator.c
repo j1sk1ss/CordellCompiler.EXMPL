@@ -367,16 +367,12 @@ static int _generate_expression(const tree_t* node, FILE* output, const char* fu
             int is_ptr = (get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob));
             get_reg(&reg, variable_type / 8, RAX, is_ptr);
 
-            iprintf(
-                output, "%s %s %s, %s ; int %s \n",
-                reg.move, reg.operation, reg.name, GET_ASMVAR(arg), arg->token->value
-            );
-
+            iprintf(output, "%s%s%s, %s ; int %s \n", reg.move, reg.operation, reg.name, GET_ASMVAR(arg), arg->token->value);
             iprintf(output, "push %s\n", GET_RAW_REG(BASE_BITNESS, RAX));
         }
 
         iprintf(output, "call __%s__\n", func_name_node->token->value);
-        if (stack_args > 0) iprintf(output, "add %s, %d\n", GET_RAW_REG(BASE_BITNESS, RSP), stack_args * 8);
+        if (stack_args > 0) iprintf(output, "add %s, %d\n", GET_RAW_REG(BASE_BITNESS, RSP), stack_args * 4);
         fprintf(output, " ; --------------- \n");
     }
     else if (node->token->t_type == EXIT_TOKEN) {
@@ -406,13 +402,13 @@ static int _get_variables_size(tree_t* head, const char* func) {
         if (expression->token->t_type == ARRAY_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->next_sibling->next_sibling->token->value, func, &arr_info)) {
-                size +=  ALIGN_TO(arr_info.size * arr_info.el_size, 8);
+                size +=  ALIGN_TO(arr_info.size * arr_info.el_size, 4);
             }
         }
         else if (expression->token->t_type == STR_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->token->value, func, &arr_info)) {
-                size += ALIGN_TO(arr_info.size * arr_info.el_size, 8);
+                size += ALIGN_TO(arr_info.size * arr_info.el_size, 4);
             }
         }
         else if (
@@ -421,7 +417,7 @@ static int _get_variables_size(tree_t* head, const char* func) {
             expression->token->t_type == IF_TOKEN
         ) size += _get_variables_size(expression->first_child->next_sibling->first_child, func);
         else if (expression->token->t_type == CASE_TOKEN) size += _get_variables_size(expression->first_child->first_child, func);
-        else size += ALIGN_TO(expression->variable_size, 8);
+        else size += ALIGN_TO(expression->variable_size, 4);
     }
 
     return size;
@@ -480,7 +476,7 @@ static int _generate_function(const tree_t* node, FILE* output, const char* func
     Also we remember input variables.
     */
     int local_vars_size = _get_variables_size(params_node->first_child, (char*)name_node->token->value) + _get_variables_size(body_node->first_child, (char*)name_node->token->value);
-    iprintf(output, "sub %s, %d\n", GET_RAW_REG(BASE_BITNESS, RSP), ALIGN_TO(local_vars_size, 8));
+    iprintf(output, "sub %s, %d\n", GET_RAW_REG(BASE_BITNESS, RSP), ALIGN_TO(local_vars_size, 4));
 
     /*
     Loading input args to stack.
@@ -534,7 +530,7 @@ static int _generate_while(const tree_t* node, FILE* output, const char* func) {
     _current_depth += 1;
 
     _generate_expression(condition, output, func);
-    iprintf(output, "cmp rax, 0\n");
+    iprintf(output, "cmp %s, 0\n", GET_RAW_REG(BASE_BITNESS, RAX));
     iprintf(output, "je __end_while_%d__\n", current_label);
 
     while (body) {
@@ -700,7 +696,7 @@ static int _generate_assignment(const tree_t* node, FILE* output, const char* fu
     Pointer assignment. Also we check if this variable is ptr, array or etc.
     Markers are 64 bits size and first child.
     */
-    if ((get_variable_size(left->token) == 64) && left->first_child) {
+    if ((get_variable_size(left->token) == 32) && left->first_child) {
         /*
         If left is array or string (array too) with elem size info.
         */
@@ -713,7 +709,7 @@ static int _generate_assignment(const tree_t* node, FILE* output, const char* fu
         */
         _generate_expression(left->first_child, output, func);
         if (arr_info.el_size > 1) iprintf(output, "imul %s, %d\n", GET_RAW_REG(BASE_BITNESS, RAX), arr_info.el_size);
-        iprintf(output, "%s %s, %s\n", !is_ptr ? "mov" : "lea", GET_REG(node, 1), GET_ASMVAR(left));
+        iprintf(output, "%s %s, %s\n", !is_ptr ? "mov" : "lea", GET_RAW_REG(BASE_BITNESS, RBX), GET_ASMVAR(left));
 
         iprintf(output, "add %s, %s\n", GET_RAW_REG(BASE_BITNESS, RAX), GET_RAW_REG(BASE_BITNESS, RBX));
         iprintf(output, "push %s\n", GET_RAW_REG(BASE_BITNESS, RAX));

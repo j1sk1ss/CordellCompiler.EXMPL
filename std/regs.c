@@ -20,6 +20,6 @@ static const char* _types[] = { "", " byte ", " word ", "", " dword ", "", "", "
 int get_reg(regs_t* regs, int size, int reg, int ptr) {
     regs->name      = _regs_table[reg][size];
     regs->operation = _types[size];
-    regs->move      = (ptr && size == 8) ? "lea" : "mov";
+    regs->move      = (ptr && size == (BASE_BITNESS / 8)) ? "lea" : "mov";
     return 1;
 }

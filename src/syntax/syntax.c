@@ -291,11 +291,10 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
     }
     
     if ((name_token->ptr || get_variable_type(name_token) != 1) && !decl_node->token->ro && !decl_node->token->glob) {
-        int var_size = 8;
+        int var_size = 4;
         if (!name_token->ptr) {
             if (type_token->t_type == CHAR_TYPE_TOKEN) var_size = 1;
             else if (type_token->t_type == SHORT_TYPE_TOKEN) var_size = 2;
-            else if (type_token->t_type == INT_TYPE_TOKEN) var_size = 4;
         }
 
         decl_node->variable_offset = add_variable_info((char*)name_node->token->value, var_size, _current_function_name);
@@ -315,7 +314,7 @@ static tree_t* _parse_variable_declaration(token_t** curr) {
 
     if (type_token->t_type == STR_TYPE_TOKEN && !decl_node->token->ro && !decl_node->token->glob) {
         int str_size = str_strlen((char*)value_node->token->value);
-        decl_node->variable_size = ALIGN_TO(str_size, 8);
+        decl_node->variable_size = ALIGN_TO(str_size, 4);
         decl_node->variable_offset = add_variable_info((char*)name_node->token->value, decl_node->variable_size, _current_function_name);
         add_array_info((char*)name_node->token->value, _current_function_name, 1, decl_node->variable_size);
         _fill_variable(name_node);
@@ -352,7 +351,6 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     int el_size = 1;
     if (elem_size_token->t_type == SHORT_TYPE_TOKEN) el_size = 2;
     else if (elem_size_token->t_type == INT_TYPE_TOKEN) el_size = 4;
-    else if (elem_size_token->t_type == LONG_TYPE_TOKEN) el_size = 8;
     
     tree_t* elem_size_node = create_tree_node(elem_size_token);
     if (!elem_size_node) {
@@ -375,7 +373,7 @@ static tree_t* _parse_array_declaration(token_t** curr) {
 
     add_array_info((char*)name_token->value, _current_function_name, el_size, array_size);
     if (!arr_token->ro && !arr_token->glob) {
-        arr_node->variable_size = ALIGN_TO(array_size * el_size, 8);
+        arr_node->variable_size = ALIGN_TO(array_size * el_size, 4);
         name_node->variable_size = arr_node->variable_size;
         arr_node->variable_offset = add_variable_info((char*)name_token->value, arr_node->variable_size, _current_function_name);
     }
