@@ -207,14 +207,13 @@ static int _generate_expression(const tree_t* node, FILE* output, const char* fu
         }
     }
     else if (node->token->t_type == ARR_VARIABLE_TOKEN || node->token->t_type == STR_VARIABLE_TOKEN) {
-        if (!node->first_child) iprintf(output, "mov %s, __%s__\n", GET_RAW_REG(BASE_BITNESS, RAX), node->token->value);
+        regs_t reg;
+        get_reg(&reg, 8, RAX, !(node->token->ro || node->token->glob));
+        if (!node->first_child) iprintf(output, "%s %s, %s\n", reg.move, GET_RAW_REG(BASE_BITNESS, RAX), GET_ASMVAR(node));
         else {
             array_info_t arr_info = { .el_size = 1 };
             get_array_info((char*)node->token->value, func, &arr_info);
             _generate_expression(node->first_child, output, func);
-
-            regs_t reg;
-            get_reg(&reg, 8, RAX, !(node->token->ro || node->token->glob));
 
             if (arr_info.el_size > 1) iprintf(output, "imul %s, %d\n", GET_RAW_REG(BASE_BITNESS, RAX), arr_info.el_size);
             iprintf(output, "%s %s, %s\n", reg.move, GET_RAW_REG(BASE_BITNESS, RBX), GET_ASMVAR(node));
@@ -346,31 +345,14 @@ static int _generate_expression(const tree_t* node, FILE* output, const char* fu
 #if (BASE_BITNESS == BIT64)
         static const int args_regs[] = { RDI, RSI, RDX, RCX, R8, R9 };
         for (pushed_args = 0; pushed_args < MIN(arg_count, 6); pushed_args++) {
-            tree_t* arg = args[pushed_args];
-
-            regs_t reg;
-            int is_ptr = (get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob));
-            get_reg(&reg, get_variable_size(arg->token) / 8, args_regs[pushed_args], is_ptr);
-            iprintf(
-                output, "%s%s%s, %s ; int %s \n",
-                reg.move, reg.operation, reg.name, GET_ASMVAR(arg), arg->token->value
-            );
+            _generate_expression(args[pushed_args], output, func);
+            iprintf(output, "mov %s, %s \n", GET_RAW_REG(BASE_BITNESS, args_regs[pushed_args]), GET_RAW_REG(BASE_BITNESS, RAX));
         }
 #endif
 
-        int stack_args = arg_count - pushed_args;
-        while (pushed_args < arg_count) {
-            regs_t reg;
-            tree_t* arg = args[pushed_args++];
-            int variable_type = get_variable_size(arg->token);
-            int is_ptr = (get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob));
-            get_reg(&reg, variable_type / 8, RAX, is_ptr);
-
-            iprintf(
-                output, "%s %s %s, %s ; int %s \n",
-                reg.move, reg.operation, reg.name, GET_ASMVAR(arg), arg->token->value
-            );
-
+        int stack_args = arg_count - pushed_args - 1;
+        while (stack_args >= 0) {
+            _generate_expression(args[stack_args--], output, func);
             iprintf(output, "push %s\n", GET_RAW_REG(BASE_BITNESS, RAX));
         }
 

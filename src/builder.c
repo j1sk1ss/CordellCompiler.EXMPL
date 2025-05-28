@@ -6,7 +6,8 @@ static int _print_parse_tree(tree_t* node, int depth) {
     for (int i = 0; i < depth; i++) printf("\t");
     if (node->token) printf(
         "[%s] (t=%d, size=%i, is_ptr=%i, off=%i, ro=%i glob=%i)\n", 
-        (char*)node->token->value, node->token->t_type, node->variable_size, node->token->ptr, node->variable_offset, node->token->ro, node->token->glob
+        (char*)node->token->value, node->token->t_type, node->variable_size, node->token->ptr, 
+        node->variable_offset, node->token->ro, node->token->glob
     );
     else printf("{ scope }\n");
     
@@ -78,26 +79,27 @@ static int _add_object(char* path) {
 }
 
 static int _compile_object(object_t* obj) {
-    print_log("String optimization of [%s]...", obj->path);
-    string_optimization(obj->ast);
+    int str_opt_res = string_optimization(obj->ast);
+    print_log("String optimization of [%s]... [%s (%i)]", obj->path, str_opt_res ? "OK" : "ERROR", str_opt_res);
 
-    print_log("Assign and muldiv optimization...");
+    int assign_opt_res = 0;
     int is_fold_vars = 0;
     do {
-        assign_optimization(obj->ast);
+        assign_opt_res = assign_optimization(obj->ast);
         is_fold_vars = muldiv_optimization(obj->ast);
     } while (is_fold_vars);
+    print_log("Assign and muldiv optimization... [Code: %i/%i]", assign_opt_res, is_fold_vars);
     
     unload_varmap(obj->ast_varinfo);
 
-    print_log("Statement optimization...");
-    stmt_optimization(obj->ast);
-    
-    print_log("Varuse optimization...");
-    varuse_optimization(obj->ast);
+    int stmt_opt_res = stmt_optimization(obj->ast);
+    print_log("Statement optimization... [%s (%i)]", stmt_opt_res ? "OK" : "ERROR", stmt_opt_res);
 
-    print_log("Offset recalculation...");
-    offset_optimization(obj->ast);
+    int varuse_opt_res = varuse_optimization(obj->ast);
+    print_log("Var usage optimization... [%s (%i)]", varuse_opt_res ? "OK" : "ERROR", varuse_opt_res);
+
+    int offset_recalc_res = offset_optimization(obj->ast);
+    print_log("Offset recalculation... [%s (%i)]", offset_recalc_res ? "OK" : "ERROR", offset_recalc_res);
 
     char save_path[128] = { 0 };
     sprintf(save_path, "%s.asm", obj->path);
@@ -164,6 +166,7 @@ int builder_compile() {
     for (int i = _current_file - 1; i >= 0; i--) {
         char delete_command[128] = { 0 };
         if (!_params.save_asm) sprintf(delete_command, "rm %s.asm %s.asm.o", _files[i].path, _files[i].path);
+        else sprintf(delete_command, "rm %s.asm.o", _files[i].path);
 
         print_debug("CLEANUP: system(%s)", delete_command);
         system(delete_command);
