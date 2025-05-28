@@ -11,6 +11,10 @@ MEM_LOGS ?= 0
 LOGGING_LOGS ?= 1
 SPECIAL_LOGS ?= 1
 
+# Memory flags
+AVALIABLE_MEMORY ?= 300000
+CFLAGS += -DALLOC_BUFFER_SIZE=$(AVALIABLE_MEMORY)
+
 ########
 # Logger flags
 ifeq ($(ERROR_LOGS), 1)

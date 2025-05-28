@@ -6,9 +6,11 @@
 #include "str.h"
 
 #define ALIGNMENT           8
-#define ALLOC_BUFFER_SIZE   250000
+// #define ALLOC_BUFFER_SIZE   250000
 #define MM_BLOCK_MAGIC      0xC07DEL
 
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+#define MAX(a,b) (((a) > (b)) ? (a) : (b))
 
 typedef struct mm_block {
     unsigned int magic;

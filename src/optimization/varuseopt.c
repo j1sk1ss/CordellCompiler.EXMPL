@@ -12,7 +12,13 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             continue;
         }
         
+        if (t->token->ptr) {
+            _find_usage(t, varname, status, local, 0);
+        }
+        
         switch (t->token->t_type) {
+            case STR_TYPE_TOKEN:
+            case LONG_TYPE_TOKEN:
             case INT_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN: 
             case SHORT_TYPE_TOKEN: _find_usage(t, varname, status, local, 1); continue;
@@ -39,12 +45,11 @@ static int _find_usage(tree_t* root, const char* varname, int* status, int local
             case BITMOVE_LEFT_TOKEN:
             case BITMOVE_RIGHT_TOKEN: _find_usage(t, varname, status, local, 0); continue;
             case CASE_TOKEN:
-            case STR_TYPE_TOKEN:
             case ARRAY_TYPE_TOKEN: _find_usage(t, varname, status, local, 0); break;
             case FUNC_TOKEN: if (!local) _find_usage(t->first_child->next_sibling->next_sibling, varname, status, local, 0); continue;
             default: break;
         }
-
+        
         if (t->token->t_type == STRING_VALUE_TOKEN || t->token->t_type == CHAR_VALUE_TOKEN) continue;
         if (!str_strncmp(varname, (char*)t->token->value, TOKEN_MAX_SIZE)) {
             *status = 1;
@@ -64,13 +69,15 @@ static int _find_decl(tree_t* root, tree_t* entry, int* delete) {
         }
 
         switch (t->token->t_type) {
+            case CASE_TOKEN:   _find_decl(t, entry, delete); break; 
+            case SWITCH_TOKEN: _find_decl(t->first_child->next_sibling, entry, delete); continue; 
             case IF_TOKEN:
             case WHILE_TOKEN:  _find_decl(t->first_child->next_sibling, entry, delete); continue;
             case FUNC_TOKEN:   _find_decl(t->first_child->next_sibling->next_sibling, entry, delete); continue;
             default: break;
         }
 
-        if (is_variable(t->token->t_type)) {
+        if (is_variable_decl(t->token->t_type)) {
             int is_used = 0;
             tree_t* name_node = t->first_child;
             if (t->token->ro || t->token->glob) _find_usage(entry, (char*)name_node->token->value, &is_used, 0, 0);
@@ -89,6 +96,7 @@ static int _find_decl(tree_t* root, tree_t* entry, int* delete) {
 
 
 int varuse_optimization(tree_t* root) {
+    if (!root) return 0;
     int delete = 0;
     do {
         delete = 0;

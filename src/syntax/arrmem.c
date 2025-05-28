@@ -3,7 +3,6 @@
 
 static array_info_t* _arrs_h = NULL;
 
-
 array_info_t* get_arrmap_head() {
     return _arrs_h;
 }

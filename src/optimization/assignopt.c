@@ -44,6 +44,7 @@ static int _change_decl(tree_t* root, char* varname, int value, int local, int o
         
         switch (t->token->t_type) {
             case CASE_TOKEN: _change_decl(t, varname, value, local, 0); break;
+            case LONG_TYPE_TOKEN:
             case INT_TYPE_TOKEN:
             case CHAR_TYPE_TOKEN: 
             case SHORT_TYPE_TOKEN: _change_decl(t, varname, value, local, 1); continue;
@@ -99,7 +100,7 @@ static int _find_decl(tree_t* root, tree_t* entry, int* change) {
             default: break;
         }
 
-        if (is_variable(t->token->t_type) && t->token->t_type != STR_TYPE_TOKEN && t->token->t_type != ARRAY_TYPE_TOKEN) {
+        if (is_variable_decl(t->token->t_type) && t->token->t_type != STR_TYPE_TOKEN && t->token->t_type != ARRAY_TYPE_TOKEN) {
             int is_changed = 0;
             tree_t* name_node = t->first_child;
             if (t->token->ro || t->token->glob) _find_assign(entry, (char*)name_node->token->value, &is_changed, 0);
@@ -121,6 +122,7 @@ static int _find_decl(tree_t* root, tree_t* entry, int* change) {
 
 
 int assign_optimization(tree_t* root) {
+    if (!root) return 0;
     int is_changed = 0;
     _find_decl(root, root, &is_changed);
     return is_changed;

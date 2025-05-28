@@ -1,10 +1,21 @@
-from "string.cpl" import prints;
-start
-    str string = "Hello there!";
-    string[0] = 'W';
-    string[3] = 'K';
-    prints string;
+from "string.cpl" import itoa reverse;
+from "memory.cpl" import mm_init malloc free memset;
+from "stdio.cpl" import gets prints;
 
-    arr stringSec 14 char = 10 'H' 'e' 'l' 'l' 'o' 10 't' 'h' 'e' 'r' 'e' '!' 0;
-    prints stringSec;
-exit a;
+start
+    ptr char input = malloc(36);
+    memset(input, 0, 35);
+    gets(input, 35);
+    prints(input);
+
+    ptr char buffer = malloc(9);
+    memset(buffer, 0, 8);
+
+    int digit_len = itoa(buffer, 8, 1234567);
+    reverse(buffer, digit_len);
+
+    prints(buffer);
+    prints(input);
+    free(buffer);
+    free(input);
+exit 0;

@@ -1,0 +1,30 @@
+from "cpllib/stdio.cpl" import open close fread fwrite gets prints;
+from "cpllib/memory.cpl" import alloc_arena free_arena memset;
+
+start
+    ptr char path = alloc_arena(100);
+    memset(path, 0, 100);
+
+    prints("Input file path: ");
+    int path_len = gets(path, 100);
+    path[path_len - 1] = 0;
+
+    int fd = open(path, 66, 438);
+    if fd > 0; {
+        ptr char content = alloc_arena(100);
+        memset(content, 0, 100);
+
+        prints("Input file text: ");
+        int content_len = gets(content, 100);
+        fwrite(fd, content, content_len - 1);
+
+        prints("File content updated!");
+        close(fd);
+    }
+    else {
+        prints("Cant open file by provided path: ");
+        prints(path);
+    }
+
+    free_arena();
+exit 0;

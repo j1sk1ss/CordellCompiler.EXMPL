@@ -1,4 +1,4 @@
-from "string.cpl" import prints gets strlen;
+from "string.cpl" import prints gets itoa;
 
 :
 Brainfuck interpriter on CPL
@@ -10,14 +10,15 @@ Or tick-tac-toe
 --->--->>>>->->->>>>>-->>>>>>>>>>>>>>>>>>+>>++++++++++[  <<++[    --<+<<+<<+>>>>[      >[<->>+++>>[-]+++<<<+[<++>>+<--]]+>+++++[>>+++++++++<<-]      >>++++.[-]>>+[<<<<+>>+>>-]<<<<<<[>+<-]<<    ]++++++++++.[-]>++  ]-->>[-->[-]>]<<[    >>--[      -[        -[          -----[>+>+++++++<<+]-->>-.----->,[<->-]<[[<]+[->>]<-]<[<<,[-]]>>>>        ]>      ]<[        >-[+<+++]+<+++[+[---->]+<<<<<<[>>]<[-]]        >[<+[---->]++[<]<[>]>[[>]+>+++++++++<<-[<]]]>[>>>>]      ]<[        -[[>+>+<<-]>[<+>-]++>+>>]<[<<++[-->>[-]]>[[-]>[<<+>>-]>]]      ]<[        [[<<]-[>>]<+<-]>[-<+]<<[<<]-<[>[+>>]>[>]>[-]]        >[[+>>]<-->>[>]+>>>]      ]<[        -[          --[+<<<<--[+>[-]>[<<+>+>-]<<[>>+<<-]]++[>]]          <<[>+>+<<-]>--[<+>-]++>>>        ]<[<<<[-]+++>[-]>[<+>>>+<<-]+>>>]      ]<[        +[[<]<<[<<]-<->>+>[>>]>[>]<-]+[-<+]<++[[>+<-]++<[<<->>+]<++]<        <<<<<<      +> > >+> > >+[        <<<               ->+>+>+[        <<<<<<<   +>->+> > >->->+[        <<<<<         ->+>+> >+>+[        <<<<            ->->+>->+[        <<<<<<<<+>-> >+> > >->+>+[        <<<<<         -> >+> >->+[        <<<<            +>->+> >+]]]]]]]        +++[[>+<-]<+++]--->>[-[<->-]<++>>]++[[<->-]>>]>[>]      ]<    ]  ]<]
 :
 
-start
-    prints "Brainfuck interpriter! Input code ";
+glob arr tape 30000 char =;
+glob arr code 10000 char =;
+glob arr bracketmap 10000 int =;
+glob arr stack 10000 int =;
 
-    glob arr code 10000 char =;
-    int codelength = gets code 10000;
-    
-    glob arr bracketmap 10000 int =;
-    glob arr stack 10000 int =;
+start
+    prints("Brainfuck interpriter! Input code: ");
+
+    int codelength = gets(code, 10000);
     int stackptr = 0;
     int pos = 0;
 
@@ -35,29 +36,24 @@ start
         char c = code[pos];
         int handled = 0;
 
-        if c == openBracket; {
-            stack[stackptr] = pos;
-            stackptr = stackptr + 1;
-            handled = 1;
-        }
-        
-        if handled == 0; {
-            if c == closedBracket; {
+        switch c; {
+            case openBracket; {
+                stack[stackptr] = pos;
+                stackptr = stackptr + 1;
+            }
+            case closedBracket; {
                 if stackptr > 0; {
                     stackptr = stackptr - 1;
                     int matchpos = stack[stackptr];
                     bracketmap[pos] = matchpos;
                     bracketmap[matchpos] = pos;
                 }
-
-                handled = 1;
             }
         }
         
         pos = pos + 1;
     }
     
-    arr tape 30000 char =;
     int pointer = 0;
     int pc = 0;
 
@@ -80,14 +76,14 @@ start
                 pc = pc + 1;
             }
             case dot; {
-                arr fbuf 2 char = 10 0;
+                arr fbuf 3 char = ' ' 0;
                 fbuf[0] = tape[pointer];
-                prints fbuf;
+                prints(fbuf);
                 pc = pc + 1;
             }
             case comma; {
-                arr sbuf 2 char = 10 0;
-                gets sbuf 2;
+                arr sbuf 3 char = ' ' ' ' 0;
+                gets(sbuf, 2);
                 tape[pointer] = sbuf[0];
                 pc = pc + 1;
             }
@@ -113,4 +109,4 @@ start
         }
     }
 
-exit 1;
+exit 0;

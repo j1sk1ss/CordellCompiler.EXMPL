@@ -4,23 +4,26 @@
 #pragma region [Misc]
 
     static char_type_t _get_char_type(unsigned char ch) {
-        if (isalpha(ch)) return CHAR_ALPHA;
+        if (isalpha(ch) || ch == '_') return CHAR_ALPHA;
         else if (str_isdigit(ch) || ch == '-') return CHAR_DIGIT;
         else if (ch == '"')  return CHAR_QUOTE;
         else if (ch == '\'') return CHAR_SING_QUOTE;
         else if (ch == '\n') return CHAR_NEWLINE;
         else if (ch == ' ')  return CHAR_SPACE;
         else if (ch == ';')  return CHAR_DELIMITER;
+        else if (ch == ',')  return CHAR_COMMA;
         else if (ch == ':')  return CHAR_COMMENT;
-        else if (ch == '[')  return CHAR_OPEN_INDEX;
-        else if (ch == ']')  return CHAR_CLOSE_INDEX;
+        else if (
+            ch == '(' || ch == ')' || 
+            ch == '[' || ch == ']' || 
+            ch == '{' || ch == '}'
+        ) return CHAR_BRACKET;
         return CHAR_OTHER;
     }
 
     static int _add_token(token_t** head, token_t** tail, token_type_t type, const unsigned char* buffer, size_t len, int line) {
         token_t* new_token = create_token(type, buffer, len, line);
         if (!new_token) return 0;
-        
         if (!*head) *head = new_token;
         else (*tail)->next = new_token;
         *tail = new_token; 
@@ -91,26 +94,25 @@ token_t* tokenize(int fd) {
             if (comment_open && !quotes_open) continue;
             if ((ct != CHAR_SPACE && ct != CHAR_NEWLINE) || quotes_open || sing_quotes_open) {
                 token_type_t new_type = UNKNOWN_STRING_TOKEN;
-
-                /*
-                If current type is UNKNOWS_STRING, we know, that this can be variable name.
-                */
-                //if (current_type != UNKNOWN_STRING_TOKEN) {
-                    if (quotes_open) new_type = STRING_VALUE_TOKEN;
-                    else if (sing_quotes_open) new_type = CHAR_VALUE_TOKEN;
-                    else {
-                        if (ct == CHAR_ALPHA)            new_type = UNKNOWN_STRING_TOKEN;
-                        else if (ct == CHAR_DIGIT)       new_type = UNKNOWN_NUMERIC_TOKEN;
-                        else if (ct == CHAR_DELIMITER)   new_type = DELIMITER_TOKEN;
-                        else if (ct == CHAR_OPEN_INDEX)  new_type = OPEN_INDEX_TOKEN;
-                        else if (ct == CHAR_CLOSE_INDEX) new_type = CLOSE_INDEX_TOKEN;
-                        else new_type = UNKNOWN_STRING_TOKEN;
-                    }
-                //}
+                if (quotes_open) new_type = STRING_VALUE_TOKEN;
+                else if (sing_quotes_open) new_type = CHAR_VALUE_TOKEN;
+                else {
+                    if (ct == CHAR_ALPHA)          new_type = UNKNOWN_STRING_TOKEN;
+                    else if (ct == CHAR_DIGIT)     new_type = UNKNOWN_NUMERIC_TOKEN;
+                    else if (ct == CHAR_DELIMITER) new_type = DELIMITER_TOKEN;
+                    else if (ct == CHAR_COMMA)     new_type = COMMA_TOKEN;
+                    else if (ct == CHAR_BRACKET)   new_type = UNKNOWN_CHAR_VALUE;
+                    else new_type = UNKNOWN_CHAR_VALUE;
+                }
                 
                 if (in_token) {
-                    if (current_type != new_type && new_type != STRING_VALUE_TOKEN) {
-                        if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) goto error;
+                    if ((current_type != new_type ||
+                        (current_type == UNKNOWN_CHAR_VALUE && new_type == UNKNOWN_CHAR_VALUE && ct == CHAR_BRACKET))) {
+                        if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) {
+                            print_error("Can't add token! type=%i token_buf=[%s], token_len=%i", current_type, token_buf, token_len);
+                            goto error;
+                        }
+
                         in_token = 0;
                     }
                 }
@@ -121,23 +123,37 @@ token_t* tokenize(int fd) {
                     in_token = 1;
                 }
                 
-                if (token_len >= TOKEN_MAX_SIZE) goto error;
+                if (token_len >= TOKEN_MAX_SIZE) {
+                    print_error("Token too large!");
+                    goto error;
+                }
+
                 token_buf[token_len++] = ch;
             } 
             else {
-                // current_type = UNKNOWN_COMMAND_TOKEN;
                 if (in_token) {
                     if (ct == CHAR_NEWLINE) line++;
-                    if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) goto error;
+                    if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) {
+                        print_error("Can't add token! type=%i token_buf=[%s], token_len=%i", current_type, token_buf, token_len);
+                        goto error;
+                    }
+
                     in_token = 0;
                 }
             }
         }
     }
 
-    if (bytes_read < 0) goto error;
+    if (bytes_read < 0) {
+        print_error("Invalid read size!");
+        goto error;
+    }
+
     if (in_token) {
-        if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) goto error;
+        if (!_add_token(&head, &tail, current_type, token_buf, token_len, line)) {
+            print_error("Can't add token! type=%i token_buf=[%s], token_len=%i", current_type, token_buf, token_len);
+            goto error;
+        }
     }
     
     return head;

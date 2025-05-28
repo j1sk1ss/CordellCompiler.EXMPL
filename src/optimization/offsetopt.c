@@ -19,6 +19,7 @@ static int _recalc_offs(tree_t* root, const char* func) {
             break;
             case ARR_VARIABLE_TOKEN:
             case STR_VARIABLE_TOKEN:
+            case LONG_VARIABLE_TOKEN:
             case INT_VARIABLE_TOKEN:
             case SHORT_VARIABLE_TOKEN:
             case CHAR_VARIABLE_TOKEN:
@@ -39,6 +40,7 @@ static int _recalc_offs(tree_t* root, const char* func) {
 
 
 int offset_optimization(tree_t* root) {
+    if (!root) return 0;
     _recalc_offs(root, NULL);
     return 1;
 }
