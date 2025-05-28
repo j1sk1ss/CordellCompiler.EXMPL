@@ -4,7 +4,6 @@
 #include "str.h"
 #include "logg.h"
 #include "token.h"
-#include "syntax.h"
 
 static const char* regs[4][8] = {
     { "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp" },
@@ -28,8 +27,10 @@ static inline const char* __get_operation_type__(int size) {
 
 #if (BASE_BITNESS == BIT64)
     #define SYSCALL "syscall"
+    #define ALIGN(x) ((x + 7) & ~(7))
 #else
     #define SYSCALL "int 0x80"
+    #define ALIGN(x) ((x + 3) & ~(3))
 #endif
 
 enum {
@@ -65,7 +66,7 @@ static inline const char* __get_register__(int size, int pos) {
 
 static inline char* format_from_stack(int offset) {
     static char stack_buff[64] = { 0 };
-    snprintf(stack_buff, sizeof(stack_buff), "[%s - %d]", GET_RAW_REG(BASE_BITNESS, RBP), ALIGN_TO(offset, 8));
+    snprintf(stack_buff, sizeof(stack_buff), "[%s - %d]", GET_RAW_REG(BASE_BITNESS, RBP), ALIGN(offset));
     return stack_buff;
 }
 

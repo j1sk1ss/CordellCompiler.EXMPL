@@ -1,8 +1,13 @@
 from "string.cpl" import strlen;
 
-function prints ptr char string; {
+function puts ptr char string; {
     long strSize = strlen(string);
     return syscall(1, 1, string, strSize);
+}
+
+function putc char c; {
+    arr tmp 2 char = c 0;
+    return syscall(1, 1, tmp, 2);
 }
 
 function gets ptr char buffer; long size; {

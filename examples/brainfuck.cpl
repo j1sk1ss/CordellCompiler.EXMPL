@@ -1,4 +1,4 @@
-from "string.cpl" import prints gets itoa;
+from "string.cpl" import puts gets itoa;
 
 :
 Brainfuck interpriter on CPL
@@ -16,7 +16,7 @@ glob arr bracketmap 10000 int =;
 glob arr stack 10000 int =;
 
 start
-    prints("Brainfuck interpriter! Input code: ");
+    puts("Brainfuck interpriter! Input code: ");
 
     int codelength = gets(code, 10000);
     int stackptr = 0;
@@ -78,7 +78,7 @@ start
             case dot; {
                 arr fbuf 3 char = ' ' 0;
                 fbuf[0] = tape[pointer];
-                prints(fbuf);
+                puts(fbuf);
                 pc = pc + 1;
             }
             case comma; {

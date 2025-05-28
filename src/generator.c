@@ -22,13 +22,11 @@ static int _generate_raw(token_type_t t_type, const tree_t* entry, FILE* output)
             const tree_t* size   = entry->first_child;
             const tree_t* t_type = size->next_sibling;
             const tree_t* name   = t_type->next_sibling;
-
-            char* directive = "resb";
-            if (t_type->token->t_type == SHORT_TYPE_TOKEN)      directive = "resw";
-            else if (t_type->token->t_type == INT_TYPE_TOKEN)   directive = "resd";
-            else if (t_type->token->t_type == LONG_TYPE_TOKEN)  directive = "resq";
-
             if (!name->next_sibling) {
+                char* directive = "resb";
+                if (t_type->token->t_type == SHORT_TYPE_TOKEN)     directive = "resw";
+                else if (t_type->token->t_type == INT_TYPE_TOKEN)  directive = "resd";
+                else if (t_type->token->t_type == LONG_TYPE_TOKEN) directive = "resq";
                 iprintf(output, "__%s__: %s %s\n", name->token->value, directive, size->token->value);
             }
         }
@@ -50,13 +48,11 @@ static int _generate_init(token_type_t t_type, const tree_t* entry, FILE* output
             const tree_t* size   = entry->first_child;
             const tree_t* t_type = size->next_sibling;
             const tree_t* name   = t_type->next_sibling;
-
-            char* directive = "db";
-            if (t_type->token->t_type == SHORT_TYPE_TOKEN)      directive = "dw";
-            else if (t_type->token->t_type == INT_TYPE_TOKEN)   directive = "dd";
-            else if (t_type->token->t_type == LONG_TYPE_TOKEN)  directive = "dq";
-
             if (name->next_sibling) {
+                char* directive = "db";
+                if (t_type->token->t_type == SHORT_TYPE_TOKEN)     directive = "dw";
+                else if (t_type->token->t_type == INT_TYPE_TOKEN)  directive = "dd";
+                else if (t_type->token->t_type == LONG_TYPE_TOKEN) directive = "dq";
                 iprintf(output, "%s %s ", name->token->value, directive);
                 for (const tree_t* elem = name->next_sibling; elem; elem = elem->next_sibling) {
                     if (elem->token->t_type == UNKNOWN_NUMERIC_TOKEN) fprintf(output, "%s%s", elem->token->value, elem->next_sibling ? "," : "\n");
@@ -387,13 +383,13 @@ static int _get_variables_size(tree_t* head, const char* func) {
         if (expression->token->t_type == ARRAY_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->next_sibling->next_sibling->token->value, func, &arr_info)) {
-                size +=  ALIGN_TO(arr_info.size * arr_info.el_size, 8);
+                size +=  ALIGN(arr_info.size * arr_info.el_size);
             }
         }
         else if (expression->token->t_type == STR_TYPE_TOKEN) {
             array_info_t arr_info = { .el_size = 1 };
             if (get_array_info((char*)expression->first_child->token->value, func, &arr_info)) {
-                size += ALIGN_TO(arr_info.size * arr_info.el_size, 8);
+                size += ALIGN(arr_info.size * arr_info.el_size);
             }
         }
         else if (
@@ -402,7 +398,7 @@ static int _get_variables_size(tree_t* head, const char* func) {
             expression->token->t_type == IF_TOKEN
         ) size += _get_variables_size(expression->first_child->next_sibling->first_child, func);
         else if (expression->token->t_type == CASE_TOKEN) size += _get_variables_size(expression->first_child->first_child, func);
-        else size += ALIGN_TO(expression->variable_size, 8);
+        else size += ALIGN(expression->variable_size);
     }
 
     return size;
@@ -461,7 +457,7 @@ static int _generate_function(const tree_t* node, FILE* output, const char* func
     Also we remember input variables.
     */
     int local_vars_size = _get_variables_size(params_node->first_child, (char*)name_node->token->value) + _get_variables_size(body_node->first_child, (char*)name_node->token->value);
-    iprintf(output, "sub %s, %d\n", GET_RAW_REG(BASE_BITNESS, RSP), ALIGN_TO(local_vars_size, 8));
+    iprintf(output, "sub %s, %d\n", GET_RAW_REG(BASE_BITNESS, RSP), ALIGN(local_vars_size));
 
     /*
     Loading input args to stack.
@@ -655,10 +651,13 @@ static int _generate_syscall(const tree_t* node, FILE* output, const char* func)
 
     int arg_index = 0;
     const tree_t* args = node->first_child;
-
     while (args) {
         regs_t reg;
-        int is_ptr = (get_array_info((char*)node->first_child->token->value, func, NULL) && !(node->first_child->token->ro || node->first_child->token->glob));
+        int is_ptr = (
+            get_array_info((char*)args->token->value, func, NULL) && 
+            !(args->token->ro || args->token->glob)
+        );
+        
         get_reg(&reg, get_variable_size(args->token) / 8, args_regs[arg_index++], is_ptr);
         iprintf(output, "%s%s%s, %s\n", reg.move, reg.operation, reg.name, GET_ASMVAR(args));
         args = args->next_sibling;
@@ -779,7 +778,7 @@ int generate_asm(const tree_t* root, FILE* output) {
 
         iprintf(output, "push %s\n", GET_RAW_REG(BASE_BITNESS, RBP));
         iprintf(output, "mov %s, %s\n", GET_RAW_REG(BASE_BITNESS, RBP), GET_RAW_REG(BASE_BITNESS, RSP));
-        iprintf(output, "sub %s, %d\n", GET_RAW_REG(BASE_BITNESS, RSP), ALIGN_TO(_get_variables_size(main_body->first_child, NULL), 16));
+        iprintf(output, "sub %s, %d\n", GET_RAW_REG(BASE_BITNESS, RSP), ALIGN(_get_variables_size(main_body->first_child, NULL)));
         _generate_text_section(main_body, output);
     }
 

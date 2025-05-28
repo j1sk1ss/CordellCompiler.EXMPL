@@ -1,6 +1,7 @@
 #ifndef VARMEM_H_
 #define VARMEM_H_
 
+#include "regs.h"
 #include "vars.h"
 #include "token.h"
 

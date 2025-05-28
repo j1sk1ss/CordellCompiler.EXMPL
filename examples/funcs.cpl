@@ -1,12 +1,12 @@
 from "string.cpl" import itoa reverse;
 from "memory.cpl" import mm_init malloc free memset;
-from "stdio.cpl" import gets prints;
+from "stdio.cpl" import gets puts;
 
 start
     ptr char input = malloc(36);
     memset(input, 0, 35);
     gets(input, 35);
-    prints(input);
+    puts(input);
 
     ptr char buffer = malloc(9);
     memset(buffer, 0, 8);
@@ -14,8 +14,8 @@ start
     int digit_len = itoa(buffer, 8, 1234567);
     reverse(buffer, digit_len);
 
-    prints(buffer);
-    prints(input);
+    puts(buffer);
+    puts(input);
     free(buffer);
     free(input);
 exit 0;

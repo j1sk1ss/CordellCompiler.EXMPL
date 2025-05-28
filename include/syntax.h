@@ -1,14 +1,13 @@
 #ifndef PARSER_H_
 #define PARSER_H_
 
+#include "regs.h"
 #include "arrmem.h"
 #include "varmem.h"
 #include "token.h"
 #include "dict.h"
 #include "vars.h"
 #include "str.h"
-
-#define ALIGN_TO(x, a) (((x) + (a) - 1) & ~((a) - 1))
 
 typedef struct tree {
     token_t* token;
