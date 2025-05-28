@@ -15,7 +15,7 @@ static const char* _regs_table[][9] = {
     /* r10 */ { "", "r10b", "r10w","", "r10d", "", "", "", "r10" },
 };
 
-static const char* _types[] = { "", " byte ", " word ", "", " dword ", "", "", "", " " };
+static const char* _types[] = { "", " byte ", " word ", "", " ", "", "", "", " " };
 
 int get_reg(regs_t* regs, int size, int reg, int ptr) {
     regs->name      = _regs_table[reg][size];

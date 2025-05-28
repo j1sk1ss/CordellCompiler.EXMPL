@@ -14,7 +14,7 @@ static int _generate_if(         const tree_t*, FILE*, const char*);
 static int _generate_raw(token_type_t t_type, const tree_t* entry, FILE* output) {
     if (!entry->first_child) return 0;
     switch (t_type) {
-        case LONG_TYPE_TOKEN:  iprintf(output, "__%s__: resq 1\n", (char*)entry->first_child->token->value); break;
+        case LONG_TYPE_TOKEN:  iprintf(output, "__%s__: resd 1\n", (char*)entry->first_child->token->value); break;
         case INT_TYPE_TOKEN:   iprintf(output, "__%s__: resd 1\n", (char*)entry->first_child->token->value); break;
         case SHORT_TYPE_TOKEN: iprintf(output, "__%s__: resw 1\n", (char*)entry->first_child->token->value); break;
         case CHAR_TYPE_TOKEN:  iprintf(output, "__%s__: resb 1\n", (char*)entry->first_child->token->value); break;
@@ -26,7 +26,7 @@ static int _generate_raw(token_type_t t_type, const tree_t* entry, FILE* output)
             char* directive = "resb";
             if (t_type->token->t_type == SHORT_TYPE_TOKEN)      directive = "resw";
             else if (t_type->token->t_type == INT_TYPE_TOKEN)   directive = "resd";
-            else if (t_type->token->t_type == LONG_TYPE_TOKEN)  directive = "resq";
+            else if (t_type->token->t_type == LONG_TYPE_TOKEN)  directive = "resd";
 
             if (!name->next_sibling) {
                 iprintf(output, "__%s__: %s %s\n", name->token->value, directive, size->token->value);
@@ -42,7 +42,7 @@ static int _generate_raw(token_type_t t_type, const tree_t* entry, FILE* output)
 static int _generate_init(token_type_t t_type, const tree_t* entry, FILE* output) {
     switch (t_type) {
         case STR_TYPE_TOKEN:   iprintf(output, "__%s__ db '%s', 0\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
-        case LONG_TYPE_TOKEN:  iprintf(output, "__%s__ dq %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
+        case LONG_TYPE_TOKEN:  iprintf(output, "__%s__ dd %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
         case INT_TYPE_TOKEN:   iprintf(output, "__%s__ dd %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
         case SHORT_TYPE_TOKEN: iprintf(output, "__%s__ dw %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
         case CHAR_TYPE_TOKEN:  iprintf(output, "__%s__ db %s\n", (char*)entry->first_child->token->value, (char*)entry->first_child->next_sibling->token->value); break;
@@ -215,7 +215,7 @@ static int _generate_expression(const tree_t* node, FILE* output, const char* fu
             _generate_expression(node->first_child, output, func);
 
             regs_t reg;
-            get_reg(&reg, 8, RAX, !(node->token->ro || node->token->glob));
+            get_reg(&reg, 4, RAX, !(node->token->ro || node->token->glob));
 
             if (arr_info.el_size > 1) iprintf(output, "imul %s, %d\n", GET_RAW_REG(BASE_BITNESS, RAX), arr_info.el_size);
             iprintf(output, "%s %s, %s\n", reg.move, GET_RAW_REG(BASE_BITNESS, RBX), GET_ASMVAR(node));
@@ -360,15 +360,19 @@ static int _generate_expression(const tree_t* node, FILE* output, const char* fu
 #endif
 
         int stack_args = arg_count - pushed_args;
+#if (BASE_BITNESS == BIT64)
         while (pushed_args < arg_count) {
-            regs_t reg;
-            tree_t* arg = args[pushed_args++];
-            int variable_type = get_variable_size(arg->token);
-            int is_ptr = (get_array_info((char*)arg->token->value, func, NULL) && !(arg->token->ro || arg->token->glob));
-            get_reg(&reg, variable_type / 8, RAX, is_ptr);
-
-            iprintf(output, "%s%s%s, %s ; int %s \n", reg.move, reg.operation, reg.name, GET_ASMVAR(arg), arg->token->value);
+#else
+        pushed_args = arg_count - 1;
+        while (pushed_args >= 0) {
+#endif
+            _generate_expression(args[pushed_args], output, func);
             iprintf(output, "push %s\n", GET_RAW_REG(BASE_BITNESS, RAX));
+#if (BASE_BITNESS == BIT64) 
+            pushed_args++;
+#else
+            pushed_args--;
+#endif
         }
 
         iprintf(output, "call __%s__\n", func_name_node->token->value);
@@ -378,8 +382,15 @@ static int _generate_expression(const tree_t* node, FILE* output, const char* fu
     else if (node->token->t_type == EXIT_TOKEN) {
         fprintf(output, "\n ; --------------- Exit --------------- \n");
         _generate_expression(node->first_child, output, func);
+#if (BASE_BITNESS == BIT64) 
         iprintf(output, "mov %s, %s\n", GET_RAW_REG(BASE_BITNESS, RDI), GET_RAW_REG(BASE_BITNESS, RAX));
         iprintf(output, "mov %s, 60\n", GET_RAW_REG(BASE_BITNESS, RAX));
+#else
+        iprintf(output, "mov %s, %s\n",     GET_RAW_REG(BASE_BITNESS, RBX), GET_RAW_REG(BASE_BITNESS, RAX));
+        iprintf(output, "mov %s, 1\n",      GET_RAW_REG(BASE_BITNESS, RAX));
+        iprintf(output, "mov %s, %s\n",     GET_RAW_REG(BASE_BITNESS, RSP), GET_RAW_REG(BASE_BITNESS, RBP));
+        iprintf(output, "pop %s\n",         GET_RAW_REG(BASE_BITNESS, RBP));
+#endif
         iprintf(output, "%s\n", SYSCALL);
     }
     else if (node->token->t_type == RETURN_TOKEN) {
@@ -439,8 +450,6 @@ static int _generate_declaration(const tree_t* node, FILE* output, const char* f
         type = 1;
         switch (get_variable_size(name_node->token)) {
             default:
-            case 64: derictive = " qword "; break;
-            case 32: derictive = " dword "; break;
             case 16: derictive = " word ";  break;
             case 8: derictive  = " byte ";  break;
         }

@@ -59,7 +59,7 @@ function itoa ptr char buffer; int buffer_size; int num; {
         num = num / 10;
     }
 
-    if is_negative; {
+    if is_negative == 1; {
         buffer[0] = 45;
     }
 

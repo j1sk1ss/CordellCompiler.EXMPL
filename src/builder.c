@@ -110,7 +110,7 @@ static int _compile_object(object_t* obj) {
     fclose(output);
 
     char compile_command[128] = { 0 };
-    sprintf(compile_command, "%s -f%s %s -g -o %s.o", _params.asm_compiler, _params.arch, save_path, save_path);
+    sprintf(compile_command, "%s -f%s %s -g -F dwarf -o %s.o", _params.asm_compiler, _params.arch, save_path, save_path);
 
     print_debug("COMPILING: system(%s)", compile_command);
     system(compile_command);
@@ -164,6 +164,7 @@ int builder_compile() {
     for (int i = _current_file - 1; i >= 0; i--) {
         char delete_command[128] = { 0 };
         if (!_params.save_asm) sprintf(delete_command, "rm %s.asm %s.asm.o", _files[i].path, _files[i].path);
+        else sprintf(delete_command, "rm %s.asm.o", _files[i].path);
 
         print_debug("CLEANUP: system(%s)", delete_command);
         system(delete_command);
