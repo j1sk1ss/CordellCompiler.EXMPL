@@ -15,7 +15,7 @@ typedef struct {
     unsigned char name[TOKEN_MAX_SIZE];
 } variable_t;
 
-static markup_token_t _markups[] = {
+static const markup_token_t _markups[] = {
     /*
     Special single place tokens.
     */
@@ -108,9 +108,9 @@ int variable_markup(token_t* head) {
     variable_t* variables = NULL;
     size_t var_count = 0;
 
-    int is_ro = 0;
+    int is_ro   = 0;
     int is_glob = 0;
-    int is_ptr = 0;
+    int is_ptr  = 0;
     while (curr) {
         switch (curr->t_type) {
             case IMPORT_TOKEN:
@@ -129,8 +129,8 @@ int variable_markup(token_t* head) {
             break;
 
             case GLOB_TYPE_TOKEN: is_glob = 1; break;
-            case RO_TYPE_TOKEN:   is_ro = 1;   break;
-            case PTR_TYPE_TOKEN:  is_ptr = 1;  break;
+            case RO_TYPE_TOKEN:   is_ro   = 1; break;
+            case PTR_TYPE_TOKEN:  is_ptr  = 1; break;
 
             case FUNC_TOKEN:
             case INT_TYPE_TOKEN:
@@ -145,13 +145,13 @@ int variable_markup(token_t* head) {
                     str_strncpy((char*)variables[var_count].name, (char*)next->value, TOKEN_MAX_SIZE);
 
                     switch (curr->t_type) {
-                        case FUNC_TOKEN:        variables[var_count].type = CALL_TOKEN; break;
-                        case INT_TYPE_TOKEN:    variables[var_count].type = INT_VARIABLE_TOKEN; break;
-                        case STR_TYPE_TOKEN:    variables[var_count].type = STR_VARIABLE_TOKEN; break;
-                        case LONG_TYPE_TOKEN:   variables[var_count].type = LONG_VARIABLE_TOKEN; break;
-                        case CHAR_TYPE_TOKEN:   variables[var_count].type = CHAR_VARIABLE_TOKEN; break;
+                        case FUNC_TOKEN:        variables[var_count].type = CALL_TOKEN;           break;
+                        case INT_TYPE_TOKEN:    variables[var_count].type = INT_VARIABLE_TOKEN;   break;
+                        case STR_TYPE_TOKEN:    variables[var_count].type = STR_VARIABLE_TOKEN;   break;
+                        case LONG_TYPE_TOKEN:   variables[var_count].type = LONG_VARIABLE_TOKEN;  break;
+                        case CHAR_TYPE_TOKEN:   variables[var_count].type = CHAR_VARIABLE_TOKEN;  break;
                         case SHORT_TYPE_TOKEN:  variables[var_count].type = SHORT_VARIABLE_TOKEN; break;
-                        case ARRAY_TYPE_TOKEN:  variables[var_count].type = ARR_VARIABLE_TOKEN; break;
+                        case ARRAY_TYPE_TOKEN:  variables[var_count].type = ARR_VARIABLE_TOKEN;   break;
                         default: break;
                     }
 
@@ -164,8 +164,8 @@ int variable_markup(token_t* head) {
                     var_count++;
                 }
 
-                is_ro = 0;
-                is_ptr = 0;
+                is_ro   = 0;
+                is_ptr  = 0;
                 is_glob = 0;
             }
             break;
