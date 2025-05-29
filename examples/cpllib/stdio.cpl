@@ -6,7 +6,7 @@ function puts ptr char string; {
 }
 
 function putc char c; {
-    arr tmp 2 char = c 0;
+    arr tmp 2 char = { c, 0 };
     return syscall(1, 1, tmp, 2);
 }
 

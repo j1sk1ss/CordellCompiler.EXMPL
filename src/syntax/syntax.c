@@ -388,6 +388,8 @@ static tree_t* _parse_array_declaration(token_t** curr) {
             if (arg) add_child_node(arr_node, arg);
             array_size = MAX(array_size, ++arr_size);
         }
+
+        val_token = val_token->next;
     }
     
     add_array_info((char*)name_token->value, _current_function_name, el_size, array_size);

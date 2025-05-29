@@ -76,13 +76,13 @@ start
                 pc = pc + 1;
             }
             case dot; {
-                arr fbuf 3 char = ' ' 0;
+                arr fbuf 2 char = { ' ', 0 };
                 fbuf[0] = tape[pointer];
                 puts(fbuf);
                 pc = pc + 1;
             }
             case comma; {
-                arr sbuf 3 char = ' ' ' ' 0;
+                arr sbuf 2 char = { ' ', 0 };
                 gets(sbuf, 2);
                 tape[pointer] = sbuf[0];
                 pc = pc + 1;
