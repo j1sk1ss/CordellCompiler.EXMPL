@@ -124,7 +124,7 @@ The following types are supported:
     : Pointers can be used as arrays :
     strPtr[0] = 'B';
 
-    arr farr 100 char = {}; // Will allocate array with size 100 and elem size 1 byte
+    arr farr 100 char =; // Will allocate array with size 100 and elem size 1 byte
     arr sarr 5 int = { 1, 2, 3, 4, 5 }; // Will allocate array for provided elements
 ```
 
