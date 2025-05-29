@@ -69,18 +69,19 @@ static int _generate_raw_ast(object_t* obj) {
     return 1;
 }
 
+#define RESULT(code) code > 0 ? "OK" : "ERROR", code 
 static int _add_object(char* path) {
     _files[_current_file].path = path;
     print_log("Raw AST generation for [%s]...", path);
 
     int res_code = _generate_raw_ast(&_files[_current_file++]);
-    print_log("AST-gen result [%s (%i)]", res_code == 1 ? "OK" : "ERROR", res_code);
+    print_log("AST-gen result [%s (%i)]", RESULT(res_code));
     return 1;
 }
 
 static int _compile_object(object_t* obj) {
     int str_opt_res = string_optimization(obj->ast);
-    print_log("String optimization of [%s]... [%s (%i)]", obj->path, str_opt_res ? "OK" : "ERROR", str_opt_res);
+    print_log("String optimization of [%s]... [%s (%i)]", obj->path, RESULT(str_opt_res));
 
     int assign_opt_res = 0;
     int is_fold_vars = 0;
@@ -93,13 +94,13 @@ static int _compile_object(object_t* obj) {
     unload_varmap(obj->ast_varinfo);
 
     int stmt_opt_res = stmt_optimization(obj->ast);
-    print_log("Statement optimization... [%s (%i)]", stmt_opt_res ? "OK" : "ERROR", stmt_opt_res);
+    print_log("Statement optimization... [%s (%i)]", RESULT(stmt_opt_res));
 
     int varuse_opt_res = varuse_optimization(obj->ast);
-    print_log("Var usage optimization... [%s (%i)]", varuse_opt_res ? "OK" : "ERROR", varuse_opt_res);
+    print_log("Var usage optimization... [%s (%i)]", RESULT(varuse_opt_res));
 
     int offset_recalc_res = offset_optimization(obj->ast);
-    print_log("Offset recalculation... [%s (%i)]", offset_recalc_res ? "OK" : "ERROR", offset_recalc_res);
+    print_log("Offset recalculation... [%s (%i)]", RESULT(offset_recalc_res));
 
     char save_path[128] = { 0 };
     sprintf(save_path, "%s.asm", obj->path);
