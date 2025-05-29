@@ -1,6 +1,8 @@
 from "stdio.cpl" import puts putc;
 start
-    arr hello_str 0 char = 'H' 'e' 'l' 'l' 'o' ' ' 'w' 'o' 'r' 'l' 'd' 0;
+    arr tmp 100 char =;
+    arr hello_str 0 char = { 'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', 0 };
     puts(hello_str);
+    puts(tmp);
     putc(10);
 exit 1;

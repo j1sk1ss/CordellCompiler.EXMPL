@@ -2,10 +2,11 @@
 
 
 static void _swap(void* a, void* b, size_t el_size) {
-    char temp[el_size];
+    char* temp = (char*)mm_malloc(el_size);
     str_memcpy(temp, a, el_size);
     str_memcpy(a, b, el_size);
     str_memcpy(b, temp, el_size);
+    mm_free(temp);
 }
 
 static int _work(void* arr, int low, int high, size_t el_size, int (*cmp)(const void*, const void*)) {

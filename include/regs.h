@@ -8,8 +8,8 @@
 static const char* regs[4][8] = {
     { "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp" },
     { "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp" },
-    { "ax",  "bx",  "cx",  "dx",  "si",  "di",   "",    ""    },
-    { "al",  "bl",  "cl",  "dl",  "sil", "dil",  "",    ""    },
+    { "ax",  "bx",  "cx",  "dx",  "si",  "di",  "",    ""    },
+    { "al",  "bl",  "cl",  "dl",  "sil", "dil", "",    ""    },
 };
 
 #define GET_OPERATION_TYPE(size) __get_operation_type__(size)

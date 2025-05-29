@@ -45,6 +45,8 @@ static tree_t* (*_get_parser(token_type_t t_type))(token_t**) {
 }
 
 static int _fill_variable(tree_t* val_node) {
+    if (val_node->next_sibling) _fill_variable(val_node->next_sibling);
+    if (val_node->first_child)  _fill_variable(val_node->first_child);
     variable_info_t varinfo;
     if (!get_var_info((char*)val_node->token->value, _current_function_name, &varinfo)) return 0;
     val_node->variable_offset = varinfo.offset;
@@ -83,7 +85,6 @@ int remove_child_node(tree_t* parent, tree_t* child) {
 
     tree_t* prev = NULL;
     tree_t* current = parent->first_child;
-
     while (current) {
         if (current == child) {
             if (prev) prev->next_sibling = current->next_sibling;
@@ -373,20 +374,20 @@ static tree_t* _parse_array_declaration(token_t** curr) {
     add_child_node(arr_node, elem_size_node);
     add_child_node(arr_node, name_node);
 
+    int arr_size = 0;
     token_t* val_token = assign_token->next;
-    for (int i = 0; val_token && val_token->t_type != DELIMITER_TOKEN; i++) {
-        tree_t* val_node = create_tree_node(val_token);
-        if (!val_node) {
-            unload_syntax_tree(arr_node);
-            unload_syntax_tree(size_node);
-            unload_syntax_tree(name_node);
-            return NULL;
-        }
-
-        _fill_variable(val_node);
-        add_child_node(arr_node, val_node);
+    if (val_token && val_token->t_type == OPEN_BLOCK_TOKEN) {
         val_token = val_token->next;
-        array_size = MAX(array_size, i);
+        while (val_token && val_token->t_type != CLOSE_BLOCK_TOKEN) {
+            if (val_token->t_type == COMMA_TOKEN) {
+                val_token = val_token->next;
+                continue;
+            }
+
+            tree_t* arg = _parse_expression(&val_token);
+            if (arg) add_child_node(arr_node, arg);
+            array_size = MAX(array_size, ++arr_size);
+        }
     }
     
     add_array_info((char*)name_token->value, _current_function_name, el_size, array_size);

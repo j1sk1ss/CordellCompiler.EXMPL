@@ -10,12 +10,12 @@
 #include "str.h"
 
 typedef struct tree {
-    token_t* token;
+    token_t*     token;
     struct tree* parent;
     struct tree* first_child;
     struct tree* next_sibling;
-    int variable_offset;
-    int variable_size;
+    int          variable_offset;
+    int          variable_size;
 } tree_t;
 
 
@@ -61,14 +61,34 @@ Return pointer to tree.
 tree_t* create_tree_node(token_t* token);
 
 /*
+Add clild tree node to parent.
+Params:
+- parent - Parent tree node.
+- child - Tree node that will be added as child to parent node.
+
+Return 1 if addition was success.
+Return -1 if something goes wrong.
 */
 int add_child_node(tree_t* parent, tree_t* child);
 
 /*
+Remove clild tree node to parent.
+Params:
+- parent - Parent tree node.
+- child - Tree node that will be removed from childs in parent node.
+
+Return 1 if remove was success.
+Return -1 if something goes wrong.
 */
 int remove_child_node(tree_t* parent, tree_t* child);
 
 /*
+Unload syntax tree with all childs and siblings.
+Params:
+- node - Tree head.
+
+Return 1 if free success.
+Return -1 if something goes wrong.
 */
 int unload_syntax_tree(tree_t* node);
 

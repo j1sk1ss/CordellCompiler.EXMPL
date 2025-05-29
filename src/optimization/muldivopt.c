@@ -16,10 +16,11 @@ static int _find_muldiv(tree_t* root, int* fold) {
             case CHAR_TYPE_TOKEN: 
             case CALL_TOKEN:
             case SYSCALL_TOKEN:
+            case ARRAY_TYPE_TOKEN:
             case RETURN_TOKEN: _find_muldiv(t, fold); continue;
             case IF_TOKEN:
-            case WHILE_TOKEN: _find_muldiv(t->first_child->next_sibling, fold); continue;
-            case FUNC_TOKEN: _find_muldiv(t->first_child->next_sibling->next_sibling, fold); continue;
+            case WHILE_TOKEN:  _find_muldiv(t->first_child->next_sibling, fold); continue;
+            case FUNC_TOKEN:   _find_muldiv(t->first_child->next_sibling->next_sibling, fold); continue;
             default: break;
         }
 
@@ -36,16 +37,16 @@ static int _find_muldiv(tree_t* root, int* fold) {
             int r_val = str_atoi((char*)right->token->value);
             int result = 0;
             switch (t->token->t_type) {
-                case PLUS_TOKEN: result = l_val + r_val; break;
-                case MINUS_TOKEN: result = l_val - r_val; break;
+                case PLUS_TOKEN:     result = l_val + r_val; break;
+                case MINUS_TOKEN:    result = l_val - r_val; break;
                 case MULTIPLY_TOKEN: result = l_val * r_val; break;
                 case DIVIDE_TOKEN: 
                     if (r_val == 0) break;
                     result = l_val / r_val; 
                     break;
-                case BITAND_TOKEN: result = l_val & r_val; break;
-                case BITOR_TOKEN: result = l_val | r_val; break;
-                case BITMOVE_LEFT_TOKEN: result = l_val << r_val; break;
+                case BITAND_TOKEN:        result = l_val & r_val; break;
+                case BITOR_TOKEN:         result = l_val | r_val; break;
+                case BITMOVE_LEFT_TOKEN:  result = l_val << r_val; break;
                 case BITMOVE_RIGHT_TOKEN: result = l_val >> r_val; break;
                 default: break;
             }
